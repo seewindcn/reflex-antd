@@ -1,0 +1,41 @@
+{% extends "web/pages/base_page.js.jinja2" %}
+
+{% block export %}
+import Document, {}  from 'next/document';
+import { createCache, extractStyle, StyleProvider } from '@ant-design/cssinjs';
+
+function MyDocument() {
+  return (
+    {{utils.render(document, indent_width=0)}}
+  )
+}
+
+MyDocument.getInitialProps = async (ctx) => {
+  const cache = createCache();
+  const originalRenderPage = ctx.renderPage;
+  ctx.renderPage = () =>
+    originalRenderPage({
+      enhanceApp: (App) => (props) => (
+        <StyleProvider cache={cache}>
+          <App {...props} />
+        </StyleProvider>
+      ),
+    });
+
+  const initialProps = await Document.getInitialProps(ctx);
+  const style = extractStyle(cache, true);
+  return {
+    ...initialProps,
+    styles: (
+      <>
+        {initialProps.styles}
+          {% raw %}
+        <style dangerouslySetInnerHTML={{ __html: style }} />
+          {% endraw %}
+      </>
+    ),
+  };
+};
+
+export default MyDocument;
+{% endblock %}

@@ -1,3 +1,4 @@
+from os import path
 from functools import lru_cache
 
 import reflex as rx
@@ -5,7 +6,11 @@ from reflex import Component, Var
 from reflex.utils import imports
 
 
+my_path = path.abspath(path.dirname(__file__))
+template_path = path.join(my_path, '.templates')
+
 APP_ROUTER = False
+
 
 class AntdComponent(Component):
     """A component that wraps a Chakra component."""
@@ -46,14 +51,16 @@ class AntdProvider(AntdComponent):
         )
         return _imports
 
-    if APP_ROUTER:
-        @staticmethod
-        @lru_cache(maxsize=None)
-        def _get_app_wrap_components() -> dict[tuple[int, str], Component]:
-            """ support app router """
+    @staticmethod
+    @lru_cache(maxsize=None)
+    def _get_app_wrap_components() -> dict[tuple[int, str], Component]:
+        """ support app router """
+        if APP_ROUTER:
             return {
                 (170, "AntdRegistryProvider"): antd_registry_provider,
             }
+        else:
+            return {}
 
 
 class AntdRegistryProvider(Component):
@@ -63,3 +70,13 @@ class AntdRegistryProvider(Component):
 
 antd_provider = AntdProvider.create()
 antd_registry_provider = AntdRegistryProvider.create()
+
+
+def patch_all():
+    from reflex import constants
+    from reflex.compiler import templates
+
+    constants.Templates.Dirs.JINJA_TEMPLATE = [path.join(template_path, 'jinja'),
+                                               constants.Templates.Dirs.JINJA_TEMPLATE]
+
+    templates.DOCUMENT_ROOT = templates.get_template("web/pages/_document.js.jinja2")

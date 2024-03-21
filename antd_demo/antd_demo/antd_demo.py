@@ -1,6 +1,16 @@
+from os import path
+import sys
 import reflex as rx
 
+my_path = path.dirname(path.realpath(__file__))
+custom_components_path = path.join(path.dirname(my_path), '..', 'custom_components')
+if path.exists(custom_components_path):
+    sys.path.insert(0, custom_components_path)
 
+from reflex_antd.base import patch_all
+
+
+patch_all()
 app = rx.App()
 
 
