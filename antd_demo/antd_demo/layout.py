@@ -8,6 +8,8 @@ from collections import OrderedDict
 import reflex as rx
 from reflex.base import Base
 
+from reflex_antd import layout
+
 
 def load_modules(parent_md, is_pkg=True) -> Iterable[ModuleType]:
     """ 遍历子目录包, 加载services, 调用init方法进行初始化
@@ -47,21 +49,30 @@ routes: Dict[str, Route] = OrderedDict()
 
 def page(path: str, title: str = "antd demo", props=None) -> Callable:
     props = props or {}
+
     # props.setdefault('height', '100%')
 
     def _webpage(contents: Callable[[tuple, dict], rx.Component]) -> Route:
         def wrapper(*children, **c_props) -> rx.Component:
             from antd_demo.components import footer, navbar, header
+            color_bg_contain = 'white'
 
-            return rx.flex(
+            return layout.layout(
                 header(),
-                navbar(),
-                rx.flex(
-                    rx.flex(
-                        contents(*children, **c_props),
+                layout.layout(
+                    navbar(),
+                    layout.layout(
+                        layout.content(
+                            contents(*children, **c_props),
+                            background=color_bg_contain,
+                            min_height=280,
+                            margin=0,
+                            padding=24,
+                        ),
+                        padding='0 24px 24px',
                     ),
+                    footer(),
                 ),
-                footer(),
                 **props,
             )
 

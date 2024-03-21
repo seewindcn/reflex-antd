@@ -1,10 +1,11 @@
 from os import path
 from functools import lru_cache
+from typing import Any
 
 import reflex as rx
 from reflex import Component, Var
 from reflex.utils import imports
-
+from reflex.vars import BaseVar
 
 my_path = path.abspath(path.dirname(__file__))
 template_path = path.join(my_path, '.templates')
@@ -12,7 +13,42 @@ template_path = path.join(my_path, '.templates')
 APP_ROUTER = False
 
 
-class AntdComponent(Component):
+class ExVar(BaseVar):
+    _var_value: Any
+
+    @classmethod
+    def create(
+            cls, value: Any, _var_is_local: bool = True, _var_is_string: bool = False
+    ) -> Var | None:
+        v: BaseVar = super().create(value, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
+        return cls(
+            _var_name=v._var_name,
+            _var_type=v._var_type,
+            _var_is_local=v._var_is_local,
+            _var_is_string=v._var_is_string,
+            _var_data=v._var_data,
+            _var_value=value,
+        )
+
+
+class ContainVar(ExVar):
+
+    @property
+    def _var_full_name(self) -> str:
+        return self._var_name
+
+
+class AntdBaseMixin:
+    def _get_style(self) -> dict:
+        """Get the style for the component.
+
+        Returns:
+            The dictionary of the component style as value and the style notation as key.
+        """
+        return {"style": self.style}
+
+
+class AntdComponent(AntdBaseMixin, Component):
     """A component that wraps a Chakra component."""
 
     library = "antd"
@@ -23,6 +59,11 @@ class AntdComponent(Component):
         return {
             (160, "AntdProvider"): antd_provider,
         }
+
+
+class AntdSubComponent(AntdBaseMixin, Component):
+    def _get_imports(self) -> imports.ImportDict:
+        return {}
 
 
 class AntdProvider(AntdComponent):

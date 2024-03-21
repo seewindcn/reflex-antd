@@ -1,5 +1,5 @@
 
-from .base import AntdComponent
+from ..base import AntdComponent
 
 
 class ButtonComponent(AntdComponent):
