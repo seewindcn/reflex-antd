@@ -54,7 +54,7 @@ def page(path: str, title: str = "antd demo", props=None) -> Callable:
 
     def _webpage(contents: Callable[[tuple, dict], rx.Component]) -> Route:
         def wrapper(*children, **c_props) -> rx.Component:
-            from antd_demo.components import footer, navbar, header
+            from antd_demo.components import footer, navbar, header, subnav
             color_bg_contain = 'white'
 
             return layout.layout(
@@ -62,6 +62,7 @@ def page(path: str, title: str = "antd demo", props=None) -> Callable:
                 layout.layout(
                     navbar(),
                     layout.layout(
+                        subnav(),
                         layout.content(
                             contents(*children, **c_props),
                             background=color_bg_contain,

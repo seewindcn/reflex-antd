@@ -1,11 +1,12 @@
 from os import path
 from functools import lru_cache
-from typing import Any
+from typing import Any,Tuple,Dict,List, Iterable,Callable
+import uuid
 
 import reflex as rx
 from reflex import Component, Var
-from reflex.utils import imports
-from reflex.vars import BaseVar
+from reflex.utils import imports, format
+from reflex.vars import BaseVar, VarData
 
 my_path = path.abspath(path.dirname(__file__))
 template_path = path.join(my_path, '.templates')
@@ -13,22 +14,12 @@ template_path = path.join(my_path, '.templates')
 APP_ROUTER = False
 
 
+def pretty_dumps(value: Any, indent=2) -> str:
+    return format.json.dumps(value, ensure_ascii=False, default=format.serialize, indent=indent)
+
+
 class ExVar(BaseVar):
     _var_value: Any
-
-    @classmethod
-    def create(
-            cls, value: Any, _var_is_local: bool = True, _var_is_string: bool = False
-    ) -> Var | None:
-        v: BaseVar = super().create(value, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
-        return cls(
-            _var_name=v._var_name,
-            _var_type=v._var_type,
-            _var_is_local=v._var_is_local,
-            _var_is_string=v._var_is_string,
-            _var_data=v._var_data,
-            _var_value=value,
-        )
 
 
 class ContainVar(ExVar):
@@ -36,6 +27,60 @@ class ContainVar(ExVar):
     @property
     def _var_full_name(self) -> str:
         return self._var_name
+
+    @staticmethod
+    def _extract(value: Any) -> Tuple[Any, Dict[str, Any]]:
+        components = {}
+
+        def _op(_v: Any):
+            if isinstance(_v, (list, tuple)):
+                return _list(_v)
+            elif isinstance(_v, dict):
+                return _dict(_v)
+
+            _id = _v
+            if isinstance(_v, Component):
+                _id = uuid.uuid4().hex
+            elif isinstance(_v, Callable):
+                _id = uuid.uuid4().hex
+                _v = _v()
+            if _id != _v:
+                components[_id] = _v
+            return _id
+
+        def _list(_v: List):
+            return [_op(i) for i in _v]
+
+        def _dict(_v: Dict):
+            return dict((k, _op(v)) for k, v in _v.items())
+
+        rs = _op(value)
+        return rs, components
+
+    @classmethod
+    def create(
+            cls, value: Any, _var_is_local: bool = True, _var_is_string: bool = False
+    ) -> Var | None:
+        new_value, components = cls._extract(value)
+        _name = pretty_dumps(new_value)
+        for k, v in components.items():
+            _name = _name.replace(f'"{k}"', str(v))
+        # v: BaseVar = super().create(_name, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
+        return cls(
+            _var_name=_name,
+            _var_type=cls,
+            _var_is_local=_var_is_local,
+            _var_is_string=_var_is_string,
+            _var_data=VarData(
+                imports=imports.merge_imports(
+                    *(c.get_imports() for c in components.values()),
+                ),
+            ),
+            _var_value=value,
+        )
+
+
+items = ContainVar.create
 
 
 class AntdBaseMixin:

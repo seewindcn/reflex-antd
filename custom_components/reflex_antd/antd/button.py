@@ -2,8 +2,8 @@
 from ..base import AntdComponent
 
 
-class ButtonComponent(AntdComponent):
+class Button(AntdComponent):
     tag = "Button"
 
 
-button = ButtonComponent.create
+button = Button.create
