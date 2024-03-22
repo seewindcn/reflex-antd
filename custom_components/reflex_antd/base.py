@@ -1,7 +1,8 @@
 from os import path
 from functools import lru_cache
-from typing import Any,Tuple,Dict,List, Iterable,Callable
+from typing import Any, Tuple, Dict, List, Iterable, Callable
 import uuid
+import dataclasses
 
 import reflex as rx
 from reflex import Component, Var
@@ -19,7 +20,16 @@ def pretty_dumps(value: Any, indent=2) -> str:
 
 
 class ExVar(BaseVar):
-    _var_value: Any
+    _var_value: Any = dataclasses.field(default=Any)
+
+
+class NodeVar(ExVar):
+    """
+    support:
+        . base types: int, float, bool, str
+        . js, like: {show ? 11 : 0}
+     """
+    pass
 
 
 class ContainVar(ExVar):
@@ -80,7 +90,16 @@ class ContainVar(ExVar):
         )
 
 
-items = ContainVar.create
+contains = ContainVar.create
+
+
+class VarDataMixin:
+    def __iter__(self):
+        v = Var()
+        v._var_data = VarData(
+            imports=self.get_imports(),
+        )
+        yield from [v]
 
 
 class AntdBaseMixin:

@@ -2,13 +2,23 @@
 
 from reflex import Component
 
+from ..base import VarDataMixin
 
-class IconComponent(Component):
+
+class IconComponent(VarDataMixin, Component):
     library = "@ant-design/icons"
 
 
 class CustomerServiceOutlined(IconComponent):
     tag = 'CustomerServiceOutlined'
+
+
+class CommentOutlined(IconComponent):
+    tag = 'CommentOutlined'
+
+
+class QuestionCircleOutlined(IconComponent):
+    tag = 'QuestionCircleOutlined'
 
 
 class LaptopOutlined(IconComponent):
@@ -17,6 +27,14 @@ class LaptopOutlined(IconComponent):
 
 class NotificationOutlined(IconComponent):
     tag = 'NotificationOutlined'
+
+
+class CloseCircleOutlined(IconComponent):
+    tag = 'CloseCircleOutlined'
+
+
+class CloseSquareOutlined(IconComponent):
+    tag = 'CloseSquareOutlined'
 
 
 class UserOutlined(IconComponent):

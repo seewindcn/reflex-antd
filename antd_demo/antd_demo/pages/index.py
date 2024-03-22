@@ -1,14 +1,16 @@
 import reflex as rx
 
-from reflex_antd import general as antd_g
+from reflex_antd import general, entry
 
 from antd_demo.layout import page
+
+from ..state import GlobalState
 
 
 @page('/')
 def index_page() -> rx.Component:
     return rx.center(
-        antd_g.button('ok'),
+        rx.button('ok'),
     )
 
 

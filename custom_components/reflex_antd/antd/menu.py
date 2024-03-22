@@ -29,7 +29,7 @@ class Menu(AntdComponent):
     mode: Optional[Var[MenuModeType]]
     selected_keys: Optional[Var[List[str]]]
 
-    items: Var[Union[ContainVar, list]]  # Var[Union[MenuItems, List[MenuItem], List[dict]]]
+    items: Var[Union[ContainVar, list]]
 
     open_keys: Optional[Var[List[str]]]
     selected_keys: Optional[Var[List[str]]]
@@ -37,12 +37,12 @@ class Menu(AntdComponent):
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
 
-        def _onSelect(ev: OnSelectEvent):
+        def _on_select(ev: OnSelectEvent):
             return [ev.selectedKeys]
 
         _triggers.update({
             'onOpenChange': lambda open_keys: [open_keys],
-            'onSelect': _onSelect,
+            EventTriggers.ON_SELECT: _on_select,
             # EventTriggers.ON_CHANGE: lambda e0: [e0.target.checked],
         })
         return _triggers
