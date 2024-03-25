@@ -264,7 +264,7 @@ class ExFormatter:
             return [_op(i, key=f'{pkey}.{idx}') for idx, i in enumerate(_v)]
 
         def _dict(_v: Dict, pkey: str) -> Dict[str, Any]:
-            return dict((k, _op(v, key=f'{pkey}.{k}')) for k, v in _v.items())
+            return dict((format.to_camel_case(k), _op(v, key=f'{pkey}.{k}')) for k, v in _v.items())
 
         rs = _op(value, key=self.name)
         self._value = rs
@@ -348,6 +348,7 @@ class ContainVar(ExVar):
 contains = ContainVar.create
 
 
+# no use
 class VarDataMixin:
     def __iter__(self):
         v = Var()
@@ -375,6 +376,7 @@ class AntdBaseMixin:
         Returns:
             Set of internally managed hooks.
         """
+        # need order hooks, useContext code need first
         s = OrderedSet(
             hook
             for hook in [self._get_mount_lifecycle_hook(), self._get_ref_hook()]
@@ -452,10 +454,24 @@ antd_registry_provider = AntdRegistryProvider.create()
 
 
 def patch_all():
-    from reflex import constants
+    from reflex import constants, vars
     from reflex.compiler import templates
 
     constants.Templates.Dirs.JINJA_TEMPLATE = [path.join(template_path, 'jinja'),
                                                constants.Templates.Dirs.JINJA_TEMPLATE]
 
     templates.DOCUMENT_ROOT = templates.get_template("web/pages/_document.js.jinja2")
+
+    old_extract_var_data = vars._extract_var_data
+    def _my_extract_var_data(value: Union[Iterable, Component]) -> list[VarData | None]:
+        if isinstance(value, Component):
+            return [
+                VarData(
+                    imports=value.get_imports(),
+                    hooks=set(value.get_hooks()),
+                )
+            ]
+        var_datas = old_extract_var_data(value)
+        return var_datas
+
+    vars._extract_var_data = _my_extract_var_data

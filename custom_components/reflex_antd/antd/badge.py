@@ -5,7 +5,7 @@ from ..base import AntdComponent, NodeVar, VarDataMixin
 from ..constant import PlacementType, SizeType, BadgeStatusType
 
 
-class Badge(VarDataMixin, AntdComponent):
+class Badge(AntdComponent):
     tag = "Badge"
 
     color: Optional[Var[str]]

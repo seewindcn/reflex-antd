@@ -5,7 +5,7 @@ from reflex import Component
 from ..base import VarDataMixin
 
 
-class IconComponent(VarDataMixin, Component):
+class IconComponent(Component):
     library = "@ant-design/icons"
 
 

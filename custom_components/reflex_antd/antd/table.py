@@ -1,9 +1,12 @@
 from typing import Optional, Union, Dict, Any, List
 from reflex import Var
 from reflex.constants import EventTriggers
+from reflex.utils import imports
 
 from ..base import AntdComponent, ContainVar
 from ..constant import StatusType, SizeType
+
+from .pagination import Pagination
 
 
 class Table(AntdComponent):
@@ -11,6 +14,7 @@ class Table(AntdComponent):
 
     data_source: Optional[Var[List[Dict[str, Any]]]]
     columns: Optional[Var[Union[ContainVar, list]]]
+    pagination: Optional[Var[Union[bool, ContainVar]]]
     row_selection: Optional[Var[Union[ContainVar, Dict]]]
     expandable: Optional[Var[Union[ContainVar, Dict]]]
 
@@ -21,6 +25,10 @@ class Table(AntdComponent):
             # 'row_selection.onChange': lambda keys, rows: [keys]
         })
         return _triggers
+
+    def get_imports(self) -> imports.ImportDict:
+        _imports = super().get_imports()
+        return _imports
 
 
 table = Table.create

@@ -7,6 +7,7 @@ from collections import OrderedDict
 
 import reflex as rx
 from reflex.base import Base
+from reflex.event import EventHandler, EventSpec
 
 from reflex_antd import layout
 
@@ -36,18 +37,24 @@ class Route(Base):
     # The component to render for the route.
     component: Callable[[], rx.Component]
 
+    on_load: EventHandler | EventSpec | list[EventHandler | EventSpec] | None
+
     def register(self) -> Self:
         routes[self.path] = self
         return self
 
     def add_page(self, app: rx.App):
-        app.add_page(self.component, self.path, self.title)
+        app.add_page(self.component, self.path, self.title, on_load=self.on_load)
 
 
 routes: Dict[str, Route] = OrderedDict()
 
 
-def page(path: str, title: str = "antd demo", props=None) -> Callable:
+def page(path: str, title: str = "antd demo", props=None,
+         on_load: (
+                 EventHandler | EventSpec | list[EventHandler | EventSpec] | None
+         ) = None,
+         ) -> Callable:
     props = props or {}
 
     # props.setdefault('height', '100%')
@@ -77,7 +84,7 @@ def page(path: str, title: str = "antd demo", props=None) -> Callable:
                 **props,
             )
 
-        r = Route(path=path, title=title, component=wrapper).register()
+        r = Route(path=path, title=title, component=wrapper, on_load=on_load).register()
         return r
 
     return _webpage
