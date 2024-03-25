@@ -30,6 +30,7 @@ _gender_filter = [
 
 class TableState(State):
     row_select_type = 'checkbox'  # checkbox | radio
+    selected_row_keys: List[int] = []
     table_gender_filter = [
         dict(text="Male", value="male"),
         dict(text="Female", value="female"),
@@ -48,6 +49,10 @@ class TableState(State):
     total: int = len(_data)
     filters: Dict[str, List[str]] = {}
 
+    @rx.var
+    def selected_row_count(self) -> str:
+        return str(len(self.selected_row_keys))
+
     @classmethod
     def get_columns(cls):
         ex_columns = helper.contains([
@@ -55,6 +60,7 @@ class TableState(State):
                 title='Id',
                 dataIndex='key',
                 key='key',
+                width=50,
                 sorter=True,
                 defaultSortOrder='descend',
                 render=helper.js_value(
@@ -91,8 +97,41 @@ class TableState(State):
                 title='Address',
                 dataIndex='address',
                 key='address',
+                hidden=False,
                 ellipsis='true',
                 copyable='true',
+            ),
+            dict(
+                title='Action',
+                key='action',
+                fixed='right',
+                render=helper.js_value(
+                    lambda _, record: rx.menu.root(
+                        rx.menu.trigger(
+                            rx.button("Options", variant="soft"),
+                        ),
+                        rx.menu.content(
+                            rx.menu.item("Edit", shortcut="⌘ E"),
+                            rx.menu.item("Duplicate", shortcut="⌘ D", on_select=GlobalState.on_event1),
+                            rx.menu.separator(),
+                            rx.menu.item("Archive", shortcut="⌘ N"),
+                            rx.menu.sub(
+                                rx.menu.sub_trigger("More"),
+                                rx.menu.sub_content(
+                                    rx.menu.item("Move to project…"),
+                                    rx.menu.item("Move to folder…"),
+                                    rx.menu.separator(),
+                                    rx.menu.item("Advanced options…"),
+                                ),
+                            ),
+                            rx.menu.separator(),
+                            rx.menu.item("Share"),
+                            rx.menu.item("Add to favorites"),
+                            rx.menu.separator(),
+                            rx.menu.item("Delete", shortcut="⌘ ⌫", color="red"),
+                        ),
+                    )
+                ),
             ),
         ])
         return ex_columns
@@ -132,6 +171,10 @@ class TableState(State):
 
     def on_row_select_change(self, selected_row_keys):
         print("on_row_select_change:", selected_row_keys)
+        self.selected_row_keys = list(set(self.selected_row_keys + selected_row_keys))
+
+    def on_clean_selected(self):
+        self.selected_row_keys = []
 
     def on_page_change(self, page, size):
         print("on_page_change:", page, size)
@@ -152,30 +195,40 @@ def table1_page() -> rx.Component:
       )
 def table2_page() -> rx.Component:
     return rx.center(
-        display.table(
-            data_source=TableState.data_source,
-            columns=TableState.get_columns(),
-            row_selection=helper.contains(
-                _name_='row_selection',
-                type=TableState.row_select_type,
-                onChange=helper.js_event(TableState.on_row_select_change, 'keys', 'rows'),
+        rx.vstack(
+            rx.hstack(
+                rx.button('clear Select', on_click=TableState.on_clean_selected),
+                rx.text('selected_row_count: ' + TableState.selected_row_count)
             ),
-            expandable=helper.contains(
-                expandedRowRender=helper.js_value(
-                    lambda record: '<p style={{ margin: 0 }}>{record.address}</p>'
+            display.table(
+                data_source=TableState.data_source,
+                columns=TableState.get_columns(),
+                row_selection=helper.contains(
+                    _name_='row_selection',
+                    type=TableState.row_select_type,
+                    selected_row_keys=TableState.selected_row_keys,
+                    onChange=helper.js_event(TableState.on_row_select_change, 'keys', 'rows'),
                 ),
-                rowExpandable=helper.js_value(
-                    lambda record: "record.age >= 50",
+                expandable=helper.contains(
+                    expandedRowRender=helper.js_value(
+                        lambda record: '<p style={{ margin: 0 }}>{record.address}</p>'
+                    ),
+                    rowExpandable=helper.js_value(
+                        lambda record: "record.age >= 50",
+                    ),
                 ),
+                pagination=helper.contains(
+                    current=TableState.page_current,
+                    total=TableState.total,
+                    page_size=TableState.page_size,
+                    page_size_options=[5, 10, 20, 50, 100, 150, 200],
+                    on_change=helper.js_event(TableState.on_page_change, 'page', 'size'),
+                    showTotal=helper.js_value('((total, range) => `${range[0]}-${range[1]} of ${total} items`)'),
+                    showSizeChanger=True,
+                    showQuickJumper=True,
+                ),
+                scroll=dict(y=500),
+                on_change=TableState.on_table_change,
             ),
-            pagination=helper.contains(
-                current=TableState.page_current,
-                total=TableState.total,
-                page_size=TableState.page_size,
-                page_size_options=[5, 10, 20, 50, 100, 150, 200],
-                on_change=helper.js_event(TableState.on_page_change, 'page', 'size'),
-                showTotal=helper.js_value('((total, range) => `${range[0]}-${range[1]} of ${total} items`)'),
-            ),
-            on_change=TableState.on_table_change,
         ),
     )

@@ -11,7 +11,7 @@ class GlobalState(rx.State):
         print(f'on_event0')
 
     def on_event1(self, ev):
-        print('on_event', ev)
+        print('on_event1', ev)
 
     def on_navbar_select(self, ev):
         print("navbar_selected_keys: ", ev)

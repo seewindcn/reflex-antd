@@ -17,6 +17,7 @@ class Table(AntdComponent):
     pagination: Optional[Var[Union[bool, ContainVar]]]
     row_selection: Optional[Var[Union[ContainVar, Dict]]]
     expandable: Optional[Var[Union[ContainVar, Dict]]]
+    scroll: Optional[Var[Union[ContainVar, Dict]]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
