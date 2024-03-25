@@ -1,9 +1,10 @@
-from typing import Type, Any, Tuple, Dict, List, Iterable, Callable
+from typing import Type, Any, Tuple, Dict, List, Iterable, Callable, Set, Union
 from os import path
 from abc import ABC, abstractmethod
 from functools import lru_cache
 import uuid
 import dataclasses
+import inspect
 
 import reflex as rx
 from reflex import Component, Var, State
@@ -35,6 +36,15 @@ class ExItem(ABC):
     def get_imports(self) -> imports.ImportDict:
         return {}
 
+    def get_state(self) -> str:
+        return ''
+
+    def get_hooks(self) -> Set[str]:
+        return set()
+
+    def get_interpolations(self) -> List[Tuple[int, int]]:
+        return []
+
 
 class ExComponentItem(ExItem):
     item: Component
@@ -49,6 +59,9 @@ class ExComponentItem(ExItem):
     def get_imports(self) -> imports.ImportDict:
         return self.item.get_imports()
 
+    def get_hooks(self) -> Set[str]:
+        return self.item.get_hooks()
+
 
 class ExCallableItem(ExItem):
     item: Callable
@@ -61,12 +74,14 @@ class ExCallableItem(ExItem):
         return str(self.item())
 
     def get_imports(self) -> imports.ImportDict:
-        c = self.item()
-        return c.get_imports()
+        return self.item().get_imports()
+
+    def get_hooks(self) -> Set[str]:
+        return self.item().get_hooks()
 
 
 class ExStateItem(ExItem):
-    item: State
+    item: BaseVar
 
     @classmethod
     def isinstance(cls, item: Any) -> bool:
@@ -75,10 +90,92 @@ class ExStateItem(ExItem):
     def serialize(self) -> str:
         return self.item._var_full_name
 
+    def get_imports(self) -> imports.ImportDict:
+        return self.item._var_data.imports
+
+    def get_hooks(self) -> Set[str]:
+        return self.item._var_data.hooks
+
+    def get_state(self) -> str:
+        return self.item._var_data.state
+
+
+class JsValue:
+    def __init__(self, value: Union[str, Callable]):
+        self.value = value
+        self. _init()
+
+    def _init(self) -> None:
+        pass
+
+    def serialize(self) -> str:
+        return self.value
+
+    def get_imports(self) -> imports.ImportDict:
+        return {}
+
+    def get_state(self) -> str:
+        return ''
+
+    def get_hooks(self) -> Set[str]:
+        return set()
+
+
+class JsFunctionValue(JsValue):
+    def _init(self) -> None:
+        self._args = inspect.getfullargspec(self.value)
+        args = self._args.args
+        self._value = self.value(*args)
+
+    def serialize(self) -> str:
+        if isinstance(self._value, str):
+            return f"""({','.join(self._args.args)}) => (
+            {self._value}
+            )
+            """
+        elif isinstance(self._value, Component):
+            return f"""({','.join(self._args.args)}) => (
+            {self._value}
+            )
+            """
+        raise TypeError(self._value)
+
+    def get_imports(self) -> imports.ImportDict:
+        return {} if isinstance(self._value, str) else self._value.get_imports()
+
+    def get_hooks(self) -> Set[str]:
+        return set() if isinstance(self._value, str) else self._value.get_hooks()
+
+
+def js_value(value: Union[str, Callable]) -> JsValue:
+    if isinstance(value, str):
+        return JsValue(value)
+    if isinstance(value, Callable):
+        return JsFunctionValue(value)
+    raise NotImplemented("Not implemented: %s(%s)" % (type(value), value))
+
+
+class ExJsItem(ExItem):
+    item: JsValue
+
+    @classmethod
+    def isinstance(cls, item: Any) -> bool:
+        return isinstance(item, JsValue)
+
+    def serialize(self) -> str:
+        return self.item.serialize()
+
+    def get_imports(self) -> imports.ImportDict:
+        return self.item.get_imports()
+
+    def get_hooks(self) -> Set[str]:
+        return self.item.get_hooks()
+
 
 class ExFormatter:
     items: List[Type[ExItem]] = [
         ExComponentItem, ExCallableItem, ExStateItem,
+        ExJsItem,
     ]
 
     def __init__(self, value: Any):
@@ -128,6 +225,34 @@ class ExFormatter:
         )
         return _imports
 
+    def get_state(self) -> str:
+        for _, ex in self._coms.items():
+            _state = ex.get_state()
+            if _state != '':
+                return _state
+        return ''
+
+    def get_hooks(self) -> Set[str]:
+        hooks = set()
+        for _, ex in self._coms.items():
+            _hooks = ex.get_hooks()
+            hooks.update(_hooks)
+        return hooks
+
+    def get_interpolations(self) -> List[Tuple[int, int]]:
+        rs = []
+        for _, ex in self._coms.items():
+            rs += ex.get_interpolations()
+        return rs
+
+    def get_var_data(self) -> VarData:
+        return VarData(
+            state=self.get_state(),
+            imports=self.get_imports(),
+            hooks=self.get_hooks(),
+            interpolations=self.get_interpolations(),
+        )
+
 
 class ExVar(BaseVar):
     _var_value: Any = dataclasses.field(default=Any)
@@ -160,9 +285,7 @@ class ContainVar(ExVar):
             _var_type=cls,
             _var_is_local=_var_is_local,
             _var_is_string=_var_is_string,
-            _var_data=VarData(
-                imports=fmt.get_imports(),
-            ),
+            _var_data=fmt.get_var_data(),
             _var_value=value,
         )
 

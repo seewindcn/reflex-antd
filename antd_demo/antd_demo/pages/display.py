@@ -66,19 +66,26 @@ class TableState(State):
                 key='key',
                 sorter=True,
                 defaultSortOrder='descend',
-                # render=lambda text=None: '<a>{text}</a>',
+                render=helper.js_value(
+                    '(text) => <a>{text}</a>',
+                ),
             ),
             dict(
                 title='Name',
                 dataIndex='name',
                 key='name',
                 sorter=True,
-                # render=lambda text=None: rx.code(Var.create_safe('{text}')),
+                render=helper.js_value(
+                    lambda text: ' <a>{text}</a>',
+                ),
             ),
             dict(
                 title='Age',
                 dataIndex='age',
                 key='age',
+                render=helper.js_value(
+                    lambda text: rx.badge(Var.create_safe('{text}'))
+                ),
             ),
             dict(
                 title='Gender',
