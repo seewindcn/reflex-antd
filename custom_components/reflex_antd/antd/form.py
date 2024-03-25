@@ -1,5 +1,6 @@
 from typing import Optional, Union, Dict, Any, List
 from reflex import Var
+from reflex.constants import EventTriggers
 
 from ..base import AntdComponent, ContainVar
 from ..constant import StatusType, SizeType
@@ -20,7 +21,7 @@ class Form(AntdComponent):
         _triggers = super().get_event_triggers()
 
         _triggers.update({
-            'onFinish': lambda values: [values],
+            'on_finish': lambda values: [values],
         })
         return _triggers
 

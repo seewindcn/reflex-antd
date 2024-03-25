@@ -1,5 +1,6 @@
 from typing import Optional, Union, Dict, Any, List
 from reflex import Var
+from reflex.constants import EventTriggers
 
 from ..base import AntdComponent, ContainVar
 from ..constant import StatusType, SizeType
@@ -38,7 +39,7 @@ class CheckboxGroup(AntdComponent):
         _triggers = super().get_event_triggers()
 
         _triggers.update({
-            'onChange': lambda e: [e],
+            EventTriggers.ON_CHANGE: lambda e: [e],
         })
         return _triggers
 

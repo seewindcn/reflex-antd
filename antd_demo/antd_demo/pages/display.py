@@ -1,5 +1,6 @@
 from typing import Optional, Union, Dict, Any, List
-
+import random
+import uuid
 import reflex as rx
 from reflex import State, Var
 
@@ -8,13 +9,17 @@ from reflex_antd import general, entry, display, helper
 from antd_demo.layout import page
 from ..state import GlobalState
 
-
 _data: list[dict[str, Any]] = [
     dict(key='1', name='Fike', age=32, gender='male', address='11 Downing Street', ),
     dict(key='2', name='John', age=42, gender='female', address='12 Downing Street', ),
     dict(key='3', name='Aim', age=22, gender='male', address='13 Downing Street', ),
     dict(key='4', name='Expandable', age=52, gender='female', address='14 Downing Street', ),
     dict(key='5', name='Black', age=62, gender='male', address='15 Downing Street', ),
+]
+_data = [
+    dict(key=i, name=str(uuid.uuid4().hex), age=random.randint(1, 100),
+         gender=random.choice(['male', 'female']), address=str(random.randbytes(n=20)))
+    for i in range(100)
 ]
 
 _gender_filter = [
@@ -59,7 +64,7 @@ class TableState(State):
                 title='Id',
                 dataIndex='key',
                 key='key',
-                sorter='true',
+                sorter=True,
                 defaultSortOrder='descend',
                 # render=lambda text=None: '<a>{text}</a>',
             ),
@@ -67,7 +72,7 @@ class TableState(State):
                 title='Name',
                 dataIndex='name',
                 key='name',
-                sorter='true',
+                sorter=True,
                 # render=lambda text=None: rx.code(Var.create_safe('{text}')),
             ),
             dict(
@@ -79,8 +84,8 @@ class TableState(State):
                 title='Gender',
                 dataIndex='gender',
                 key='gender',
-                # filters=cls.table_gender_filter,
-                filters=_gender_filter,
+                filters=cls.table_gender_filter,
+                # filters=_gender_filter,
             ),
             dict(
                 title='Address',

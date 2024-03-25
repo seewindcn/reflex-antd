@@ -41,7 +41,7 @@ class Menu(AntdComponent):
             return [ev.selectedKeys]
 
         _triggers.update({
-            'onOpenChange': lambda open_keys: [open_keys],
+            EventTriggers.ON_OPEN_CHANGE: lambda open_keys: [open_keys],
             EventTriggers.ON_SELECT: _on_select,
             # EventTriggers.ON_CHANGE: lambda e0: [e0.target.checked],
         })

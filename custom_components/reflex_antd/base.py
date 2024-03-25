@@ -1,11 +1,12 @@
+from typing import Type, Any, Tuple, Dict, List, Iterable, Callable
 from os import path
+from abc import ABC, abstractmethod
 from functools import lru_cache
-from typing import Any, Tuple, Dict, List, Iterable, Callable
 import uuid
 import dataclasses
 
 import reflex as rx
-from reflex import Component, Var
+from reflex import Component, Var, State
 from reflex.utils import imports, format
 from reflex.vars import BaseVar, VarData
 
@@ -17,6 +18,115 @@ APP_ROUTER = False
 
 def pretty_dumps(value: Any, indent=2) -> str:
     return format.json.dumps(value, ensure_ascii=False, default=format.serialize, indent=indent)
+
+
+class ExItem(ABC):
+    @classmethod
+    def isinstance(cls, item: Any) -> bool:
+        pass
+
+    def __init__(self, item: Any):
+        self.item = item
+
+    @abstractmethod
+    def serialize(self) -> str:
+        ...
+
+    def get_imports(self) -> imports.ImportDict:
+        return {}
+
+
+class ExComponentItem(ExItem):
+    item: Component
+
+    @classmethod
+    def isinstance(cls, item: Any) -> bool:
+        return isinstance(item, Component)
+
+    def serialize(self) -> str:
+        return str(self.item)
+
+    def get_imports(self) -> imports.ImportDict:
+        return self.item.get_imports()
+
+
+class ExCallableItem(ExItem):
+    item: Callable
+
+    @classmethod
+    def isinstance(cls, item: Any) -> bool:
+        return isinstance(item, Callable)
+
+    def serialize(self) -> str:
+        return str(self.item())
+
+    def get_imports(self) -> imports.ImportDict:
+        c = self.item()
+        return c.get_imports()
+
+
+class ExStateItem(ExItem):
+    item: State
+
+    @classmethod
+    def isinstance(cls, item: Any) -> bool:
+        return isinstance(item, BaseVar) and item._var_full_name.startswith("state__")
+
+    def serialize(self) -> str:
+        return self.item._var_full_name
+
+
+class ExFormatter:
+    items: List[Type[ExItem]] = [
+        ExComponentItem, ExCallableItem, ExStateItem,
+    ]
+
+    def __init__(self, value: Any):
+        self.value = value
+        self._coms: Dict[str, ExItem] = {}
+        self._value: Any = None
+        self._extract()
+
+    def _extract(self):
+        value = self.value
+        self._coms.clear()
+
+        def _op(_v: Any):
+            if isinstance(_v, (list, tuple)):
+                return _list(_v)
+            elif isinstance(_v, dict):
+                return _dict(_v)
+            elif isinstance(_v, (int, float, str, bool)):
+                return _v
+
+            _id = _v
+            for ex in self.items:
+                if ex.isinstance(_v):
+                    _id = uuid.uuid4().hex
+                    self._coms[_id] = ex(_v)
+                    return _id
+            return _v
+
+        def _list(_v: List):
+            return [_op(i) for i in _v]
+
+        def _dict(_v: Dict):
+            return dict((k, _op(v)) for k, v in _v.items())
+
+        rs = _op(value)
+        self._value = rs
+
+    def get_value(self) -> str:
+        v = pretty_dumps(self._value)
+        for k, ex in self._coms.items():
+            v = v.replace(f'"{k}"', ex.serialize())
+        return v
+
+    def get_imports(self) -> imports.ImportDict:
+        _imports = imports.merge_imports(
+            *(c.get_imports() for c in self._coms.values()),
+        )
+        return _imports
 
 
 class ExVar(BaseVar):
@@ -38,43 +148,12 @@ class ContainVar(ExVar):
     def _var_full_name(self) -> str:
         return self._var_name
 
-    @staticmethod
-    def _extract(value: Any) -> Tuple[Any, Dict[str, Any]]:
-        components = {}
-
-        def _op(_v: Any):
-            if isinstance(_v, (list, tuple)):
-                return _list(_v)
-            elif isinstance(_v, dict):
-                return _dict(_v)
-
-            _id = _v
-            if isinstance(_v, Component):
-                _id = uuid.uuid4().hex
-            elif isinstance(_v, Callable):
-                _id = uuid.uuid4().hex
-                _v = _v()
-            if _id != _v:
-                components[_id] = _v
-            return _id
-
-        def _list(_v: List):
-            return [_op(i) for i in _v]
-
-        def _dict(_v: Dict):
-            return dict((k, _op(v)) for k, v in _v.items())
-
-        rs = _op(value)
-        return rs, components
-
     @classmethod
     def create(
             cls, value: Any, _var_is_local: bool = True, _var_is_string: bool = False
     ) -> Var | None:
-        new_value, components = cls._extract(value)
-        _name = pretty_dumps(new_value)
-        for k, v in components.items():
-            _name = _name.replace(f'"{k}"', str(v))
+        fmt = ExFormatter(value)
+        _name = fmt.get_value()
         # v: BaseVar = super().create(_name, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
         return cls(
             _var_name=_name,
@@ -82,9 +161,7 @@ class ContainVar(ExVar):
             _var_is_local=_var_is_local,
             _var_is_string=_var_is_string,
             _var_data=VarData(
-                imports=imports.merge_imports(
-                    *(c.get_imports() for c in components.values()),
-                ),
+                imports=fmt.get_imports(),
             ),
             _var_value=value,
         )

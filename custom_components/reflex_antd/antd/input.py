@@ -1,5 +1,6 @@
 from typing import Optional, Union, Dict, Any
 from reflex import Var
+from reflex.constants import EventTriggers
 
 from ..base import AntdComponent, ContainVar
 from ..constant import StatusType, SizeType
@@ -27,8 +28,8 @@ class Input(AntdComponent):
         _triggers = super().get_event_triggers()
 
         _triggers.update({
-            'onChange': lambda e: [e],
-            'onPressEnter': lambda e: [e],
+            EventTriggers.ON_CHANGE: lambda e: [e],
+            'on_press_enter': lambda e: [e],
         })
         return _triggers
 

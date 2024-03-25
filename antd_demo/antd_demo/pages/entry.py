@@ -41,7 +41,7 @@ def form1_page() -> rx.Component:
             wrapper_col=dict(span=16),
             max_width=600,
             auto_complete='off',
-            onFinish=GlobalState.on_event1,
+            on_finish=GlobalState.on_event1,
         ),
     )
 

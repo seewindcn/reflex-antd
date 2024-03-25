@@ -54,13 +54,14 @@ def navbar() -> rx.Component:
                 dict(key='display', label='display', icon=general.LaptopOutlined(), children=[
                     dict(key='display-table1', label=rx.link('table1', href='/display/table1')),
                     dict(key='display-table2', label=rx.link('table2', href='/display/table2')),
+                    dict(key='display-table3', label=rx.link('table3', href='/display/table3')),
                 ]),
 
             ]),
             # selected_keys=['nav1-1'],
             open_keys=GlobalState.navbar_open_keys,
             selected_keys=GlobalState.navbar_selected_keys,
-            onOpenChange=GlobalState.set_navbar_open_keys,
+            on_open_change=GlobalState.set_navbar_open_keys,
             on_select=GlobalState.set_navbar_selected_keys,
             height='100%',
             class_name="border-2 border-gray-300"
@@ -90,7 +91,7 @@ def content(*args, **kwargs) -> rx.Component:
             ),
             general.float_button(
                 icon=general.QuestionCircleOutlined.create(),
-                onClick=GlobalState.on_event0,
+                on_click=GlobalState.on_event0,
             ),
             trigger='hover',
             type='primary',

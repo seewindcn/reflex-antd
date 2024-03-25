@@ -1,5 +1,6 @@
 from typing import Optional, Union, Dict, Any
 from reflex import Var
+from reflex.constants import EventTriggers
 
 from ..base import AntdComponent, ContainVar
 from ..constant import ButtonType, FloatGroupTriggerType, FloatGroupShapeType
@@ -23,7 +24,7 @@ class FloatButton(AntdComponent):
         _triggers = super().get_event_triggers()
 
         _triggers.update({
-            'onClick': lambda: [],
+            EventTriggers.ON_CLICK: lambda: [],
         })
         return _triggers
 
