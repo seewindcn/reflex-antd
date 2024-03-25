@@ -29,6 +29,7 @@ _gender_filter = [
 
 
 class TableState(State):
+    row_select_type = 'checkbox'  # checkbox | radio
     table_gender_filter = [
         dict(text="Male", value="male"),
         dict(text="Female", value="female"),
@@ -41,21 +42,6 @@ class TableState(State):
         dict(title='Age', dataIndex='age', key='age', ),
         dict(title='Address', dataIndex='address', key='address', ),
     ]
-
-    def on_table_change(self, pagination, filters, sorter):
-        print("on_table_change:", pagination, filters, sorter)
-        self.data_source = _data
-        if 'gender' in filters and filters['gender'] is not None:
-            # test table_gender_filter
-            self.data_source = [d for d in _data if d['gender'] in filters['gender']]
-            if len(filters['gender']) >= 2 and self.table_gender_filter[-1]['text'] != 'Test':
-                self.table_gender_filter.append(dict(text="Test", value="test"))
-            elif self.table_gender_filter[-1]['text'] == 'Test':
-                self.table_gender_filter.pop(-1)
-
-        if sorter and sorter['column'] is not None:
-            field, order = sorter['field'], sorter['order']
-            self.data_source = sorted(self.data_source, key=lambda d: d[field], reverse=bool(order == 'descend'))
 
     @classmethod
     def get_columns(cls):
@@ -83,6 +69,7 @@ class TableState(State):
                 title='Age',
                 dataIndex='age',
                 key='age',
+                sorter=True,
                 render=helper.js_value(
                     lambda text: rx.badge(Var.create_safe('{text}'))
                 ),
@@ -104,6 +91,24 @@ class TableState(State):
         ])
         return ex_columns
 
+    def on_table_change(self, pagination, filters, sorter):
+        print("on_table_change:", pagination, filters, sorter)
+        self.data_source = _data
+        if 'gender' in filters and filters['gender'] is not None:
+            # test table_gender_filter
+            self.data_source = [d for d in _data if d['gender'] in filters['gender']]
+            if len(filters['gender']) >= 2 and self.table_gender_filter[-1]['text'] != 'Test':
+                self.table_gender_filter.append(dict(text="Test", value="test"))
+            elif self.table_gender_filter[-1]['text'] == 'Test':
+                self.table_gender_filter.pop(-1)
+
+        if sorter and sorter['column'] is not None:
+            field, order = sorter['field'], sorter['order']
+            self.data_source = sorted(self.data_source, key=lambda d: d[field], reverse=bool(order == 'descend'))
+
+    def on_row_select_change(self, selected_row_keys):
+        print("on_row_select_change:", selected_row_keys)
+
 
 @page('/display/table1')
 def table1_page() -> rx.Component:
@@ -121,6 +126,20 @@ def table2_page() -> rx.Component:
         display.table(
             data_source=TableState.data_source,
             columns=TableState.get_columns(),
+            row_selection=helper.contains(
+                _name_='row_selection',
+                type=TableState.row_select_type,
+                onChange=helper.js_event(TableState.on_row_select_change, 'keys', 'rows'),
+            ),
+            expandable=helper.contains(
+                expandedRowRender=helper.js_value(
+                    lambda record: '<p style={{ margin: 0 }}>{record.address}</p>'
+                ),
+                rowExpandable=helper.js_value(
+                    lambda record: "record.age >= 50",
+                ),
+            ),
             on_change=TableState.on_table_change,
+            # **{'row_selection.onChange': TableState.on_row_select_change},
         ),
     )

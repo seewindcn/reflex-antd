@@ -2,6 +2,7 @@ from typing import Type, Any, Tuple, Dict, List, Iterable, Callable, Set, Union
 from os import path
 from abc import ABC, abstractmethod
 from functools import lru_cache
+from hashlib import md5
 import uuid
 import dataclasses
 import inspect
@@ -10,6 +11,9 @@ import reflex as rx
 from reflex import Component, Var, State
 from reflex.utils import imports, format
 from reflex.vars import BaseVar, VarData
+from reflex.event import EventHandler
+
+from .util import OrderedSet
 
 my_path = path.abspath(path.dirname(__file__))
 template_path = path.join(my_path, '.templates')
@@ -26,8 +30,9 @@ class ExItem(ABC):
     def isinstance(cls, item: Any) -> bool:
         pass
 
-    def __init__(self, item: Any):
+    def __init__(self, item: Any, key: str = ''):
         self.item = item
+        self.key = key
 
     @abstractmethod
     def serialize(self) -> str:
@@ -61,6 +66,52 @@ class ExComponentItem(ExItem):
 
     def get_hooks(self) -> Set[str]:
         return self.item.get_hooks()
+
+
+class JsEvent:
+    hd: EventHandler
+
+    def __init__(self, hd: EventHandler, *args):
+        self.hd = hd
+        self.args = args
+
+    def get_state_full_name(self) -> str:
+        name = str(self.hd.fn).split(' ')[1]
+        _base = format.to_snake_case(name)
+        return f'state.{_base}'
+
+    def get_event_args(self) -> str:
+        _args = inspect.getfullargspec(self.hd.fn)
+        rs = []
+        for idx, _arg in enumerate(_args.args):
+            if idx == 0:  # ignore self
+                continue
+            rs.append(f'{_arg}:{self.args[idx-1]}')
+        return ','.join(rs)
+
+
+js_event = JsEvent
+
+
+class ExEventHandlerItem(ExItem):
+    item: JsEvent
+
+    @classmethod
+    def isinstance(cls, item: Any) -> bool:
+        return isinstance(item, JsEvent)
+
+    def _get_fn_name(self) -> str:
+        return f"{self.key.replace('.', '_')}_{md5(self.key.encode('utf-8')).hexdigest()}"
+
+    def serialize(self) -> str:
+        return self._get_fn_name()
+
+    def get_hooks(self) -> Set[str]:
+        _hook = f"""const {self._get_fn_name()} = useCallback(({','.join(self.item.args)}) => addEvents(
+        [Event("{self.item.get_state_full_name()}", {{ {self.item.get_event_args()} }})], 
+        ({','.join(self.item.args)}), {{}}), [addEvents, Event]);
+        """
+        return {_hook}
 
 
 class ExCallableItem(ExItem):
@@ -103,7 +154,7 @@ class ExStateItem(ExItem):
 class JsValue:
     def __init__(self, value: Union[str, Callable]):
         self.value = value
-        self. _init()
+        self._init()
 
     def _init(self) -> None:
         pass
@@ -145,6 +196,7 @@ class JsFunctionValue(JsValue):
 
     def get_hooks(self) -> Set[str]:
         return set() if isinstance(self._value, str) else self._value.get_hooks()
+        # return set(['const abc = 1;'])
 
 
 def js_value(value: Union[str, Callable]) -> JsValue:
@@ -174,11 +226,15 @@ class ExJsItem(ExItem):
 
 class ExFormatter:
     items: List[Type[ExItem]] = [
-        ExComponentItem, ExCallableItem, ExStateItem,
+        ExComponentItem,
+        ExStateItem,
         ExJsItem,
+        ExEventHandlerItem,
+        ExCallableItem,
     ]
 
-    def __init__(self, value: Any):
+    def __init__(self, value: Any, name: str = ''):
+        self.name = name
         self.value = value
         self._coms: Dict[str, ExItem] = {}
         self._value: Any = None
@@ -188,11 +244,11 @@ class ExFormatter:
         value = self.value
         self._coms.clear()
 
-        def _op(_v: Any):
+        def _op(_v: Any, key: str):
             if isinstance(_v, (list, tuple)):
-                return _list(_v)
+                return _list(_v, pkey=key)
             elif isinstance(_v, dict):
-                return _dict(_v)
+                return _dict(_v, pkey=key)
             elif isinstance(_v, (int, float, str, bool)):
                 return _v
 
@@ -200,17 +256,17 @@ class ExFormatter:
             for ex in self.items:
                 if ex.isinstance(_v):
                     _id = uuid.uuid4().hex
-                    self._coms[_id] = ex(_v)
+                    self._coms[_id] = ex(_v, key=key)
                     return _id
             return _v
 
-        def _list(_v: List):
-            return [_op(i) for i in _v]
+        def _list(_v: List, pkey: str) -> List[Any]:
+            return [_op(i, key=f'{pkey}.{idx}') for idx, i in enumerate(_v)]
 
-        def _dict(_v: Dict):
-            return dict((k, _op(v)) for k, v in _v.items())
+        def _dict(_v: Dict, pkey: str) -> Dict[str, Any]:
+            return dict((k, _op(v, key=f'{pkey}.{k}')) for k, v in _v.items())
 
-        rs = _op(value)
+        rs = _op(value, key=self.name)
         self._value = rs
 
     def get_value(self) -> str:
@@ -274,17 +330,16 @@ class ContainVar(ExVar):
         return self._var_name
 
     @classmethod
-    def create(
-            cls, value: Any, _var_is_local: bool = True, _var_is_string: bool = False
-    ) -> Var | None:
-        fmt = ExFormatter(value)
+    def create(cls, _args_: Any = None, _name_: str = '', **kwargs) -> Var | None:
+        value = _args_ if _args_ is not None else kwargs
+        fmt = ExFormatter(value, name=_name_)
         _name = fmt.get_value()
         # v: BaseVar = super().create(_name, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
         return cls(
             _var_name=_name,
             _var_type=cls,
-            _var_is_local=_var_is_local,
-            _var_is_string=_var_is_string,
+            _var_is_local=True,
+            _var_is_string=False,
             _var_data=fmt.get_var_data(),
             _var_value=value,
         )
@@ -310,6 +365,25 @@ class AntdBaseMixin:
             The dictionary of the component style as value and the style notation as key.
         """
         return {"style": self.style}
+
+    def _get_hooks_internal(self) -> Set[str]:
+        """Get the React hooks for this component managed by the framework.
+
+        Downstream components should NOT override this method to avoid breaking
+        framework functionality.
+
+        Returns:
+            Set of internally managed hooks.
+        """
+        s = OrderedSet(
+            hook
+            for hook in [self._get_mount_lifecycle_hook(), self._get_ref_hook()]
+            if hook
+        )
+        s |= self._get_events_hooks()
+        s |= self._get_vars_hooks()
+        s |= self._get_special_hooks()
+        return s
 
 
 class AntdComponent(AntdBaseMixin, Component):
