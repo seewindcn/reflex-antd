@@ -111,14 +111,15 @@ class TableState(State):
 
         _filters = filters if filters else self.filters
         if _filters:
+            _filters = dict((k, v) for k, v in _filters.items() if v is not None)
             self.filters = _filters
-            # test table_gender_filter
-            my_data = [d for d in _data if d['gender'] in _filters['gender']]
-            # test filter items change
-            if len(_filters['gender']) >= 2 and self.table_gender_filter[-1]['text'] != 'Test':
-                self.table_gender_filter.append(dict(text="Test", value="test"))
-            elif self.table_gender_filter[-1]['text'] == 'Test':
-                self.table_gender_filter.pop(-1)
+            if 'gender' in _filters:
+                my_data = [d for d in _data if d['gender'] in _filters['gender']]
+                # test filter items change
+                # if len(_filters['gender']) >= 2 and self.table_gender_filter[-1]['text'] != 'Test':
+                #     self.table_gender_filter.append(dict(text="Test", value="test"))
+                # elif self.table_gender_filter[-1]['text'] == 'Test':
+                #     self.table_gender_filter.pop(-1)
         self.total = len(my_data)
 
         if sorter and sorter['column'] is not None:
