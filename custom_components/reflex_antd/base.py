@@ -12,7 +12,7 @@ from reflex import Component, Var, State
 from reflex.constants import Hooks
 from reflex.utils import imports, format
 from reflex.vars import BaseVar, VarData
-from reflex.event import EventHandler
+from reflex.event import EventHandler, EventSpec, EventChain
 
 from .util import OrderedSet
 
@@ -31,9 +31,10 @@ class ExItem(ABC):
     def isinstance(cls, item: Any) -> bool:
         pass
 
-    def __init__(self, item: Any, key: str = ''):
+    def __init__(self, item: Any, parent: Component, key: str = ''):
         self.item = item
         self.key = key
+        self.parent = parent
 
     @abstractmethod
     def serialize(self) -> str:
@@ -112,6 +113,29 @@ class ExEventHandlerItem(ExItem):
         [Event("{self.item.get_state_full_name()}", {{ {self.item.get_event_args()} }})], 
         ({','.join(self.item.args)}), {{}}), [addEvents, Event]);
         """
+        return {_hook}
+
+
+class ExLambdaHandlerItem(ExItem):
+    item: Callable
+
+    @classmethod
+    def isinstance(cls, item: Any) -> bool:
+        return isinstance(item, Callable)
+
+    def _get_fn_name(self) -> str:
+        return f"{self.key.replace('.', '_')}_{md5(self.key.encode('utf-8')).hexdigest()}"
+
+    def get_event_triggers(self):
+        return dict(hack=self.item)
+
+    def serialize(self) -> str:
+        return self._get_fn_name()
+
+    def get_hooks(self) -> Set[str]:
+        chain = self.parent._create_event_chain(self.key, self.item)
+        rendered_chain = format.format_prop(chain).strip("{}")
+        _hook = f"""const {self._get_fn_name()} = useCallback({rendered_chain}, [addEvents, Event]);"""
         return {_hook}
 
 
@@ -231,12 +255,14 @@ class ExFormatter:
         ExStateItem,
         ExJsItem,
         ExEventHandlerItem,
-        ExCallableItem,
+        ExLambdaHandlerItem,
+        # ExCallableItem,
     ]
 
-    def __init__(self, value: Any, name: str = ''):
+    def __init__(self, value: Any, parent: Component, name: str = ''):
         self.name = name
         self.value = value
+        self.parent = parent
         self._coms: Dict[str, ExItem] = {}
         self._value: Any = None
         self._extract()
@@ -257,7 +283,7 @@ class ExFormatter:
             for ex in self.items:
                 if ex.isinstance(_v):
                     _id = uuid.uuid4().hex
-                    self._coms[_id] = ex(_v, key=key)
+                    self._coms[_id] = ex(_v, self.parent, key=key)
                     return _id
             return _v
 
@@ -331,22 +357,25 @@ class ContainVar(ExVar):
         return self._var_name
 
     @classmethod
-    def create(cls, _args_: Any = None, _name_: str = '', **kwargs) -> Var | None:
+    def create(cls, _args_: Any = None, **kwargs) -> Var | None:
         value = _args_ if _args_ is not None else kwargs
-        fmt = ExFormatter(value, name=_name_)
-        _name = fmt.get_value()
         # v: BaseVar = super().create(_name, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
         return cls(
-            _var_name=_name,
+            _var_name='',
             _var_type=cls,
             _var_is_local=True,
             _var_is_string=False,
-            _var_data=fmt.get_var_data(),
+            _var_data=None,
             _var_value=value,
         )
 
+    def init(self, parent: Component, name: str):
+        fmt = ExFormatter(self._var_value, parent=parent, name=name)
+        self._var_name = fmt.get_value()
+        self._var_data = fmt.get_var_data()
 
-contains = ContainVar.create
+
+contain = ContainVar.create
 
 
 # no use
@@ -391,6 +420,11 @@ class AntdBaseMixin:
         s |= self._get_special_hooks()
         return s
 
+    def _init_contains(self, contains: Dict[str, ContainVar]):
+        for k, v in contains.items():
+            v.init(self, k)
+            setattr(self, k, v)
+
 
 class AntdComponent(AntdBaseMixin, Component):
     """A component that wraps a Chakra component."""
@@ -403,6 +437,17 @@ class AntdComponent(AntdBaseMixin, Component):
         return {
             (160, "AntdProvider"): antd_provider,
         }
+
+    def __init__(self, *args, **kwargs):
+        contains = {}
+        kw = {}
+        for k,v in kwargs.items():
+            if isinstance(v, ContainVar):
+                contains[k] = v
+            else:
+                kw[k] = v
+        super().__init__(*args, **kw)
+        self._init_contains(contains)
 
 
 class AntdSubComponent(AntdBaseMixin, Component):

@@ -23,7 +23,8 @@ class Table(AntdComponent):
         _triggers = super().get_event_triggers()
         _triggers.update({
             EventTriggers.ON_CHANGE: lambda pagination, filters, sorter: [pagination, filters, sorter],
-            # 'row_selection.onChange': lambda keys, rows: [keys]
+            'row_selection.on_change': lambda keys, rows: [keys],
+            'pagination.on_change': lambda page, size: [page, size],
         })
         return _triggers
 

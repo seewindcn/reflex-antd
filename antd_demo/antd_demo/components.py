@@ -39,7 +39,7 @@ def navbar() -> rx.Component:
     return layout.sider(
         navigation.menu(
             mode='inline',
-            items=helper.contains([
+            items=helper.contain([
                 dict(key='general', label='general', icon=general.UserOutlined(), children=[
                     dict(key='nav1-1', label=rx.link('页面1', href='/')),
                     dict(key='nav1-general', label=rx.link('general', href='/general'), icon=general.CustomerServiceOutlined()),
@@ -73,7 +73,7 @@ def navbar() -> rx.Component:
 
 def subnav() -> rx.Component:
     return navigation.breadcrumb(
-        items=helper.contains([
+        items=helper.contain([
             dict(title=rx.link('Home', href='/')),
             dict(title=rx.link('Level1', href='/general')),
             dict(title=rx.link('Level2')),

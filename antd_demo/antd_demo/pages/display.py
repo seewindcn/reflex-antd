@@ -55,7 +55,7 @@ class TableState(State):
 
     @classmethod
     def get_columns(cls):
-        ex_columns = helper.contains([
+        ex_columns = helper.contain([
             dict(
                 title='Id',
                 dataIndex='key',
@@ -205,13 +205,12 @@ def table2_page() -> rx.Component:
             display.table(
                 data_source=TableState.data_source,
                 columns=TableState.get_columns(),
-                row_selection=helper.contains(
-                    _name_='row_selection',
+                row_selection=helper.contain(
                     type=TableState.row_select_type,
                     selected_row_keys=TableState.selected_row_keys,
-                    onChange=helper.js_event(TableState.on_row_select_change, 'keys', 'rows'),
+                    on_change=lambda keys: TableState.on_row_select_change(keys),
                 ),
-                expandable=helper.contains(
+                expandable=helper.contain(
                     expandedRowRender=helper.js_value(
                         lambda record: '<p style={{ margin: 0 }}>{record.address}</p>'
                     ),
@@ -219,12 +218,12 @@ def table2_page() -> rx.Component:
                         lambda record: "record.age >= 50",
                     ),
                 ),
-                pagination=helper.contains(
+                pagination=helper.contain(
                     current=TableState.page_current,
                     total=TableState.total,
                     page_size=TableState.page_size,
                     page_size_options=[5, 10, 20, 50, 100, 150, 200],
-                    on_change=helper.js_event(TableState.on_page_change, 'page', 'size'),
+                    on_change=TableState.on_page_change,
                     showTotal=helper.js_value('((total, range) => `${range[0]}-${range[1]} of ${total} items`)'),
                     showSizeChanger=True,
                     showQuickJumper=True,

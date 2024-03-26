@@ -1,1 +1,1 @@
-from .base import contains, js_value, js_event  # noqa
+from .base import contain, js_value, js_event  # noqa
