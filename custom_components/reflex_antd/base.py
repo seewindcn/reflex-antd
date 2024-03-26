@@ -9,6 +9,7 @@ import inspect
 
 import reflex as rx
 from reflex import Component, Var, State
+from reflex.constants import Hooks
 from reflex.utils import imports, format
 from reflex.vars import BaseVar, VarData
 from reflex.event import EventHandler
@@ -383,7 +384,10 @@ class AntdBaseMixin:
             if hook
         )
         s |= self._get_events_hooks()
-        s |= self._get_vars_hooks()
+        var_hooks = self._get_vars_hooks()
+        if [h for h in var_hooks if 'addEvents' in h]:
+            s.add(Hooks.EVENTS)
+        s |= var_hooks
         s |= self._get_special_hooks()
         return s
 

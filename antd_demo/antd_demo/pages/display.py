@@ -112,7 +112,9 @@ class TableState(State):
                         ),
                         rx.menu.content(
                             rx.menu.item("Edit", shortcut="⌘ E"),
-                            rx.menu.item("Duplicate", shortcut="⌘ D", on_select=GlobalState.on_event1),
+                            rx.menu.item("Duplicate", shortcut="⌘ D",
+                                         on_select=lambda _: GlobalState.on_event1(Var.create_safe('("Duplicate:" + record.key)'))
+                                         ),
                             rx.menu.separator(),
                             rx.menu.item("Archive", shortcut="⌘ N"),
                             rx.menu.sub(
