@@ -21,7 +21,7 @@ class Checkbox(AntdComponent):
         _triggers = super().get_event_triggers()
 
         _triggers.update({
-            'onChange': lambda e: [e],
+            'on_change': lambda e: [e],
         })
         return _triggers
 

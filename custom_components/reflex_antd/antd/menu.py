@@ -5,7 +5,7 @@ from reflex.utils import imports
 from reflex.constants import EventTriggers
 
 from ..base import AntdComponent, AntdSubComponent, ContainVar
-from ..constant import ThemeType, MenuModeType
+from ..constant import ThemeType, MenuModeType, TriggerType
 
 
 class MenuItem(BaseModel):
@@ -19,20 +19,34 @@ class MenuItem(BaseModel):
 #     pass
 
 class OnSelectEvent(Base):
+    item: Any
+    key: Any
+    keyPath: Any
     selectedKeys: List[str]
 
 
 class Menu(AntdComponent):
     tag = 'Menu'
 
-    theme: Optional[Var[ThemeType]]
-    mode: Optional[Var[MenuModeType]]
-    selected_keys: Optional[Var[List[str]]]
+    default_open_keys: Optional[Var[List[str]]]
+    default_selected_keys: Optional[Var[List[str]]]
+    expand_icon: Optional[Var[Component]]
+    force_sub_menu_render: Optional[Var[bool]]
+    inline_collapsed: Optional[Var[bool]]
+    inline_indent: Optional[Var[bool]]
 
     items: Var[Union[ContainVar, list]]
-
+    mode: Optional[Var[MenuModeType]]
+    multiple: Optional[Var[bool]]
     open_keys: Optional[Var[List[str]]]
+    overflowed_indicator: Optional[Var[Component]]
+    selectable: Optional[Var[bool]]
     selected_keys: Optional[Var[List[str]]]
+    sub_menu_close_delay: Optional[Var[float]]
+    sub_menu_open_delay: Optional[Var[float]]
+
+    theme: Optional[Var[ThemeType]]
+    trigger_sub_menu_action: Optional[Var[TriggerType]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
@@ -40,10 +54,14 @@ class Menu(AntdComponent):
         def _on_select(ev: OnSelectEvent):
             return [ev.selectedKeys]
 
+        def _on_click(ev: OnSelectEvent):
+            return [ev.key, ev.keyPath]
+
         _triggers.update({
             EventTriggers.ON_OPEN_CHANGE: lambda open_keys: [open_keys],
             EventTriggers.ON_SELECT: _on_select,
-            # EventTriggers.ON_CHANGE: lambda e0: [e0.target.checked],
+            EventTriggers.ON_CLICK: _on_click,
+            'on_deselect': _on_click,
         })
         return _triggers
 

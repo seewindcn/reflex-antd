@@ -31,7 +31,6 @@ class Pagination(AntdComponent):
         _triggers = super().get_event_triggers()
         _triggers.update({
             EventTriggers.ON_CHANGE: lambda page, page_size: [page, page_size],
-            # 'row_selection.onChange': lambda keys, rows: [keys]
         })
         return _triggers
 

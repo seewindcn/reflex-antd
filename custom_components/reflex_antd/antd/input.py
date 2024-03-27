@@ -50,7 +50,7 @@ class Search(Input):
         _triggers = super().get_event_triggers()
 
         _triggers.update({
-            'onSearch': lambda value, event: [value, event],
+            'on_search': lambda value, event: [value, event],
         })
         return _triggers
 

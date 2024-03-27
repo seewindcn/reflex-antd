@@ -3,7 +3,7 @@ from reflex import Var
 from reflex.constants import EventTriggers
 
 from ..base import AntdComponent, ContainVar
-from ..constant import ButtonType, FloatGroupTriggerType, FloatGroupShapeType
+from ..constant import ButtonType, TriggerType, FloatGroupShapeType
 
 from .icon import IconComponent
 from .badge import Badge
@@ -33,7 +33,7 @@ class FloatGroup(FloatButton):
     tag = "FloatButton.Group"
 
     open: Optional[Var[bool]]
-    trigger: Optional[Var[FloatGroupTriggerType]]
+    trigger: Optional[Var[TriggerType]]
 
     close_icon: Optional[Var[IconComponent]]
 
