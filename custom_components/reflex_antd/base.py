@@ -52,6 +52,14 @@ class ExItem(ABC):
     def get_interpolations(self) -> List[Tuple[int, int]]:
         return []
 
+    def get_var_data(self) -> VarData:
+        return VarData(
+            state=self.get_state(),
+            imports=self.get_imports(),
+            hooks=self.get_hooks(),
+            interpolations=self.get_interpolations(),
+        )
+
 
 class ExComponentItem(ExItem):
     item: Component
@@ -73,9 +81,11 @@ class ExComponentItem(ExItem):
 class JsEvent:
     hd: EventHandler
 
-    def __init__(self, hd: EventHandler, *args):
+    def __init__(self, hd: Any, js: str, fmt: bool = False):
+        assert isinstance(hd, EventHandler)
         self.hd = hd
-        self.args = args
+        self.js = js
+        self.fmt = fmt
 
     def get_state_full_name(self) -> str:
         name = str(self.hd.fn).split(' ')[1]
@@ -102,18 +112,35 @@ class ExEventHandlerItem(ExItem):
     def isinstance(cls, item: Any) -> bool:
         return isinstance(item, JsEvent)
 
+    @property
+    def hd_item(self) -> 'ExLambdaHandlerItem':
+        try:
+            return self._hd_item
+        except AttributeError:
+            self._hd_item = ExLambdaHandlerItem(self.item.hd, self.parent, key=self.key)
+            return self._hd_item
+
     def _get_fn_name(self) -> str:
         return f"{self.key.replace('.', '_')}_{md5(self.key.encode('utf-8')).hexdigest()}"
 
     def serialize(self) -> str:
-        return self._get_fn_name()
+        hd_name = self.hd_item.serialize()
+        if not self.item.fmt:
+            return f"""(selected, selected_rows, change_rows) => {{
+                {self.item.js}
+                {hd_name}(selected, selected_rows, change_rows)
+            }}
+            """
+        else:
+            return self.item.js % dict(name=hd_name)
 
     def get_hooks(self) -> Set[str]:
-        _hook = f"""const {self._get_fn_name()} = useCallback(({','.join(self.item.args)}) => addEvents(
-        [Event("{self.item.get_state_full_name()}", {{ {self.item.get_event_args()} }})], 
-        ({','.join(self.item.args)}), {{}}), [addEvents, Event]);
-        """
-        return {_hook}
+        return self.hd_item.get_hooks()
+        # _hook = f"""const {self._get_fn_name()} = useCallback(({','.join(self.item.args)}) => addEvents(
+        # [Event("{self.item.get_state_full_name()}", {{ {self.item.get_event_args()} }})],
+        # ({','.join(self.item.args)}), {{}}), [addEvents, Event]);
+        # """
+        # return {_hook}
 
 
 class ExLambdaHandlerItem(ExItem):
@@ -420,10 +447,23 @@ class AntdBaseMixin:
         s |= self._get_special_hooks()
         return s
 
-    def _init_contains(self, contains: Dict[str, ContainVar]):
+    def _init_contains(self, contains: Dict[str, ContainVar], exs: Dict[str, Any]):
         for k, v in contains.items():
             v.init(self, k)
             setattr(self, k, v)
+        for k, v in exs.items():
+            if isinstance(v, JsValue):
+                item = ExJsItem(v, self, key=k)
+            elif isinstance(v, JsEvent):
+                item = ExEventHandlerItem(v, self, key=k)
+            else:
+                raise NotImplementedError(f"Unsupported type: {type(v)}")
+
+            setattr(self, k, BaseVar(
+                _var_name=item.serialize(),
+                _var_is_local=True,
+                _var_data=item.get_var_data(),
+            ))
 
 
 class AntdComponent(AntdBaseMixin, Component):
@@ -440,14 +480,17 @@ class AntdComponent(AntdBaseMixin, Component):
 
     def __init__(self, *args, **kwargs):
         contains = {}
+        exs = {}
         kw = {}
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             if isinstance(v, ContainVar):
                 contains[k] = v
+            elif isinstance(v, (JsValue, JsEvent)):
+                exs[k] = v
             else:
                 kw[k] = v
         super().__init__(*args, **kw)
-        self._init_contains(contains)
+        self._init_contains(contains, exs)
 
 
 class AntdSubComponent(AntdBaseMixin, Component):

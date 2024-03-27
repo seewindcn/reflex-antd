@@ -9,16 +9,20 @@ from reflex_antd import general, entry, display, helper, navigation
 from antd_demo.layout import page
 from ..state import GlobalState
 
-_data: list[dict[str, Any]] = [
-    dict(key='1', name='Fike', age=32, gender='male', address='11 Downing Street', ),
-    dict(key='2', name='John', age=42, gender='female', address='12 Downing Street', ),
-    dict(key='3', name='Aim', age=22, gender='male', address='13 Downing Street', ),
-    dict(key='4', name='Expandable', age=52, gender='female', address='14 Downing Street', ),
-    dict(key='5', name='Black', age=62, gender='male', address='15 Downing Street', ),
-]
+
+def random_data(i) -> Dict[str, Any]:
+    return dict(key=i, name=str(uuid.uuid4().hex), age=random.randint(1, 100),
+                gender=random.choice(['male', 'female']), address=str(random.randbytes(n=20)),
+                )
+
+
+def render_children(pi: int) -> List[Dict[str, Any]]:
+    return [random_data(pi * 100 + i) for i in range(random.randint(1, 10))]
+
+
 _data = [
-    dict(key=i, name=str(uuid.uuid4().hex), age=random.randint(1, 100),
-         gender=random.choice(['male', 'female']), address=str(random.randbytes(n=20)))
+    dict(children=render_children(i) if int(i / 10) % 2 == 0 and i % 2 == 0 else None,
+         **random_data(i))
     for i in range(100)
 ]
 
@@ -60,12 +64,12 @@ class TableState(State):
                 title='Id',
                 dataIndex='key',
                 key='key',
-                width=50,
+                width=100,
                 sorter=True,
                 defaultSortOrder='descend',
-                render=helper.js_value(
-                    '(text) => <a>{text}</a>',
-                ),
+                # render=helper.js_value(
+                #     '(text) => <a>{text}</a>',
+                # ),
             ),
             dict(
                 title='Name',
@@ -113,7 +117,8 @@ class TableState(State):
                         rx.menu.content(
                             rx.menu.item("Edit", shortcut="⌘ E"),
                             rx.menu.item("Duplicate", shortcut="⌘ D",
-                                         on_select=lambda _: GlobalState.on_event1(Var.create_safe('("Duplicate:" + record.key)'))
+                                         on_select=lambda _: GlobalState.on_event1(
+                                             Var.create_safe('("Duplicate:" + record.key)'))
                                          ),
                             rx.menu.separator(),
                             rx.menu.item("Archive", shortcut="⌘ N"),
@@ -171,9 +176,19 @@ class TableState(State):
         idx = (self.page_current - 1) * self.page_size
         self.data_source = my_data[idx: idx + self.page_size]
 
-    def on_row_select_change(self, selected_row_keys):
-        print("on_row_select_change:", selected_row_keys)
-        self.selected_row_keys = list(set(self.selected_row_keys + selected_row_keys))
+    def on_row_select_change(self, keys):
+        print("on_row_select_change:", keys)
+        self.selected_row_keys = list(set(self.selected_row_keys + keys))
+
+    def on_row_select(self,  record, selected, selected_rows):
+        print("on_row_select:",  record, selected, selected_rows)
+        if not selected:
+            self.selected_row_keys = [i for i in self.selected_row_keys if i not in [record, *selected_rows]]
+
+    def on_row_select_all(self, selected, selected_rows, change_rows):
+        print("on_row_select_all:",  selected, selected_rows, change_rows)
+        if not selected:
+            self.selected_row_keys = [i for i in self.selected_row_keys if i not in change_rows]
 
     def on_clean_selected(self):
         self.selected_row_keys = []
@@ -192,9 +207,7 @@ def table1_page() -> rx.Component:
     )
 
 
-@page('/display/table2',
-      on_load=TableState.on_load,
-      )
+@page('/display/table2', on_load=TableState.on_load)
 def table2_page() -> rx.Component:
     return rx.center(
         rx.vstack(
@@ -207,16 +220,31 @@ def table2_page() -> rx.Component:
                 columns=TableState.get_columns(),
                 row_selection=helper.contain(
                     type=TableState.row_select_type,
+                    check_strictly=False,
                     selected_row_keys=TableState.selected_row_keys,
-                    on_change=lambda keys: TableState.on_row_select_change(keys),
+                    on_change=TableState.on_row_select_change,
+                    on_select=helper.js_event(TableState.on_row_select, js="""(record, selected, selected_rows) => {
+                        if (selected_rows.length > 0) {
+                            var selected_rows = selected_rows.map(item => { return item.key });
+                        } else if (record.children) {
+                            var selected_rows = record.children.map(item => { return item.key });
+                        }
+                        %(name)s(record.key, selected, selected_rows);
+                    }
+                    """, fmt=True),
+                    on_select_all=helper.js_event(TableState.on_row_select_all, js="""
+                    var selected_rows = selected_rows.map(item => { return item.key });
+                    var change_rows = change_rows.map(item => { return item.key });
+                    """),
                 ),
                 expandable=helper.contain(
-                    expandedRowRender=helper.js_value(
-                        lambda record: '<p style={{ margin: 0 }}>{record.address}</p>'
-                    ),
-                    rowExpandable=helper.js_value(
-                        lambda record: "record.age >= 50",
-                    ),
+                    children_column_name='children',
+                    #    expandedRowRender=helper.js_value(
+                    #        lambda record: '<p style={{ margin: 0 }}>{record.address}</p>'
+                    #    ),
+                    #    rowExpandable=helper.js_value(
+                    #        lambda record: "record.age >= 50",
+                    #    ),
                 ),
                 pagination=helper.contain(
                     current=TableState.page_current,
@@ -229,7 +257,9 @@ def table2_page() -> rx.Component:
                     showQuickJumper=True,
                 ),
                 scroll=dict(y=500),
+                footer=helper.js_value(lambda: rx.badge('footer-test')),
                 on_change=TableState.on_table_change,
             ),
         ),
     )
+

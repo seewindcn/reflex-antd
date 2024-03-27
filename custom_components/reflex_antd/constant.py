@@ -3,6 +3,9 @@ from typing import Literal
 
 ThemeType = Literal["light", "dark"]
 PlacementType = Literal["start", "end"]
+AlignType = Literal["start", "end", "center", "baseline"]
+OrientationType = Literal["left", "right", "top", "bottom", "center"]
+DirectionType = Literal["vertical", "horizontal"]
 SizeType = Literal["default", "small", "medium", "middle", "large"]
 StatusType = Literal['default', 'error', 'warning']
 
