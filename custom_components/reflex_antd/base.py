@@ -489,9 +489,9 @@ class AntdComponent(AntdBaseMixin, Component):
     @staticmethod
     @lru_cache(maxsize=None)
     def _get_app_wrap_components() -> dict[tuple[int, str], Component]:
-        from .antd.base import antd_provider
+        from .antd.base import config_provider
         return {
-            (160, "AntdProvider"): antd_provider,
+            (160, "AntdProvider"): _config_provider if _config_provider is not None else config_provider(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -512,6 +512,16 @@ class AntdComponent(AntdBaseMixin, Component):
 class AntdSubComponent(AntdBaseMixin, Component):
     def _get_imports(self) -> imports.ImportDict:
         return {}
+
+
+_config_provider: Optional[Component] = None
+
+
+def default_config(provider: Component):
+    global _config_provider
+    from .antd.base import ConfigProvider
+    assert isinstance(provider, ConfigProvider)
+    _config_provider = provider
 
 
 def patch_all():

@@ -7,10 +7,12 @@ custom_components_path = path.join(path.dirname(my_path), '..', 'custom_componen
 if path.exists(custom_components_path):
     sys.path.insert(0, custom_components_path)
 
-from reflex_antd.base import patch_all
-
-
+from reflex_antd.helper import patch_all, default_config, config_provider, Locale
 patch_all()
+default_config(config_provider(
+    # locale=Locale('en_US'),
+    locale=Locale('zh_CN'),
+))
 app = rx.App()
 
 

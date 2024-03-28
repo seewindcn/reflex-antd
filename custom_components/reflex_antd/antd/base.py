@@ -26,7 +26,7 @@ class Locale(JsValue):
         }
 
 
-class AntdProvider(AntdComponent):
+class ConfigProvider(AntdComponent):
     """Top level antd provider must be included in any app using antd components."""
 
     tag = "ConfigProvider"
@@ -45,15 +45,16 @@ class AntdProvider(AntdComponent):
     theme: Optional[Var[str]]
 
     @classmethod
-    def create(cls) -> Component:
-        """Create a new AntdProvider component.
+    def create(cls, *children, **props) -> Component:
+        """Create a new ConfigProvider component.
 
         Returns:
-            A new AntdProvider component.
+            A new ConfigProvider component.
         """
         return super().create(
+            *children,
             theme=Var.create("theme", _var_is_local=False),
-            locale=Locale("zh_CN"),
+            **props
         )
 
     def _get_imports(self) -> imports.ImportDict:
@@ -69,7 +70,7 @@ class AntdProvider(AntdComponent):
         """ support app router """
         if base.APP_ROUTER:
             return {
-                (170, "AntdRegistryProvider"): antd_registry_provider,
+                (170, "AntdRegistryProvider"): antd_registry_provider(),
             }
         else:
             return {}
@@ -80,6 +81,6 @@ class AntdRegistryProvider(Component):
     tag = "AntdRegistry"
 
 
-antd_provider = AntdProvider.create()
-antd_registry_provider = AntdRegistryProvider.create()
+config_provider = ConfigProvider.create
+antd_registry_provider = AntdRegistryProvider.create
 
