@@ -5,8 +5,6 @@ from reflex.constants import EventTriggers
 from ..base import AntdComponent, ContainVar, JsValue
 from ..constant import ColorFormatType, SizeType, PlacementType, TriggerType
 
-from .icon import IconComponent
-
 
 class ColorPicker(AntdComponent):
     tag = 'ColorPicker'
@@ -40,6 +38,8 @@ class ColorPicker(AntdComponent):
         })
         return _triggers
 
+
+color_picker = ColorPicker.create
 
 
 

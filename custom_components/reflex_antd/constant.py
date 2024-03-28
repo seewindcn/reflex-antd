@@ -26,4 +26,8 @@ BadgeStatusType = Literal["success", 'processing', 'default', 'error', 'warning'
 StepsStatusType = Literal['wait', 'process', 'finish', 'error']
 StepsType = Literal['default', 'navigation', 'inline']
 
+DatePickerModeType = Literal['time', 'date', 'month', 'year', 'decade']
+DatePickerType = Literal['date', 'week', 'month', 'quarter', 'year']
+
+
 

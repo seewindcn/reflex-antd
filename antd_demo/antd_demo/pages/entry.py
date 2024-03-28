@@ -1,6 +1,6 @@
 import reflex as rx
 
-from reflex_antd import general, entry
+from reflex_antd import general, entry, helper
 
 from antd_demo.layout import page
 from ..state import GlobalState
@@ -27,6 +27,25 @@ def form1_page() -> rx.Component:
                 name='remember',
                 value_prop_name='checked',
                 wrapper_col=dict(offset=8, span=16),
+            ),
+            entry.form_item(
+                entry.date_picker(
+                    default_value=helper.contain([
+                        entry.dayjs('2000-01-01'),
+                        entry.dayjs('2000-01-03'),
+                    ]),
+                    multiple=True,
+                ),
+                name='date_picker',
+            ),
+            entry.form_item(
+                entry.range_picker(
+                    default_value=helper.contain([
+                        entry.dayjs('2000-01-01'),
+                        entry.dayjs('2000-01-03'),
+                    ]),
+                ),
+                name='range_picker',
             ),
             entry.form_item(
                 general.button(

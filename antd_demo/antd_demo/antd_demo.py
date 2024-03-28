@@ -7,13 +7,33 @@ custom_components_path = path.join(path.dirname(my_path), '..', 'custom_componen
 if path.exists(custom_components_path):
     sys.path.insert(0, custom_components_path)
 
-from reflex_antd.helper import patch_all, default_config, config_provider, Locale
+from reflex_antd.helper import patch_all, default_config, config_provider, Locale, contain
+
 patch_all()
+app = rx.App(
+    style=dict(
+        # antd theme
+        # antd=dict(
+        #     token={
+        #         'colorPrimary': '#1890ff',
+        #         'colorPrimaryBg': '#e6f7ff',
+        #         'colorLink': '#1890ff',
+        #     },
+        #     inherit=True,
+        # )
+    ),
+)
+
+# config antd
 default_config(config_provider(
     # locale=Locale('en_US'),
     locale=Locale('zh_CN'),
+    theme=contain(
+        token={
+            'colorPrimary': '#00B96B',
+        }
+    ),
 ))
-app = rx.App()
 
 
 def load_pages():
@@ -30,4 +50,3 @@ def load_pages():
 
 
 load_pages()
-

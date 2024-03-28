@@ -1,18 +1,17 @@
 from typing import Optional, Union, Dict, Any
-from reflex import Var
+from reflex import Var, Component
 from reflex.constants import EventTriggers
 
 from ..base import AntdComponent, ContainVar
 from ..constant import ButtonType, TriggerType, FloatGroupShapeType
 
-from .icon import IconComponent
 from .badge import Badge
 
 
 class FloatButton(AntdComponent):
     tag = "FloatButton"
 
-    icon: Optional[Var[IconComponent]]
+    icon: Optional[Var[Component]]
     tooltip: Optional[Var[Union[ContainVar]]]
     type: Optional[Var[ButtonType]]
     shape: Optional[Var[FloatGroupShapeType]]
@@ -22,7 +21,6 @@ class FloatButton(AntdComponent):
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
-
         _triggers.update({
             EventTriggers.ON_CLICK: lambda: [],
         })
@@ -35,7 +33,7 @@ class FloatGroup(FloatButton):
     open: Optional[Var[bool]]
     trigger: Optional[Var[TriggerType]]
 
-    close_icon: Optional[Var[IconComponent]]
+    close_icon: Optional[Var[Component]]
 
 
 float_button = FloatButton.create

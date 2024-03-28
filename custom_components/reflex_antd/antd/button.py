@@ -1,12 +1,10 @@
 from typing import Optional, Union, Dict, Any
 
-from reflex import Var
+from reflex import Var, Component
 from reflex.constants import EventTriggers
 
 from ..base import AntdComponent, ContainVar
 from ..constant import ButtonType, ButtonShape, SizeType
-
-from .icon import IconComponent
 
 
 class Button(AntdComponent):
@@ -19,7 +17,7 @@ class Button(AntdComponent):
     href: Optional[Var[str]]
     target: Optional[Var[str]]
     html_type: Optional[Var[str]]
-    icon: Optional[Var[IconComponent]]
+    icon: Optional[Var[Component]]
     loading: Optional[Var[bool]]
     shape: Optional[Var[ButtonShape]]
     size: Optional[Var[SizeType]]

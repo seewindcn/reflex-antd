@@ -1,11 +1,9 @@
 from typing import Optional, Union, Dict, Any
-from reflex import Var
+from reflex import Var, Component
 from reflex.constants import EventTriggers
 
 from ..base import AntdComponent, ContainVar
 from ..constant import StatusType, SizeType
-
-from .icon import IconComponent
 
 
 class Input(AntdComponent):
@@ -17,11 +15,11 @@ class Input(AntdComponent):
     disabled: Optional[Var[bool]]
     max_length: Optional[Var[int]]
     placeholder: Optional[Var[str]]
-    prefix: Optional[Var[IconComponent]]
+    prefix: Optional[Var[Component]]
     show_count: Optional[Var[bool]]
     status: Optional[Var[StatusType]]
     size: Optional[Var[SizeType]]
-    suffix: Optional[Var[IconComponent]]
+    suffix: Optional[Var[Component]]
     value: Optional[Var[str]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
@@ -43,7 +41,7 @@ class TextArea(Input):
 class Search(Input):
     tag = 'Input.Search'
 
-    enter_button: Optional[Var[IconComponent]]
+    enter_button: Optional[Var[Component]]
     loading: Optional[Var[bool]]
 
     def get_event_triggers(self) -> Dict[str, Any]:

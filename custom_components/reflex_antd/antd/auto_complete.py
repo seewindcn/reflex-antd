@@ -45,3 +45,5 @@ class AutoComplete(AntdComponent):
         return _triggers
 
 
+auto_complete = AutoComplete.create
+

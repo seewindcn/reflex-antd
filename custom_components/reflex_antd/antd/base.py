@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union, Dict
 from functools import lru_cache
 
 import reflex as rx
@@ -41,8 +41,13 @@ class ConfigProvider(AntdComponent):
     get_target_container: Optional[Var[JsValue]]
     icon_prefix_cls: Optional[Var[str]]
     locale: Optional[Var[Locale]]
-
-    theme: Optional[Var[str]]
+    popup_match_select_width: Optional[Var[Union[bool, int]]]
+    popup_overflow: Optional[Var[str]]
+    prefix_cls: Optional[Var[str]]
+    render_empty: Optional[Var[JsValue]]
+    theme: Optional[Var[ContainVar]]
+    virtual: Optional[Var[bool]]
+    warning: Optional[Var[Dict]]
 
     @classmethod
     def create(cls, *children, **props) -> Component:
@@ -51,9 +56,12 @@ class ConfigProvider(AntdComponent):
         Returns:
             A new ConfigProvider component.
         """
+        if 'theme' not in props:
+            theme = Var.create('theme.styles.global.body.antd', _var_is_local=False)
+            props['theme'] = theme
+
         return super().create(
             *children,
-            theme=Var.create("theme", _var_is_local=False),
             **props
         )
 

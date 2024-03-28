@@ -57,3 +57,4 @@ class Cascader(AntdComponent):
         return _triggers
 
 
+cascader = Cascader.create

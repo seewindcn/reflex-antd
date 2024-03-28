@@ -5,8 +5,6 @@ from reflex.constants import EventTriggers
 from ..base import AntdComponent, ContainVar
 from ..constant import StatusType, SizeType
 
-from .icon import IconComponent
-
 
 class Checkbox(AntdComponent):
     tag = "Checkbox"
