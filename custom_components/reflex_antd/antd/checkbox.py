@@ -11,7 +11,7 @@ from .icon import IconComponent
 class Checkbox(AntdComponent):
     tag = "Checkbox"
 
-    autoFocus: Optional[Var[bool]]
+    auto_focus: Optional[Var[bool]]
     checked: Optional[Var[bool]]
     default_checked: Optional[Var[bool]]
     disabled: Optional[Var[bool]]
@@ -19,9 +19,8 @@ class Checkbox(AntdComponent):
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
-
         _triggers.update({
-            'on_change': lambda e: [e],
+            EventTriggers.ON_CHANGE: lambda e: [e],
         })
         return _triggers
 
@@ -32,14 +31,13 @@ class CheckboxGroup(AntdComponent):
     default_value: Optional[Var[List[Union[int, str]]]]
     disabled: Optional[Var[bool]]
     name: Optional[Var[str]]
-    options: Optional[Var[List[Dict]]]
-    value: Optional[Var[List[Union[int, str]]]]
+    options: Optional[Var[List[Union[str, int, Dict]]]]
+    value: Optional[Var[List[Union[int, str, bool]]]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
-
         _triggers.update({
-            EventTriggers.ON_CHANGE: lambda e: [e],
+            EventTriggers.ON_CHANGE: lambda checked_value: [checked_value],
         })
         return _triggers
 

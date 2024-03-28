@@ -9,6 +9,9 @@ DirectionType = Literal["vertical", "horizontal"]
 SizeType = Literal["default", "small", "medium", "middle", "large"]
 StatusType = Literal['default', 'error', 'warning']
 TriggerType = Literal["click", "hover"]
+VariantType = Literal['outlined', 'borderless', 'filled']
+
+ColorFormatType = Literal['rgb', 'hex', 'hsb']
 
 MenuModeType = Literal["vertical", "horizontal", 'inline']
 

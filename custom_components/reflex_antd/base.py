@@ -1,4 +1,4 @@
-from typing import Type, Any, Tuple, Dict, List, Iterable, Callable, Set, Union
+from typing import Type, Any, Tuple, Dict, List, Iterable, Callable, Set, Union, Optional
 from os import path
 from abc import ABC, abstractmethod
 from functools import lru_cache
@@ -6,6 +6,7 @@ from hashlib import md5
 import uuid
 import dataclasses
 import inspect
+import re
 
 import reflex as rx
 from reflex import Component, Var, State
@@ -14,12 +15,14 @@ from reflex.utils import imports, format
 from reflex.vars import BaseVar, VarData
 from reflex.event import EventHandler, EventSpec, EventChain
 
+from .constant import SizeType
 from .util import OrderedSet
 
 my_path = path.abspath(path.dirname(__file__))
 template_path = path.join(my_path, '.templates')
 
 APP_ROUTER = False
+RE_KEY_IDX = re.compile(r'\.\d+\.')
 
 
 def pretty_dumps(value: Any, indent=2) -> str:
@@ -125,10 +128,13 @@ class ExEventHandlerItem(ExItem):
 
     def serialize(self) -> str:
         hd_name = self.hd_item.serialize()
+        trigger = self.hd_item._get_event_trigger()
+        args = inspect.getfullargspec(trigger).args
+
         if not self.item.fmt:
-            return f"""(selected, selected_rows, change_rows) => {{
+            return f"""({','.join(args)}) => {{
                 {self.item.js}
-                {hd_name}(selected, selected_rows, change_rows)
+                {hd_name}({','.join(args)})
             }}
             """
         else:
@@ -153,14 +159,20 @@ class ExLambdaHandlerItem(ExItem):
     def _get_fn_name(self) -> str:
         return f"{self.key.replace('.', '_')}_{md5(self.key.encode('utf-8')).hexdigest()}"
 
-    def get_event_triggers(self):
-        return dict(hack=self.item)
+    def _get_event_trigger_key(self) -> str:
+        return RE_KEY_IDX.sub('.*.', self.key)
+
+    def _get_event_trigger(self) -> Callable:
+        triggers = self.parent.get_event_triggers()
+        rs = triggers.get(self._get_event_trigger_key(), lambda: [])
+        return rs
 
     def serialize(self) -> str:
         return self._get_fn_name()
 
     def get_hooks(self) -> Set[str]:
-        chain = self.parent._create_event_chain(self.key, self.item)
+        key = self._get_event_trigger_key()
+        chain = self.parent._create_event_chain(key, self.item)
         rendered_chain = format.format_prop(chain).strip("{}")
         _hook = f"""const {self._get_fn_name()} = useCallback({rendered_chain}, [addEvents, Event]);"""
         return {_hook}
@@ -204,12 +216,13 @@ class ExStateItem(ExItem):
 
 
 class JsValue:
-    def __init__(self, value: Union[str, Callable]):
+    def __init__(self, value: Union[str, Callable], **kwargs):
         self.value = value
-        self._init()
+        self._init(**kwargs)
 
-    def _init(self) -> None:
-        pass
+    def _init(self, **kwargs) -> None:
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     def serialize(self) -> str:
         return self.value
@@ -225,23 +238,25 @@ class JsValue:
 
 
 class JsFunctionValue(JsValue):
-    def _init(self) -> None:
+    is_component: bool = None
+
+    def _init(self, **kwargs) -> None:
+        super()._init(**kwargs)
         self._args = inspect.getfullargspec(self.value)
         args = self._args.args
         self._value = self.value(*args)
 
     def serialize(self) -> str:
         if isinstance(self._value, str):
-            return f"""({','.join(self._args.args)}) => (
-            {self._value}
-            )
-            """
+            v = self._value
         elif isinstance(self._value, Component):
-            return f"""({','.join(self._args.args)}) => (
-            {self._value}
-            )
-            """
-        raise TypeError(self._value)
+            self.is_component = True
+            v = str(self._value)
+        else:
+            raise TypeError(self._value)
+        sep_1, sep_2 = ('{{', '}}') if not self.is_component else ('(', ')')
+        return f"""({','.join(self._args.args)}) => 
+        {sep_1} {v} {sep_2} """
 
     def get_imports(self) -> imports.ImportDict:
         return {} if isinstance(self._value, str) else self._value.get_imports()
@@ -251,11 +266,11 @@ class JsFunctionValue(JsValue):
         # return set(['const abc = 1;'])
 
 
-def js_value(value: Union[str, Callable]) -> JsValue:
+def js_value(value: Union[str, Callable], **kwargs) -> JsValue:
     if isinstance(value, str):
-        return JsValue(value)
+        return JsValue(value, **kwargs)
     if isinstance(value, Callable):
-        return JsFunctionValue(value)
+        return JsFunctionValue(value, **kwargs)
     raise NotImplemented("Not implemented: %s(%s)" % (type(value), value))
 
 
@@ -474,6 +489,7 @@ class AntdComponent(AntdBaseMixin, Component):
     @staticmethod
     @lru_cache(maxsize=None)
     def _get_app_wrap_components() -> dict[tuple[int, str], Component]:
+        from .antd.base import antd_provider
         return {
             (160, "AntdProvider"): antd_provider,
         }
@@ -496,53 +512,6 @@ class AntdComponent(AntdBaseMixin, Component):
 class AntdSubComponent(AntdBaseMixin, Component):
     def _get_imports(self) -> imports.ImportDict:
         return {}
-
-
-class AntdProvider(AntdComponent):
-    """Top level antd provider must be included in any app using antd components."""
-
-    tag = "ConfigProvider"
-    alias = "AntdConfigProvider"
-
-    theme: Var[str]
-
-    @classmethod
-    def create(cls) -> Component:
-        """Create a new AntdProvider component.
-
-        Returns:
-            A new AntdProvider component.
-        """
-        return super().create(
-            theme=Var.create("theme", _var_is_local=False),
-        )
-
-    def _get_imports(self) -> imports.ImportDict:
-        _imports = super()._get_imports()
-        _imports.setdefault("/utils/theme.js", []).append(
-            imports.ImportVar(tag="theme", is_default=True),
-        )
-        return _imports
-
-    @staticmethod
-    @lru_cache(maxsize=None)
-    def _get_app_wrap_components() -> dict[tuple[int, str], Component]:
-        """ support app router """
-        if APP_ROUTER:
-            return {
-                (170, "AntdRegistryProvider"): antd_registry_provider,
-            }
-        else:
-            return {}
-
-
-class AntdRegistryProvider(Component):
-    library = "@ant-design/nextjs-registry"
-    tag = "AntdRegistry"
-
-
-antd_provider = AntdProvider.create()
-antd_registry_provider = AntdRegistryProvider.create()
 
 
 def patch_all():

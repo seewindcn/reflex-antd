@@ -78,6 +78,7 @@ class TableState(State):
                 sorter=True,
                 render=helper.js_value(
                     lambda text: ' <a>{text}</a>',
+                    is_component=True,
                 ),
             ),
             dict(
@@ -94,8 +95,13 @@ class TableState(State):
                 dataIndex='gender',
                 key='gender',
                 filters=cls.table_gender_filter,
-                defaultFilteredValue=cls.filters['gender'],
                 # filters=_gender_filter,
+                defaultFilteredValue=cls.filters['gender'],
+                on_header_cell=helper.js_event(GlobalState.on_event1, js="""
+                    console.log("on_header_cell: ", column);
+                    var column = column.key;
+                    return;
+                """)
             ),
             dict(
                 title='Address',
@@ -176,8 +182,8 @@ class TableState(State):
         idx = (self.page_current - 1) * self.page_size
         self.data_source = my_data[idx: idx + self.page_size]
 
-    def on_row_select_change(self, keys):
-        print("on_row_select_change:", keys)
+    def on_row_select_change(self, keys, info):
+        print("on_row_select_change:", keys, info)
         self.selected_row_keys = list(set(self.selected_row_keys + keys))
 
     def on_row_select(self,  record, selected, selected_rows):
@@ -218,6 +224,9 @@ def table2_page() -> rx.Component:
             display.table(
                 data_source=TableState.data_source,
                 columns=TableState.get_columns(),
+                # on_header_row=helper.js_value(
+                #     lambda columns, index: 'console.log(columns, index);'
+                # ),
                 row_selection=helper.contain(
                     type=TableState.row_select_type,
                     check_strictly=False,
@@ -252,7 +261,7 @@ def table2_page() -> rx.Component:
                     page_size=TableState.page_size,
                     page_size_options=[5, 10, 20, 50, 100, 150, 200],
                     on_change=TableState.on_page_change,
-                    showTotal=helper.js_value('((total, range) => `${range[0]}-${range[1]} of ${total} items`)'),
+                    showTotal=helper.js_value('((total, range) => `${range[0]}-${range[1]} of ${total} items`) '),
                     showSizeChanger=True,
                     showQuickJumper=True,
                 ),
