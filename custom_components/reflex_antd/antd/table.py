@@ -6,8 +6,6 @@ from reflex.utils import imports
 from ..base import AntdComponent, ContainVar, JsValue
 from ..constant import StatusType, SizeType
 
-from .pagination import Pagination
-
 
 class Table(AntdComponent):
     tag = 'Table'
@@ -58,10 +56,6 @@ class Table(AntdComponent):
                 lambda selected, selected_rows, change_rows: [selected, selected_rows, change_rows],
         })
         return _triggers
-
-    def get_imports(self) -> imports.ImportDict:
-        _imports = super().get_imports()
-        return _imports
 
 
 table = Table.create

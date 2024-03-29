@@ -6,7 +6,7 @@ from antd_demo.layout import page
 from ..state import GlobalState
 
 
-@page('/entry/form1')
+@page('/entry/form1', 'entry')
 def form1_page() -> rx.Component:
     return rx.center(
         entry.form(

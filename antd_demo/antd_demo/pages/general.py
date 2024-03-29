@@ -5,7 +5,7 @@ from reflex_antd import general as antd_g
 from antd_demo.layout import page
 
 
-@page('/general')
+@page('/general', 'general')
 def general_page() -> rx.Component:
     return rx.center(
         rx.text('general page'),

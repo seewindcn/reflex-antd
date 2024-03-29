@@ -12,6 +12,6 @@ from .antd.rate import rate  # noqa
 from .antd.select import select  # noqa
 from .antd.slider import slider  # noqa
 from .antd.switch import switch  # noqa
-
+from .antd.transfer import transfer  # noqa
 
 

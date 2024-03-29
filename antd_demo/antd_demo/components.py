@@ -18,6 +18,7 @@ def header() -> rx.Component:
             flex=1,
             min_width=0,
         ),
+
         align_items='center',
         display='flex',
     )
@@ -35,29 +36,47 @@ def footer() -> rx.Component:
 # navigation.MI(key='sub2', label='subnav2', icon=general.LaptopOutlined()),
 
 
+def nav_items() -> rx.Component:
+    from .layout import routes, route_groups
+    items = []
+    for _, g in route_groups.items():
+        group = dict(key=g.name,
+                     label=g.name if not g.path else rx.link(g.name, href=g.path),
+                     icon=g.icon, children=[])
+        for _, r in routes.items():
+            if r.group != g.name:
+                continue
+            group['children'].append(
+                dict(key=f'{g.name}-{r.path}',
+                     label=rx.link(r.path, href=r.path),
+                     icon=r.icon))
+        items.append(group)
+    # items = helper.contain([
+    #     dict(key='general', label='general', icon=general.UserOutlined(), children=[
+    #         dict(key='nav1-1', label=rx.link('页面1', href='/')),
+    #         dict(key='nav1-general', label=rx.link('general', href='/general'), icon=general.CustomerServiceOutlined()),
+    #         dict(key='nav1-3', label=general.button('按钮3')),
+    #     ]),
+    #     dict(key='layout', label='layout', icon=general.LaptopOutlined(), children=[
+    #
+    #     ]),
+    #     dict(key='entry', label='entry', icon=general.LaptopOutlined(), children=[
+    #         dict(key='entry-form1', label=rx.link('form1', href='/entry/form1')),
+    #     ]),
+    #     dict(key='display', label='display', icon=general.LaptopOutlined(), children=[
+    #         dict(key='display-table1', label=rx.link('table1', href='/display/table1')),
+    #         dict(key='display-table2', label=rx.link('table2', href='/display/table2')),
+    #         dict(key='display-table3', label=rx.link('table3', href='/display/table3')),
+    #     ]),
+    # ]),
+    return helper.contain(items)
+
+
 def navbar() -> rx.Component:
     return layout.sider(
         navigation.menu(
             mode='inline',
-            items=helper.contain([
-                dict(key='general', label='general', icon=general.UserOutlined(), children=[
-                    dict(key='nav1-1', label=rx.link('页面1', href='/')),
-                    dict(key='nav1-general', label=rx.link('general', href='/general'), icon=general.CustomerServiceOutlined()),
-                    dict(key='nav1-3', label=general.button('按钮3')),
-                ]),
-                dict(key='layout', label='layout', icon=general.LaptopOutlined(), children=[
-
-                ]),
-                dict(key='entry', label='entry', icon=general.LaptopOutlined(), children=[
-                    dict(key='entry-form1', label=rx.link('form1', href='/entry/form1')),
-                ]),
-                dict(key='display', label='display', icon=general.LaptopOutlined(), children=[
-                    dict(key='display-table1', label=rx.link('table1', href='/display/table1')),
-                    dict(key='display-table2', label=rx.link('table2', href='/display/table2')),
-                    dict(key='display-table3', label=rx.link('table3', href='/display/table3')),
-                ]),
-
-            ]),
+            items=nav_items(),
             # selected_keys=['nav1-1'],
             open_keys=GlobalState.navbar_open_keys,
             selected_keys=GlobalState.navbar_selected_keys,

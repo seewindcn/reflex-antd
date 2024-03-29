@@ -7,7 +7,7 @@ from reflex import State, Var
 from reflex_antd import general, entry, display, helper, navigation
 
 from antd_demo.layout import page
-from ..state import GlobalState
+from antd_demo.state import GlobalState
 
 
 def random_data(i) -> Dict[str, Any]:
@@ -203,7 +203,7 @@ class TableState(State):
         print("on_page_change:", page, size)
 
 
-@page('/display/table1')
+@page('/display/table1', 'display')
 def table1_page() -> rx.Component:
     return rx.center(
         display.table(
@@ -213,7 +213,8 @@ def table1_page() -> rx.Component:
     )
 
 
-@page('/display/table2', on_load=TableState.on_load)
+@page('/display/table2', 'display',
+      on_load=TableState.on_load)
 def table2_page() -> rx.Component:
     return rx.center(
         rx.vstack(

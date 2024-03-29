@@ -6,10 +6,11 @@ import pkgutil
 from collections import OrderedDict
 
 import reflex as rx
+from reflex import Component
 from reflex.base import Base
 from reflex.event import EventHandler, EventSpec
 
-from reflex_antd import layout
+from reflex_antd import layout, general
 
 
 def load_modules(parent_md, is_pkg=True) -> Iterable[ModuleType]:
@@ -28,9 +29,11 @@ def load_modules(parent_md, is_pkg=True) -> Iterable[ModuleType]:
 class Route(Base):
     """A page route."""
 
+    group: str = 'other'
     # The path of the route.
     path: str
 
+    icon: Component = None
     # The page title.
     title: str | None = None
 
@@ -47,10 +50,26 @@ class Route(Base):
         app.add_page(self.component, self.path, self.title, on_load=self.on_load)
 
 
+class RouteGroup(Base):
+    icon: Component
+    name: str
+    path: str = ''
+
+
 routes: Dict[str, Route] = OrderedDict()
+route_groups: Dict[str, RouteGroup] = dict(
+    general=RouteGroup(name='general', icon=general.icon('UserOutlined'), path='/'),
+    layout=RouteGroup(name='layout', icon=general.icon('LaptopOutlined')),
+    display=RouteGroup(name='display', icon=general.icon('PicLeftOutlined')),
+    entry=RouteGroup(name='entry', icon=general.icon('LaptopOutlined')),
+    other=RouteGroup(name='other', icon=general.icon('QuestionOutlined')),
+)
 
 
-def page(path: str, title: str = "antd demo", props=None,
+def page(path: str, group: str = 'other',
+         icon: Component = None,
+         title: str = "antd demo",
+         props=None,
          on_load: (
                  EventHandler | EventSpec | list[EventHandler | EventSpec] | None
          ) = None,
@@ -84,7 +103,9 @@ def page(path: str, title: str = "antd demo", props=None,
                 **props,
             )
 
-        r = Route(path=path, title=title, component=wrapper, on_load=on_load).register()
+        r = Route(group=group, path=path,
+                  icon=icon, title=title,
+                  component=wrapper, on_load=on_load).register()
         return r
 
     return _webpage

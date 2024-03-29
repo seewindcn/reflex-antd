@@ -7,7 +7,7 @@ from antd_demo.layout import page
 from ..state import GlobalState
 
 
-@page('/')
+@page('/', '')
 def index_page() -> rx.Component:
     return rx.center(
         rx.button('ok'),

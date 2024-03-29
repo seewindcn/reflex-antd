@@ -16,8 +16,6 @@ app = rx.App(
         # antd=dict(
         #     token={
         #         'colorPrimary': '#1890ff',
-        #         'colorPrimaryBg': '#e6f7ff',
-        #         'colorLink': '#1890ff',
         #     },
         #     inherit=True,
         # )
@@ -31,7 +29,10 @@ default_config(config_provider(
     theme=contain(
         token={
             'colorPrimary': '#00B96B',
-        }
+            'colorPrimaryBg': '#e6f7ff',
+            'colorLink': '#1890ff',
+        },
+        inherit=True,
     ),
 ))
 
