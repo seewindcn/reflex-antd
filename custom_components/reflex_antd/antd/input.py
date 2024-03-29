@@ -2,29 +2,33 @@ from typing import Optional, Union, Dict, Any
 from reflex import Var, Component
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar
-from ..constant import StatusType, SizeType
+from ..base import AntdComponent, ContainVar, JsValue
+from ..constant import StatusType, SizeType, VariantType
 
 
 class Input(AntdComponent):
     tag = "Input"
 
-    allow_clear: Optional[Var[bool]]
-    count: Optional[Var[Dict]]
+    addon_after: Optional[Var[Component]]
+    addon_before: Optional[Var[Component]]
+    allow_clear: Optional[Var[Union[bool, ContainVar]]]
+    count: Optional[Var[Union[Dict, ContainVar]]]
     default_value: Optional[Var[str]]
     disabled: Optional[Var[bool]]
+    id: Optional[Var[str]]
     max_length: Optional[Var[int]]
-    placeholder: Optional[Var[str]]
     prefix: Optional[Var[Component]]
-    show_count: Optional[Var[bool]]
+    show_count: Optional[Var[Union[bool, JsValue]]]
     status: Optional[Var[StatusType]]
     size: Optional[Var[SizeType]]
     suffix: Optional[Var[Component]]
+    type: Optional[Var[str]]
     value: Optional[Var[str]]
+    variant: Optional[Var[VariantType]]
+    placeholder: Optional[Var[str]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
-
         _triggers.update({
             EventTriggers.ON_CHANGE: lambda e: [e],
             'on_press_enter': lambda e: [e],
@@ -35,7 +39,7 @@ class Input(AntdComponent):
 class TextArea(Input):
     tag = "Input.TextArea"
 
-    auto_size: Optional[Var[bool]]
+    auto_size: Optional[Var[Union[bool, Dict]]]
 
 
 class Search(Input):
@@ -46,9 +50,8 @@ class Search(Input):
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
-
         _triggers.update({
-            'on_search': lambda value, event: [value, event],
+            'on_search': lambda value, event, info: [value, event, info],
         })
         return _triggers
 
@@ -56,7 +59,8 @@ class Search(Input):
 class Password(Input):
     tag = 'Input.Password'
 
-    visibility_toggle: Optional[Var[bool]]
+    icon_render: Optional[Var[JsValue]]
+    visibility_toggle: Optional[Var[Union[bool, ContainVar]]]
 
 
 input = Input.create  # noqa

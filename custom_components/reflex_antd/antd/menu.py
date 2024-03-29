@@ -5,7 +5,7 @@ from reflex.utils import imports
 from reflex.constants import EventTriggers
 
 from ..base import AntdComponent, AntdSubComponent, ContainVar
-from ..constant import ThemeType, MenuModeType, TriggerType
+from ..constant import ThemeType, DirectionType, TriggerType
 
 
 class MenuItem(BaseModel):
@@ -36,7 +36,7 @@ class Menu(AntdComponent):
     inline_indent: Optional[Var[bool]]
 
     items: Var[Union[ContainVar, list]]
-    mode: Optional[Var[MenuModeType]]
+    mode: Optional[Var[DirectionType]]
     multiple: Optional[Var[bool]]
     open_keys: Optional[Var[List[str]]]
     overflowed_indicator: Optional[Var[Component]]

@@ -3,17 +3,15 @@ from typing import Literal
 
 ThemeType = Literal["light", "dark"]
 PlacementType = Literal["start", "end", "bottom", "bottomLeft", "bottomRight", "top", "topLeft", "topRight"]
-AlignType = Literal["start", "end", "center", "baseline"]
+AlignType = Literal["start", "end", "center", "baseline", "left", "right"]
 OrientationType = Literal["left", "right", "top", "bottom", "center"]
-DirectionType = Literal["vertical", "horizontal"]
+DirectionType = Literal["vertical", "horizontal", "inline"]
 SizeType = Literal["default", "small", "medium", "middle", "large"]
 StatusType = Literal['default', 'error', 'warning']
 TriggerType = Literal["click", "hover"]
 VariantType = Literal['outlined', 'borderless', 'filled']
 
 ColorFormatType = Literal['rgb', 'hex', 'hsb']
-
-MenuModeType = Literal["vertical", "horizontal", 'inline']
 
 ButtonType = Literal['default', 'primary']
 ButtonShape = Literal['default', 'circle', 'round']
@@ -29,5 +27,8 @@ StepsType = Literal['default', 'navigation', 'inline']
 DatePickerModeType = Literal['time', 'date', 'month', 'year', 'decade']
 DatePickerType = Literal['date', 'week', 'month', 'quarter', 'year']
 
+RadioStyleType = Literal['outline', 'solid']
+RadioType = Literal['default', 'button']
 
+SelectModeType = Literal['multiple', 'tags']
 
