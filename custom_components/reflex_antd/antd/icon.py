@@ -41,9 +41,12 @@ class IconComponent(BaseIconComponent):
         #         "\nSee full list at https://lucide.dev/icons."
         #     )
 
-        props["tag"] = format.to_title_case(format.to_snake_case(props["tag"]))
+        # props["tag"] = format.to_title_case(format.to_snake_case(props["tag"]))
         # props["alias"] = f"antd{props['tag']}"
         return super().create(*children, **props)
+
+
+icon = IconComponent.create
 
 
 class CustomerServiceOutlined(BaseIconComponent):
@@ -76,6 +79,3 @@ class CloseSquareOutlined(BaseIconComponent):
 
 class UserOutlined(BaseIconComponent):
     tag = 'UserOutlined'
-
-
-icon = IconComponent.create

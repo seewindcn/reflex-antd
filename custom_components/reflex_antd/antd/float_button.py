@@ -12,7 +12,7 @@ class FloatButton(AntdComponent):
     tag = "FloatButton"
 
     icon: Optional[Var[Component]]
-    tooltip: Optional[Var[Union[ContainVar]]]
+    tooltip: Optional[Var[Union[str, ContainVar]]]
     type: Optional[Var[ButtonType]]
     shape: Optional[Var[FloatGroupShapeType]]
     href: Optional[Var[str]]
