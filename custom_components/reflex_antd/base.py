@@ -10,13 +10,16 @@ import re
 
 import reflex as rx
 from reflex import Component, Var, State
-from reflex.constants import Hooks
+from reflex.constants import Hooks, Reflex
 from reflex.utils import imports, format
 from reflex.vars import BaseVar, VarData
 from reflex.event import EventHandler, EventSpec, EventChain
 
 from .constant import SizeType
 from .util import OrderedSet
+
+# 0.4.6 -> 000.004.006
+version = '.'.join(map(lambda x: x.zfill(3), Reflex.VERSION.split('.')))
 
 my_path = path.abspath(path.dirname(__file__))
 template_path = path.join(my_path, '.templates')
@@ -171,8 +174,12 @@ class ExLambdaHandlerItem(ExItem):
         return self._get_fn_name()
 
     def get_hooks(self) -> Set[str]:
-        key = self._get_event_trigger_key()
-        chain = self.parent._create_event_chain(key, self.item)
+        if version >= '000.004.006':
+            key = self._get_event_trigger()
+            chain = self.parent._create_event_chain(key, self.item)
+        else:
+            key = self._get_event_trigger_key()
+            chain = self.parent._create_event_chain(key, self.item)
         rendered_chain = format.format_prop(chain).strip("{}")
         _hook = f"""const {self._get_fn_name()} = useCallback({rendered_chain}, [addEvents, Event]);"""
         return {_hook}
