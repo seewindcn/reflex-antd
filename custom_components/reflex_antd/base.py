@@ -1,22 +1,27 @@
 from typing import Type, Any, Tuple, Dict, List, Iterable, Callable, Set, Union, Optional
+import sys
 from os import path
 from abc import ABC, abstractmethod
-from functools import lru_cache
+from functools import lru_cache, wraps
 from hashlib import md5
 import uuid
 import dataclasses
 import inspect
 import re
+from pydantic import PrivateAttr
 
 import reflex as rx
-from reflex import Component, Var, State
-from reflex.constants import Hooks, Reflex
+from reflex import Component, Var, State, Base
+from reflex.components.component import BaseComponent, CustomComponent, StatefulComponent
+from reflex.constants import Hooks, Reflex, MemoizationDisposition
 from reflex.utils import imports, format
 from reflex.vars import BaseVar, VarData
 from reflex.event import EventHandler, EventSpec, EventChain
 
 from .constant import SizeType
 from .util import OrderedSet
+
+ReactNode = Union[str, Component]
 
 # 0.4.6 -> 000.004.006
 version = '.'.join(map(lambda x: x.zfill(3), Reflex.VERSION.split('.')))
@@ -26,6 +31,24 @@ template_path = path.join(my_path, '.templates')
 
 APP_ROUTER = False
 RE_KEY_IDX = re.compile(r'\.\d+\.')
+
+
+def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:
+
+    def _my(_hd: Callable[..., Component]) -> Callable:
+        @wraps(_hd)
+        def _wrap(*args, **kwargs):
+            _com = _hd(*args, **kwargs)
+            if forced:
+                _com._memoization_mode.disposition = MemoizationDisposition.ALWAYS
+            _sc = StatefulComponent.create(_com)
+            return _sc if _sc is not None else _com
+        return _wrap
+
+    if hd is None:
+        return _my
+    else:
+        return _my(hd)
 
 
 def pretty_dumps(value: Any, indent=2) -> str:
@@ -66,8 +89,14 @@ class ExItem(ABC):
             interpolations=self.get_interpolations(),
         )
 
+    def get_custom_components(self) -> set[CustomComponent]:
+        return set()
 
-class ExComponentItem(ExItem):
+    def get_custom_code(self) -> set[str]:
+        return set()
+
+
+class ExComponentItemBase(ExItem):
     item: Component
 
     @classmethod
@@ -81,7 +110,28 @@ class ExComponentItem(ExItem):
         return self.item.get_imports()
 
     def get_hooks(self) -> Set[str]:
-        return self.item.get_hooks()
+        return self.item.get_hooks_internal() | self.item.get_hooks()
+
+    def get_custom_components(self) -> set[CustomComponent]:
+        return {self.item} if isinstance(self.item, CustomComponent) else set()
+
+    def get_custom_code(self) -> set[str]:
+        return self.item.get_custom_code() if isinstance(self.item, BaseComponent) else set()
+
+
+class ExComponentItem(ExComponentItemBase):
+    item: Component
+
+
+class ExStatefulComponentItem(ExComponentItemBase):
+    item: StatefulComponent
+
+    @classmethod
+    def isinstance(cls, item: Any) -> bool:
+        return isinstance(item, StatefulComponent)
+
+    def serialize(self) -> str:
+        return f'<{self.item.tag}/>'
 
 
 class JsEvent:
@@ -145,11 +195,9 @@ class ExEventHandlerItem(ExItem):
 
     def get_hooks(self) -> Set[str]:
         return self.hd_item.get_hooks()
-        # _hook = f"""const {self._get_fn_name()} = useCallback(({','.join(self.item.args)}) => addEvents(
-        # [Event("{self.item.get_state_full_name()}", {{ {self.item.get_event_args()} }})],
-        # ({','.join(self.item.args)}), {{}}), [addEvents, Event]);
-        # """
-        # return {_hook}
+
+    def get_imports(self) -> imports.ImportDict:
+        return self.hd_item.get_imports()
 
 
 class ExLambdaHandlerItem(ExItem):
@@ -172,6 +220,9 @@ class ExLambdaHandlerItem(ExItem):
 
     def serialize(self) -> str:
         return self._get_fn_name()
+
+    def get_imports(self) -> imports.ImportDict:
+        return {"react": [imports.ImportVar(tag="useCallback")]}
 
     def get_hooks(self) -> Set[str]:
         if version >= '000.004.006':
@@ -243,9 +294,13 @@ class JsValue:
     def get_hooks(self) -> Set[str]:
         return set()
 
+    def get_custom_components(self) -> set[CustomComponent]:
+        return set()
+
 
 class JsFunctionValue(JsValue):
     is_component: bool = None
+    _value: Union[str, Component]
 
     def _init(self, **kwargs) -> None:
         super()._init(**kwargs)
@@ -272,6 +327,9 @@ class JsFunctionValue(JsValue):
         return set() if isinstance(self._value, str) else self._value.get_hooks()
         # return set(['const abc = 1;'])
 
+    def get_custom_components(self) -> set[CustomComponent]:
+        return set() if not isinstance(self._value, CustomComponent) else {self._value}
+
 
 def js_value(value: Union[str, Callable], **kwargs) -> JsValue:
     if isinstance(value, str):
@@ -297,9 +355,13 @@ class ExJsItem(ExItem):
     def get_hooks(self) -> Set[str]:
         return self.item.get_hooks()
 
+    def get_custom_components(self) -> set[CustomComponent]:
+        return self.item.get_custom_components()
+
 
 class ExFormatter:
     items: List[Type[ExItem]] = [
+        ExStatefulComponentItem,
         ExComponentItem,
         ExStateItem,
         ExJsItem,
@@ -334,13 +396,21 @@ class ExFormatter:
                     _id = uuid.uuid4().hex
                     self._coms[_id] = ex(_v, self.parent, key=key)
                     return _id
+
+            if isinstance(_v, Base):
+                _d = dict(_v._iter(exclude_unset=True, exclude_none=True, to_dict=False))
+                return _dict(_d, pkey=key)
+            elif dataclasses.is_dataclass(_v):
+                _d = dataclasses.asdict(_v)
+                return _dict(_d, pkey=key)
+
             return _v
 
         def _list(_v: List, pkey: str) -> List[Any]:
             return [_op(i, key=f'{pkey}.{idx}') for idx, i in enumerate(_v)]
 
         def _dict(_v: Dict, pkey: str) -> Dict[str, Any]:
-            return dict((format.to_camel_case(k), _op(v, key=f'{pkey}.{k}')) for k, v in _v.items())
+            return dict((format.to_camel_case(k), _op(v, key=f'{pkey}.{k}')) for k, v in _v.items() if v is not None)
 
         rs = _op(value, key=self.name)
         self._value = rs
@@ -386,6 +456,10 @@ class ExFormatter:
         )
 
 
+@dataclasses.dataclass(
+    eq=False,
+    **{"slots": True} if sys.version_info >= (3, 10) else {},
+)
 class ExVar(BaseVar):
     _var_value: Any = dataclasses.field(default=Any)
 
@@ -399,7 +473,12 @@ class NodeVar(ExVar):
     pass
 
 
+@dataclasses.dataclass(
+    eq=False,
+    **{"slots": True} if sys.version_info >= (3, 10) else {},
+)
 class ContainVar(ExVar):
+    _var_fmt: ExFormatter = dataclasses.field(default=None)
 
     @property
     def _var_full_name(self) -> str:
@@ -420,8 +499,21 @@ class ContainVar(ExVar):
 
     def init(self, parent: Component, name: str):
         fmt = ExFormatter(self._var_value, parent=parent, name=name)
+        self._var_fmt = fmt
         self._var_name = fmt.get_value()
         self._var_data = fmt.get_var_data()
+
+    def get_custom_components(self) -> set[CustomComponent]:
+        rs = set()
+        for ex in self._var_fmt._coms.values():
+            rs |= ex.get_custom_components()
+        return rs
+
+    def get_custom_code(self) -> Set[str]:
+        rs = set()
+        for ex in self._var_fmt._coms.values():
+            rs |= ex.get_custom_code()
+        return rs
 
 
 contain = ContainVar.create
@@ -438,6 +530,20 @@ class VarDataMixin:
 
 
 class AntdBaseMixin:
+    def get_custom_components(
+            self, seen: set[str] | None = None
+    ) -> Set[CustomComponent]:
+        _coms = super().get_custom_components(seen=seen)
+        if hasattr(self, '_custom_components') and self._custom_components:
+            _coms |= self._custom_components
+        return _coms
+
+    def get_custom_code(self) -> Set[str]:
+        code = super().get_custom_code()
+        for k, v in self._iter_contains():
+            code.update(v.get_custom_code())
+        return code
+
     def _get_style(self) -> dict:
         """Get the style for the component.
 
@@ -445,6 +551,17 @@ class AntdBaseMixin:
             The dictionary of the component style as value and the style notation as key.
         """
         return {"style": self.style}
+
+    def _get_events_hooks(self) -> set[str]:
+        _hooks = super()._get_events_hooks()
+        js_events: List[BaseVar] = [
+            v for k, v in self.event_triggers.items()
+            if isinstance(v, BaseVar) and v._var_data is not None and v._var_data.hooks]
+        rs = OrderedSet(_hooks)
+        if js_events:
+            for ev in js_events:
+                rs |= ev._var_data.hooks
+        return rs
 
     def _get_hooks_internal(self) -> Set[str]:
         """Get the React hooks for this component managed by the framework.
@@ -469,29 +586,44 @@ class AntdBaseMixin:
         s |= self._get_special_hooks()
         return s
 
+    def _iter_contains(self) -> Iterable[Tuple[str, ContainVar]]:
+        for k in self.get_fields().keys():
+            v = getattr(self, k, None)
+            if isinstance(v, ContainVar):
+                yield k, v
+
     def _init_contains(self, contains: Dict[str, ContainVar], exs: Dict[str, Any]):
         for k, v in contains.items():
             v.init(self, k)
+            self._custom_components |= v.get_custom_components()
             setattr(self, k, v)
+
+        event_keys = self.get_event_triggers().keys()
         for k, v in exs.items():
             if isinstance(v, JsValue):
                 item = ExJsItem(v, self, key=k)
+                self._custom_components |= item.get_custom_components()
             elif isinstance(v, JsEvent):
                 item = ExEventHandlerItem(v, self, key=k)
             else:
                 raise NotImplementedError(f"Unsupported type: {type(v)}")
-
-            setattr(self, k, BaseVar(
+            _v = BaseVar(
                 _var_name=item.serialize(),
                 _var_is_local=True,
                 _var_data=item.get_var_data(),
-            ))
+            )
+            if k in event_keys:
+                self.event_triggers[k] = _v
+            else:
+                setattr(self, k, _v)
 
 
 class AntdComponent(AntdBaseMixin, Component):
     """A component that wraps a Chakra component."""
 
     library = "antd"
+
+    _custom_components: Set[CustomComponent] = PrivateAttr(default_factory=set)
 
     @staticmethod
     @lru_cache(maxsize=None)
@@ -517,7 +649,10 @@ class AntdComponent(AntdBaseMixin, Component):
 
 
 class AntdSubComponent(AntdBaseMixin, Component):
+    base_tag: str = None
+
     def _get_imports(self) -> imports.ImportDict:
+        _imports = super()._get_imports()
         return {}
 
 

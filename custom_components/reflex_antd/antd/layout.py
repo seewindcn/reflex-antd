@@ -6,15 +6,19 @@ from reflex.utils import imports
 from ..base import AntdComponent, AntdSubComponent
 
 
-class Layout(AntdComponent):
+class LayoutBase(AntdComponent):
+    pass
+
+
+class Layout(LayoutBase):
     tag = 'Layout'
 
     has_sider: Optional[Var[bool]]
 
-    def _get_custom_code(self) -> str | None:
-        return """
-        const { Header, Content, Footer, Sider } = Layout;
-        """
+    # def _get_custom_code(self) -> str | None:
+    #     return """
+    #     const { Header, Content, Footer, Sider } = Layout;
+    #     """
 
 
 class SubLayout(AntdSubComponent):
@@ -22,19 +26,19 @@ class SubLayout(AntdSubComponent):
 
 
 class Header(SubLayout):
-    tag = 'Header'
+    tag = 'Layout.Header'
 
 
 class Content(SubLayout):
-    tag = 'Content'
+    tag = 'Layout.Content'
 
 
 class Footer(SubLayout):
-    tag = 'Footer'
+    tag = 'Layout.Footer'
 
 
 class Sider(SubLayout):
-    tag = 'Sider'
+    tag = 'Layout.Sider'
 
 
 layout = Layout.create

@@ -32,10 +32,6 @@ def footer() -> rx.Component:
     )
 
 
-# navigation.MI(key='sub1', label='subnav1', icon=general.UserOutlined()),
-# navigation.MI(key='sub2', label='subnav2', icon=general.LaptopOutlined()),
-
-
 def nav_items() -> rx.Component:
     from .layout import routes, route_groups
     items = []
@@ -51,24 +47,6 @@ def nav_items() -> rx.Component:
                      label=rx.link(r.path, href=r.path),
                      icon=r.icon))
         items.append(group)
-    # items = helper.contain([
-    #     dict(key='general', label='general', icon=general.UserOutlined(), children=[
-    #         dict(key='nav1-1', label=rx.link('页面1', href='/')),
-    #         dict(key='nav1-general', label=rx.link('general', href='/general'), icon=general.CustomerServiceOutlined()),
-    #         dict(key='nav1-3', label=general.button('按钮3')),
-    #     ]),
-    #     dict(key='layout', label='layout', icon=general.LaptopOutlined(), children=[
-    #
-    #     ]),
-    #     dict(key='entry', label='entry', icon=general.LaptopOutlined(), children=[
-    #         dict(key='entry-form1', label=rx.link('form1', href='/entry/form1')),
-    #     ]),
-    #     dict(key='display', label='display', icon=general.LaptopOutlined(), children=[
-    #         dict(key='display-table1', label=rx.link('table1', href='/display/table1')),
-    #         dict(key='display-table2', label=rx.link('table2', href='/display/table2')),
-    #         dict(key='display-table3', label=rx.link('table3', href='/display/table3')),
-    #     ]),
-    # ]),
     return helper.contain(items)
 
 
@@ -104,18 +82,18 @@ def content(*args, **kwargs) -> rx.Component:
     return layout.content(
         general.float_group(
             general.float_button(
-                icon=general.CommentOutlined.create(),
+                icon=general.icon('CommentOutlined'),
                 badge=dict(count=5, color="blue"),
                 href='/',
             ),
             general.float_button(
-                icon=general.QuestionCircleOutlined.create(),
+                icon=general.icon('QuestionCircleOutlined'),
                 on_click=GlobalState.on_event0,
             ),
             trigger='hover',
             type='primary',
-            icon=general.CustomerServiceOutlined.create(),
-            close_icon=general.CloseCircleOutlined.create(),
+            icon=general.icon('CustomerServiceOutlined'),
+            close_icon=general.icon('CloseCircleOutlined'),
         ),
         *args,
         **kwargs

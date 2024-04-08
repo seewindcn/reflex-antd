@@ -1,2 +1,2 @@
-from . import table, tree  # noqa
+from . import display, table, tree  # noqa
 

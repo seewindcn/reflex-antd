@@ -3,8 +3,8 @@ from typing import Optional, Union, Dict, Any
 from reflex import Var, Component
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar
-from ..constant import ButtonType, ButtonShape, SizeType
+from ..base import AntdComponent, ContainVar, ReactNode
+from ..constant import TypeType, ButtonShape, SizeType
 
 
 class Button(AntdComponent):
@@ -17,11 +17,11 @@ class Button(AntdComponent):
     href: Optional[Var[str]]
     target: Optional[Var[str]]
     html_type: Optional[Var[str]]
-    icon: Optional[Var[Component]]
+    icon: Optional[Var[ReactNode]]
     loading: Optional[Var[bool]]
     shape: Optional[Var[ButtonShape]]
     size: Optional[Var[SizeType]]
-    type: Optional[Var[ButtonType]]
+    type: Optional[Var[TypeType]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

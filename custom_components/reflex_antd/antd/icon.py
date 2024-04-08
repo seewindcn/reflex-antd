@@ -49,33 +49,33 @@ class IconComponent(BaseIconComponent):
 icon = IconComponent.create
 
 
-class CustomerServiceOutlined(BaseIconComponent):
-    tag = 'CustomerServiceOutlined'
-
-
-class CommentOutlined(BaseIconComponent):
-    tag = 'CommentOutlined'
-
-
-class QuestionCircleOutlined(BaseIconComponent):
-    tag = 'QuestionCircleOutlined'
-
-
-class LaptopOutlined(BaseIconComponent):
-    tag = 'LaptopOutlined'
-
-
-class NotificationOutlined(BaseIconComponent):
-    tag = 'NotificationOutlined'
-
-
-class CloseCircleOutlined(BaseIconComponent):
-    tag = 'CloseCircleOutlined'
-
-
-class CloseSquareOutlined(BaseIconComponent):
-    tag = 'CloseSquareOutlined'
-
-
-class UserOutlined(BaseIconComponent):
-    tag = 'UserOutlined'
+# class CustomerServiceOutlined(BaseIconComponent):
+#     tag = 'CustomerServiceOutlined'
+#
+#
+# class CommentOutlined(BaseIconComponent):
+#     tag = 'CommentOutlined'
+#
+#
+# class QuestionCircleOutlined(BaseIconComponent):
+#     tag = 'QuestionCircleOutlined'
+#
+#
+# class LaptopOutlined(BaseIconComponent):
+#     tag = 'LaptopOutlined'
+#
+#
+# class NotificationOutlined(BaseIconComponent):
+#     tag = 'NotificationOutlined'
+#
+#
+# class CloseCircleOutlined(BaseIconComponent):
+#     tag = 'CloseCircleOutlined'
+#
+#
+# class CloseSquareOutlined(BaseIconComponent):
+#     tag = 'CloseSquareOutlined'
+#
+#
+# class UserOutlined(BaseIconComponent):
+#     tag = 'UserOutlined'

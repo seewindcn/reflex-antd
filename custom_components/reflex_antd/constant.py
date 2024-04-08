@@ -7,15 +7,16 @@ AlignType = Literal["start", "end", "center", "baseline", "left", "right"]
 OrientationType = Literal["left", "right", "top", "bottom", "center"]
 DirectionType = Literal["vertical", "horizontal", "inline"]
 SizeType = Literal["default", "small", "medium", "middle", "large"]
-StatusType = Literal['default', 'error', 'warning']
-TriggerType = Literal["click", "hover"]
+StatusType = Literal['default', 'success', 'error', 'warning', 'info', 'exception', 'normal', 'active']
+TriggerType = Literal["click", "hover", "focus", 'contextMenu']
 VariantType = Literal['outlined', 'borderless', 'filled']
+TypeType = Literal['default', 'primary']
 
 ColorFormatType = Literal['rgb', 'hex', 'hsb']
 
-ButtonType = Literal['default', 'primary']
 ButtonShape = Literal['default', 'circle', 'round']
 
+TypographyTextType = Literal['secondary', 'success', 'warning', 'danger']
 
 FloatGroupShapeType = Literal["circle", "square"]
 
@@ -31,4 +32,15 @@ RadioStyleType = Literal['outline', 'solid']
 RadioType = Literal['default', 'button']
 
 SelectModeType = Literal['multiple', 'tags']
+
+ProgressType = Literal['line', 'circle', 'dashboard']
+
+TimelineModeType = Literal['left', 'alternate', 'right']
+
+TabsType = Literal['line', 'card', 'editable-card']
+
+QRCodeType = Literal['canvas', 'svg']
+QRCodeErrorLevelType = Literal['L', 'M', 'Q', 'H']
+QRCodeStatusType = Literal['active', 'expired', 'loading', 'scanned']
+
 

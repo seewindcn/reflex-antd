@@ -45,7 +45,7 @@ class ConfigProvider(AntdComponent):
     popup_overflow: Optional[Var[str]]
     prefix_cls: Optional[Var[str]]
     render_empty: Optional[Var[JsValue]]
-    theme: Optional[Var[ContainVar]]
+    theme: Optional[Var[Union[Dict, ContainVar]]]
     virtual: Optional[Var[bool]]
     warning: Optional[Var[Dict]]
 
