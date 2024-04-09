@@ -1,2 +1,9 @@
 # reflex-antd
-A Reflex wrapper for Antd
+
+A Reflex custom component demo1.
+
+## Installation
+
+```bash
+pip install reflex-antd
+```
