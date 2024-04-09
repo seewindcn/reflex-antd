@@ -11,6 +11,7 @@ StatusType = Literal['default', 'success', 'error', 'warning', 'info', 'exceptio
 TriggerType = Literal["click", "hover", "focus", 'contextMenu']
 VariantType = Literal['outlined', 'borderless', 'filled']
 TypeType = Literal['default', 'primary']
+RoleType = Literal['alert', 'status']
 
 ColorFormatType = Literal['rgb', 'hex', 'hsb']
 

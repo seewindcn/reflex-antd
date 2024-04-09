@@ -9,6 +9,7 @@ from .antd.collapse import collapse  # noqa
 from .antd.descriptions import descriptions  # noqa
 from .antd.empty import empty  # noqa
 from .antd.image import image,image_preview_group  # noqa
+from .antd.list import alist,list_item,list_item_meta  # noqa
 from .antd.popover import popover  # noqa
 from .antd.qrcode import qrcode  # noqa
 from .antd.segmented import segmented  # noqa

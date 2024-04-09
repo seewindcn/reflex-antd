@@ -9,10 +9,10 @@ class Card(AntdComponent):
     tag = 'Card'
 
     actions: Optional[Var[ContainVar]]
-    active_tabKey: Optional[Var[str]]
+    active_tab_key: Optional[Var[str]]
     bordered: Optional[Var[bool]]
     cover: Optional[Var[Component]]
-    default_active_tabKey: Optional[Var[str]]
+    default_active_tab_key: Optional[Var[str]]
     extra: Optional[Var[Component]]
     hoverable: Optional[Var[bool]]
     loading: Optional[Var[bool]]

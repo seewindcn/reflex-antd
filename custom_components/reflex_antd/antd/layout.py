@@ -21,7 +21,7 @@ class Layout(LayoutBase):
     #     """
 
 
-class SubLayout(AntdSubComponent):
+class SubLayout(AntdComponent):
     width: Var[int]
 
 

@@ -9,14 +9,14 @@ class Carousel(AntdComponent):
     tag = 'Carousel'
 
     autoplay: Optional[Var[bool]]
-    autoplaySpeed: Optional[Var[int]]
-    dotPosition: Optional[Var[str]]
+    autoplay_speed: Optional[Var[int]]
+    dot_position: Optional[Var[str]]
     dots: Optional[Var[Union[bool, dict]]]
     fade: Optional[Var[bool]]
     infinite: Optional[Var[bool]]
     speed: Optional[Var[int]]
     easing: Optional[Var[str]]
-    waitForAnimate: Optional[Var[bool]]
+    wait_for_animate: Optional[Var[bool]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

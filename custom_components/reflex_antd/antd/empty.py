@@ -10,7 +10,7 @@ class Empty(AntdComponent):
 
     description: Optional[Var[Component]]
     image: Optional[Var[Component]]
-    imageStyle: Optional[Var[dict]]
+    image_style: Optional[Var[dict]]
 
 
 empty = Empty.create
