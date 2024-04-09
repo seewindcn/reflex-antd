@@ -40,7 +40,9 @@ def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:
         def _wrap(*args, **kwargs):
             _com = _hd(*args, **kwargs)
             if forced:
+                _com._memoization_mode = _com._memoization_mode.__class__()
                 _com._memoization_mode.disposition = MemoizationDisposition.ALWAYS
+                # _com._memoization_mode.recursive = False
             _sc = StatefulComponent.create(_com)
             return _sc if _sc is not None else _com
         return _wrap
