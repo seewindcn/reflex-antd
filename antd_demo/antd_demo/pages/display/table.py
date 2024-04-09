@@ -186,13 +186,13 @@ class TableState(State):
         print("on_row_select_change:", keys, info)
         self.selected_row_keys = list(set(self.selected_row_keys + keys))
 
-    def on_row_select(self,  record, selected, selected_rows):
-        print("on_row_select:",  record, selected, selected_rows)
+    def on_row_select(self, record, selected, selected_rows):
+        print("on_row_select:", record, selected, selected_rows)
         if not selected:
             self.selected_row_keys = [i for i in self.selected_row_keys if i not in [record, *selected_rows]]
 
     def on_row_select_all(self, selected, selected_rows, change_rows):
-        print("on_row_select_all:",  selected, selected_rows, change_rows)
+        print("on_row_select_all:", selected, selected_rows, change_rows)
         if not selected:
             self.selected_row_keys = [i for i in self.selected_row_keys if i not in change_rows]
 
@@ -266,10 +266,13 @@ def table2_page() -> rx.Component:
                     showSizeChanger=True,
                     showQuickJumper=True,
                 ),
-                scroll=dict(y=500),
+                scroll=dict(y=500, x=900),
                 footer=helper.js_value(lambda: rx.badge('footer-test')),
                 on_change=TableState.on_table_change,
+                style=dict(
+                    width='99%',
+                ),
             ),
         ),
+        width='100%',
     )
-
