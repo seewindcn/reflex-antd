@@ -276,7 +276,9 @@ class ExStateItem(ExItem):
 
 
 class JsValue:
-    def __init__(self, value: Union[str, Callable], **kwargs):
+    value: Callable | str
+
+    def __init__(self, value: Union[str, Callable, Any] = None, **kwargs):
         self.value = value
         self._init(**kwargs)
 
@@ -296,12 +298,18 @@ class JsValue:
     def get_hooks(self) -> Set[str]:
         return set()
 
+    def get_var_data(self) -> VarData:
+        return VarData(
+            state=self.get_state(),
+            imports=self.get_imports(),
+            hooks=self.get_hooks(),
+        )
+
     def get_custom_components(self) -> set[CustomComponent]:
         return set()
 
 
 class JsFunctionValue(JsValue):
-    is_component: bool = None
     _value: Union[str, Component]
 
     def _init(self, **kwargs) -> None:
@@ -311,14 +319,15 @@ class JsFunctionValue(JsValue):
         self._value = self.value(*args)
 
     def serialize(self) -> str:
+        is_component = False
         if isinstance(self._value, str):
             v = self._value
         elif isinstance(self._value, Component):
-            self.is_component = True
+            is_component = True
             v = str(self._value)
         else:
             raise TypeError(self._value)
-        sep_1, sep_2 = ('{{', '}}') if not self.is_component else ('(', ')')
+        sep_1, sep_2 = ('{{', '}}') if not is_component else ('(', ')')
         return f"""({','.join(self._args.args)}) => 
         {sep_1} {v} {sep_2} """
 

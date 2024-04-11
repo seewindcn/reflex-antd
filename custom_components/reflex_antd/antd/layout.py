@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from reflex import Component, Var
 from reflex.utils import imports
@@ -22,7 +22,7 @@ class Layout(LayoutBase):
 
 
 class SubLayout(AntdComponent):
-    width: Var[int]
+    width: Optional[Var[Union[int, str]]]
 
 
 class Header(SubLayout):

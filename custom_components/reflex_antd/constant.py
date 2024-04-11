@@ -44,4 +44,4 @@ QRCodeType = Literal['canvas', 'svg']
 QRCodeErrorLevelType = Literal['L', 'M', 'Q', 'H']
 QRCodeStatusType = Literal['active', 'expired', 'loading', 'scanned']
 
-
+MessageType = Literal['info', 'success', 'error', 'loading', 'warning']
