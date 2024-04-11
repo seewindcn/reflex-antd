@@ -6,17 +6,18 @@ Author-email: seewind <seewindcn@gmail.com>
 License: Apache-2.0
 Project-URL: Homepage, https://github.com/seewindcn/reflex-antd
 Keywords: reflex,reflex-custom-components
-Classifier: Development Status :: 4 - Beta
+Classifier: Development Status :: 1 - Beta
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
+License-File: LICENSE
 Requires-Dist: reflex>=0.4.2
 Provides-Extra: dev
 Requires-Dist: build; extra == "dev"
 Requires-Dist: twine; extra == "dev"
 
-# antd
+# reflex-antd
 
-A Reflex custom component antd.
+A Reflex custom component demo1.
 
 ## Installation
 

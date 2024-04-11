@@ -183,6 +183,7 @@ class ExStateItem(ExItem):
         ...
 
 class JsValue:
+    value: Callable | str
 
     def serialize(self) -> str:
         ...
@@ -196,11 +197,13 @@ class JsValue:
     def get_hooks(self) -> Set[str]:
         ...
 
+    def get_var_data(self) -> VarData:
+        ...
+
     def get_custom_components(self) -> set[CustomComponent]:
         ...
 
 class JsFunctionValue(JsValue):
-    is_component: bool
 
     def serialize(self) -> str:
         ...
