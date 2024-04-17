@@ -22,7 +22,6 @@ from reflex.vars import BaseVar, VarData
 from reflex.event import EventHandler, EventSpec, EventChain
 from .constant import SizeType
 from .util import OrderedSet
-ReactNode = Union[str, Component]
 version = '.'.join(map(lambda x: x.zfill(3), Reflex.VERSION.split('.')))
 my_path = path.abspath(path.dirname(__file__))
 template_path = path.join(my_path, '.templates')
@@ -350,3 +349,5 @@ def default_config(provider: Component):
 
 def patch_all():
     ...
+ReactNode = Union[str, Component]
+JsNode = Union[JsValue, JsEvent]

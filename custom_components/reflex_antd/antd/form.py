@@ -77,7 +77,7 @@ class FormItem(AntdComponent):
 class FormList(AntdComponent):
     tag = 'Form.List'
 
-    children: Optional[Var[JsValue]]
+    # children: Optional[Var[JsValue]]
     initial_value: Optional[Var[List]]
     name: Optional[Var[Union[str, int, List[Union[str, int]]]]]
     rules: Optional[Var[ContainVar]]

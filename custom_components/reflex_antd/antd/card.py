@@ -43,9 +43,7 @@ class CardMeta(AntdComponent):
     tag = 'Card.Meta'
 
     avatar: Optional[Var[Component]]
-    className: Optional[Var[str]]
     description: Optional[Var[Component]]
-    style: Optional[Var[Dict]]
     title: Optional[Var[Component]]
 
 

@@ -654,7 +654,10 @@ class AntdComponent(AntdBaseMixin, Component):
                 exs[k] = v
             else:
                 kw[k] = v
-        super().__init__(*args, **kw)
+        try:
+            super().__init__(*args, **kw)
+        except Exception as err:
+            raise TypeError(f"class<{self}>, args={args}, kw={kw}, error: {err}")
         self._init_contains(contains, exs)
 
 

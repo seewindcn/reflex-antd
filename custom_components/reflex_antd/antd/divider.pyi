@@ -5,7 +5,7 @@ from reflex.style import Style
 from typing import Optional, Union
 from reflex import Component, Var
 from reflex.utils import imports
-from ..base import AntdComponent, AntdSubComponent
+from ..base import AntdComponent, AntdSubComponent, ReactNode
 from ..constant import OrientationType, DirectionType
 
 class Divider(AntdComponent):

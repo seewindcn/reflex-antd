@@ -2,10 +2,12 @@ from typing import Any, Dict, Literal, Optional, Union, overload
 from reflex.vars import Var, BaseVar, ComputedVar
 from reflex.event import EventChain, EventHandler, EventSpec
 from reflex.style import Style
-from typing import Optional, Union
+from typing import Optional, Union, Dict, Any
 from reflex import Component, Var
 from reflex.utils import imports
-from ..base import AntdComponent, AntdSubComponent
+from reflex.constants import EventTriggers
+from ..base import AntdComponent, AntdSubComponent, ReactNode, ContainVar
+from ..constant import BreakpointType, ThemeType
 
 class LayoutBase(AntdComponent):
     pass
@@ -160,9 +162,12 @@ class Footer(SubLayout):
 
 class Sider(SubLayout):
 
+    def get_event_triggers(self) -> Dict[str, Any]:
+        ...
+
     @overload
     @classmethod
-    def create(cls, *children, width: Optional[Union[Var[Union[int, str]], Union[int, str]]]=None, _custom_components: Optional[Set[CustomComponent]]=None, style: Optional[Style]=None, key: Optional[Any]=None, id: Optional[Any]=None, class_name: Optional[Any]=None, autofocus: Optional[bool]=None, custom_attrs: Optional[Dict[str, Union[Var, str]]]=None, on_blur: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_click: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_context_menu: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_double_click: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_focus: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mount: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_down: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_enter: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_leave: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_move: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_out: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_over: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_up: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_scroll: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_unmount: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, **props) -> 'Sider':
+    def create(cls, *children, breakpoint: Optional[Union[Var[Union[Literal['xs', 'sm', 'md', 'lg', 'xl', 'xxl'], Dict]], Union[Literal['xs', 'sm', 'md', 'lg', 'xl', 'xxl'], Dict]]]=None, collapsed: Optional[Union[Var[bool], bool]]=None, collapsed_width: Optional[Union[Var[int], int]]=None, collapsible: Optional[Union[Var[bool], bool]]=None, default_collapsed: Optional[Union[Var[bool], bool]]=None, reverse_arrow: Optional[Union[Var[bool], bool]]=None, theme: Optional[Union[Var[Literal['light', 'dark']], Literal['light', 'dark']]]=None, trigger: Optional[Union[Var[Union[Component, str]], Union[Component, str]]]=None, zero_width_trigger_style: Optional[Union[Var[Union[Dict, ContainVar]], Union[Dict, ContainVar]]]=None, width: Optional[Union[Var[Union[int, str]], Union[int, str]]]=None, _custom_components: Optional[Set[CustomComponent]]=None, style: Optional[Style]=None, key: Optional[Any]=None, id: Optional[Any]=None, class_name: Optional[Any]=None, autofocus: Optional[bool]=None, custom_attrs: Optional[Dict[str, Union[Var, str]]]=None, on_blur: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_breakpoint: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_click: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_collapse: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_context_menu: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_double_click: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_focus: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mount: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_down: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_enter: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_leave: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_move: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_out: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_over: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_up: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_scroll: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_unmount: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, **props) -> 'Sider':
         """Create the component.
 
         Args:
