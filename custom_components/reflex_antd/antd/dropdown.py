@@ -17,7 +17,7 @@ class Dropdown(AntdComponent):
     disabled: Optional[Var[bool]]
     destroy_popup_on_hide: Optional[Var[bool]]
     dropdown_render: Optional[Var[JsValue]]
-    menu: Optional[Var[ContainVar]]
+    menu: Optional[Var[Union[ContainVar, list]]]
     placement: Optional[Var[PlacementType]]
     trigger: Optional[Var[ContainVar]]
     open: Optional[Var[bool]]
@@ -52,4 +52,3 @@ class DropdownButton(Dropdown):
 
 dropdown = Dropdown.create
 dropdown_button = DropdownButton.create
-

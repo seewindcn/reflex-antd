@@ -2,7 +2,7 @@ from typing import Optional, Union, Dict, Any, List
 from reflex import Var, Component
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, ContainVar, JsValue,ReactNode
 from ..constant import ColorFormatType, SizeType, PlacementType, TriggerType
 
 
@@ -11,7 +11,6 @@ class ColorPicker(AntdComponent):
 
     allow_clear: Optional[Var[bool]]
     arrow: Optional[Var[bool]]
-    children: Optional[Var[Component]]
     default_value: Optional[Var[str]]
     default_format: Optional[Var[str]]
     disabled: Optional[Var[bool]]

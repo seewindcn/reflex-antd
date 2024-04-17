@@ -1,10 +1,10 @@
-from typing import Optional, Union, Dict, Any
+from typing import Optional, Union, Dict, Any, List
 
 from reflex import Component, Var
 from reflex.utils import imports
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar
+from ..base import AntdComponent, ContainVar, JsNode
 from ..constant import OrientationType, DirectionType
 
 
@@ -13,10 +13,12 @@ class Anchor(AntdComponent):
 
     affix: Optional[Var[bool]]
     bounds: Optional[Var[int]]
+    get_container: Optional[Var[JsNode]]
+    get_current_anchor: Optional[Var[JsNode]]
     offset_top: Optional[Var[int]]
     show_ink_in_fixed: Optional[Var[bool]]
     target_offset: Optional[Var[int]]
-    items: Optional[Var[ContainVar]]
+    items: Optional[Var[Union[List, ContainVar]]]
     direction: Optional[Var[DirectionType]]
     replace: Optional[Var[bool]]
 

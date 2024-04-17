@@ -8,7 +8,6 @@ from reflex import State, Var
 from reflex_antd import helper, display, general, entry, layout
 
 from antd_demo.layout import page
-from antd_demo.state import GlobalState
 
 
 class DisplayState(State):
@@ -52,6 +51,16 @@ class DisplayState(State):
         'Australian walks 100km after outback crash.',
         'Man charged over missing wedding girl.',
         'Los Angeles battles huge wildfires.',
+    ]
+
+    tree_data = [
+        dict(title='parent-1', key='0', children=[
+            dict(title='child-1', key='0-1', children=[
+            ]),
+            dict(title='child-2', key='0-2', children=[
+                dict(title='node-1', key='0-2-1', )
+            ]),
+        ]),
     ]
 
     select_calendar: str = ""
@@ -128,8 +137,13 @@ def display_page() -> rx.Component:
                 display.tab_item(key='collapse', label='collapse', children=collapse_page()),
                 display.tab_item(key='list', label='list', children=list_page()),
                 display.tab_item(key='avatar', label='avatar', children=avatar_page()),
+                display.tab_item(key='tree', label='tree', children=tree_page()),
             ]),
             on_change=DisplayState.set_active_key,
+            style=dict(
+                width='100%',
+
+            ),
         ),
     )
 
@@ -771,3 +785,18 @@ def avatar_page() -> rx.Component:
         ),
 
     )
+
+
+@helper.stateful
+def tree_page() -> rx.Component:
+    return rx.center(
+        rx.vstack(
+            display.tree(
+                tree_data=DisplayState.tree_data,
+                checkable=True,
+            ),
+        ),
+    )
+
+
+

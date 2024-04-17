@@ -60,8 +60,9 @@ routes: Dict[str, Route] = OrderedDict()
 route_groups: Dict[str, RouteGroup] = dict(
     general=RouteGroup(name='general', icon=general.icon('UserOutlined'), path='/'),
     layout=RouteGroup(name='layout', icon=general.icon('LaptopOutlined')),
-    display=RouteGroup(name='display', icon=general.icon('PicLeftOutlined')),
+    navigation=RouteGroup(name='navigation', icon=general.icon('PicLeftOutlined')),
     feedback=RouteGroup(name='feedback', icon=general.icon('PicLeftOutlined')),
+    display=RouteGroup(name='display', icon=general.icon('PicLeftOutlined')),
     entry=RouteGroup(name='entry', icon=general.icon('LaptopOutlined')),
     other=RouteGroup(name='other', icon=general.icon('QuestionOutlined')),
 )

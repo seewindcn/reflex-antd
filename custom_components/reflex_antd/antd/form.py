@@ -12,7 +12,7 @@ class Form(AntdComponent):
     colon: Optional[Var[bool]]
     disabled: Optional[Var[bool]]
     fields: Optional[Var[ContainVar]]
-    initial_values: Optional[Var[ContainVar]]
+    initial_values: Optional[Var[Dict]]
     label_align: Optional[Var[AlignType]]
     label_wrap: Optional[Var[bool]]
     label_col: Optional[Var[Dict]]

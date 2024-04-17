@@ -3,14 +3,14 @@ from reflex import Var, Component
 from reflex.constants import EventTriggers
 from reflex.utils import imports
 
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, ContainVar, JsNode, ReactNode
 from ..constant import StatusType, SizeType
 
 
 class Tree(AntdComponent):
     tag = 'Tree'
 
-    allow_drop: Optional[Var[JsValue]]
+    allow_drop: Optional[Var[JsNode]]
     auto_expand_parent: Optional[Var[bool]]
     block_node: Optional[Var[bool]]
     checkable: Optional[Var[bool]]
@@ -22,13 +22,13 @@ class Tree(AntdComponent):
     default_expand_parent: Optional[Var[bool]]
     default_selected_keys: Optional[Var[List[str]]]
     disabled: Optional[Var[bool]]
-    draggable: Optional[Var[Union[bool, JsValue, ContainVar]]]
+    draggable: Optional[Var[Union[bool, JsNode, ContainVar]]]
     expanded_keys: Optional[Var[List[str]]]
     field_names: Optional[Var[Dict]]
-    filter_tree_node: Optional[Var[JsValue]]
+    filter_tree_node: Optional[Var[JsNode]]
     height: Optional[Var[int]]
-    icon: Optional[Var[Union[Component, JsValue]]]
-    load_data: Optional[Var[JsValue]]
+    icon: Optional[Var[Union[ReactNode, JsNode]]]
+    load_data: Optional[Var[JsNode]]
     loaded_keys: Optional[Var[List[str]]]
     multiple: Optional[Var[bool]]
     root_style: Optional[Var[Dict]]
@@ -36,8 +36,8 @@ class Tree(AntdComponent):
     selected_keys: Optional[Var[List[str]]]
     show_icon: Optional[Var[bool]]
     show_line: Optional[Var[Union[bool, ContainVar]]]
-    switcher_icon: Optional[Var[Union[Component, JsValue]]]
-    title_render: Optional[Var[JsValue]]
+    switcher_icon: Optional[Var[Union[ReactNode, JsNode]]]
+    title_render: Optional[Var[JsNode]]
     tree_data: Optional[Var[List[Dict]]]
     virtual: Optional[Var[bool]]
     # DirectoryTree
@@ -57,6 +57,9 @@ class Tree(AntdComponent):
             "on_load": lambda keys, e: [keys, e],
             "on_right_click": lambda e: [e.event, e.node],
             "on_select": lambda keys, e: [keys, e],
+
+            "load_data": lambda node: [node],
+            "filter_tree_node": lambda node: [node],
         })
         return _triggers
 

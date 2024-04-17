@@ -297,7 +297,7 @@ def antd_feedback_modal() -> rx.Component:
     )
 
 
-@page('/demo/feedback', 'feedback')
+@page('/feedback/feedback', 'feedback')
 def feedback_page() -> rx.Component:
     return rx.box(
         display.tabs(

@@ -3,7 +3,7 @@ from reflex import Var, Component
 from reflex.constants import EventTriggers
 from reflex.utils import imports
 
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, ContainVar, JsValue, JsEvent
 from ..constant import StatusType, SizeType
 
 
@@ -31,13 +31,15 @@ class Table(AntdComponent):
     table_layout: Optional[Var[str]]
     title: Optional[Var[JsValue]]
     virtual: Optional[Var[bool]]
-    on_header_row: Optional[Var[JsValue]]
-    on_row: Optional[Var[JsValue]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
         _triggers.update({
             EventTriggers.ON_CHANGE: lambda pagination, filters, sorter: [pagination, filters, sorter],
+            'on_header_row': lambda columns, index: [columns, index],
+            'on_row': lambda record, index: [record, index],
+            'on_scroll': lambda ev: [ev],
+
             'columns.*.on_header_cell': lambda column: [column],
             'columns.*.on_cell': lambda record, row_index: [record, row_index],
             'columns.*.on_filter': lambda: [],

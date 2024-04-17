@@ -14,7 +14,6 @@ class AutoComplete(AntdComponent):
     allow_clear: Optional[Var[bool]]
     auto_focus: Optional[Var[bool]]
     backfill: Optional[Var[bool]]
-    children: Optional[Var[Union[Component, ContainVar]]]
     default_active_first_option: Optional[Var[bool]]
     default_open: Optional[Var[bool]]
     default_value: Optional[Var[str]]
@@ -24,7 +23,7 @@ class AutoComplete(AntdComponent):
     filter_option: Optional[Var[bool]]
     not_found_content: Optional[Var[Component]]
     open: Optional[Var[bool]]
-    options: Optional[Var[ContainVar]]
+    options: Optional[Var[list]]
     placeholder: Optional[Var[str]]
     status: Optional[Var[str]]
     size: Optional[Var[SizeType]]
@@ -35,7 +34,6 @@ class AutoComplete(AntdComponent):
         _triggers = super().get_event_triggers()
         _triggers.update({
             EventTriggers.ON_BLUR: lambda: [],
-            EventTriggers.ON_CLOSE: lambda value: [value],
             "on_dropdown_visible_change": lambda open: [open],
             EventTriggers.ON_FOCUS: lambda: [],
             "on_search": lambda value: [value],
@@ -46,4 +44,3 @@ class AutoComplete(AntdComponent):
 
 
 auto_complete = AutoComplete.create
-

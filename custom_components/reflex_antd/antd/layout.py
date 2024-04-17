@@ -1,9 +1,11 @@
-from typing import Optional, Union
+from typing import Optional, Union, Dict, Any
 
 from reflex import Component, Var
 from reflex.utils import imports
+from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, AntdSubComponent
+from ..base import AntdComponent, AntdSubComponent, ReactNode, ContainVar
+from ..constant import BreakpointType, ThemeType
 
 
 class LayoutBase(AntdComponent):
@@ -39,6 +41,24 @@ class Footer(SubLayout):
 
 class Sider(SubLayout):
     tag = 'Layout.Sider'
+
+    breakpoint: Optional[Var[Union[BreakpointType, Dict]]]
+    collapsed: Optional[Var[bool]]
+    collapsed_width: Optional[Var[int]]
+    collapsible: Optional[Var[bool]]
+    default_collapsed: Optional[Var[bool]]
+    reverse_arrow: Optional[Var[bool]]
+    theme: Optional[Var[ThemeType]]
+    trigger: Optional[Var[ReactNode]]
+    zero_width_trigger_style: Optional[Var[Union[Dict, ContainVar]]]
+
+    def get_event_triggers(self) -> Dict[str, Any]:
+        _triggers = super().get_event_triggers()
+        _triggers.update({
+            'on_breakpoint': lambda broken: [broken],
+            'on_collapse': lambda collapsed, type: [collapsed, type],
+        })
+        return _triggers
 
 
 layout = Layout.create

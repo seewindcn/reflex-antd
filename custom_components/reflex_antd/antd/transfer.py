@@ -2,12 +2,13 @@ from typing import Optional, Union, Dict, Any, List
 from reflex import Var, Component
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, ContainVar, JsValue, js_value
 from ..constant import StatusType
 
 
 class Transfer(AntdComponent):
     tag = 'Transfer'
+    _rename_props: Dict[str, str] = {"itemRender": "render"}
 
     data_source: Optional[Var[List]]
     disabled: Optional[Var[bool]]
@@ -20,7 +21,7 @@ class Transfer(AntdComponent):
     operations: Optional[Var[List[str]]]
     operation_style: Optional[Var[Dict]]
     pagination: Optional[Var[Union[bool, ContainVar]]]
-    render: Optional[Var[Union[JsValue, ContainVar]]]
+    item_render: Optional[Var[Union[JsValue, ContainVar]]]
     row_key: Optional[Var[JsValue]]
     select_all_labels: Optional[Var[JsValue]]
     selected_keys: Optional[Var[List[str]]]
@@ -29,6 +30,13 @@ class Transfer(AntdComponent):
     status: Optional[Var[StatusType]]
     target_keys: Optional[Var[List[str]]]
     titles: Optional[Var[ContainVar]]
+
+    @classmethod
+    def create(cls, *children, **props) -> Component:
+        if 'item_render' not in props:
+            props['item_render'] = js_value(lambda record: 'return record.title;')
+        com = super().create(*children, **props)
+        return com
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

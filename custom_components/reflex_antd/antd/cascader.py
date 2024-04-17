@@ -31,7 +31,7 @@ class Cascader(AntdComponent):
     max_tag_text_length: Optional[Var[int]]
     not_found_content: Optional[Var[str]]
     open: Optional[Var[bool]]
-    options: Optional[Var[ContainVar]]
+    options: Optional[Var[Union[ContainVar,list]]]
     placeholder: Optional[Var[str]]
     placement: Optional[Var[PlacementType]]
     show_search: Optional[Var[Union[bool, ContainVar]]]

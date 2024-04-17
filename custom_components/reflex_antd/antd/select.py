@@ -37,7 +37,7 @@ class Select(AntdComponent):
     open: Optional[Var[bool]]
     option_filter_prop: Optional[Var[str]]
     option_label_prop: Optional[Var[str]]
-    options: Optional[Var[Union[Dict, ContainVar]]]
+    options: Optional[Var[Union[list, ContainVar]]]
     option_render: Optional[Var[JsValue]]
     placeholder: Optional[Var[Component]]
     placement: Optional[Var[PlacementType]]

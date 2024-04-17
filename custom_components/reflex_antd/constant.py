@@ -12,6 +12,7 @@ TriggerType = Literal["click", "hover", "focus", 'contextMenu']
 VariantType = Literal['outlined', 'borderless', 'filled']
 TypeType = Literal['default', 'primary']
 RoleType = Literal['alert', 'status']
+BreakpointType = Literal['xs', 'sm', 'md', 'lg', 'xl', 'xxl']
 
 ColorFormatType = Literal['rgb', 'hex', 'hsb']
 

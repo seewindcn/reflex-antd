@@ -21,8 +21,6 @@ from reflex.event import EventHandler, EventSpec, EventChain
 from .constant import SizeType
 from .util import OrderedSet
 
-ReactNode = Union[str, Component]
-
 # 0.4.6 -> 000.004.006
 version = '.'.join(map(lambda x: x.zfill(3), Reflex.VERSION.split('.')))
 
@@ -34,6 +32,7 @@ RE_KEY_IDX = re.compile(r'\.\d+\.')
 
 
 def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:
+    """ render a component into a function """
 
     def _my(_hd: Callable[..., Component]) -> Callable:
         @wraps(_hd)
@@ -179,7 +178,7 @@ class ExEventHandlerItem(ExItem):
             return self._hd_item
 
     def _get_fn_name(self) -> str:
-        return f"{self.key.replace('.', '_')}_{md5(self.key.encode('utf-8')).hexdigest()}"
+        return f"{self.key.replace('.', '_')}_{md5(f'{str(self.item.hd)}'.encode('utf-8')).hexdigest()}_{id(self)}"
 
     def serialize(self) -> str:
         hd_name = self.hd_item.serialize()
@@ -210,7 +209,7 @@ class ExLambdaHandlerItem(ExItem):
         return isinstance(item, Callable)
 
     def _get_fn_name(self) -> str:
-        return f"{self.key.replace('.', '_')}_{md5(self.key.encode('utf-8')).hexdigest()}"
+        return f"{self.key.replace('.', '_')}_{md5(f'{str(self.item)}'.encode('utf-8')).hexdigest()}_{id(self)}"
 
     def _get_event_trigger_key(self) -> str:
         return RE_KEY_IDX.sub('.*.', self.key)
@@ -699,3 +698,8 @@ def patch_all():
         return var_datas
 
     vars._extract_var_data = _my_extract_var_data
+
+
+ReactNode = Union[str, Component]
+JsNode = Union[JsValue, JsEvent]
+
