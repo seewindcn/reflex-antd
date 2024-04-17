@@ -76,8 +76,10 @@ class ExItem(ABC):
     def get_state(self) -> str:
         return ''
 
-    def get_hooks(self) -> Set[str]:
-        return set()
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
+        if version <= '000.004.006':
+            return set()
+        return {}
 
     def get_interpolations(self) -> List[Tuple[int, int]]:
         return []
@@ -108,16 +110,24 @@ class ExComponentItemBase(ExItem):
         return str(self.item)
 
     def get_imports(self) -> imports.ImportDict:
-        return self.item.get_imports()
+        if version <= '000.004.006':
+            return self.item.get_imports()
+        else:
+            return self.item._get_all_imports()
 
-    def get_hooks(self) -> Set[str]:
-        return self.item.get_hooks_internal() | self.item.get_hooks()
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
+        if version <= '000.004.006':
+            return self.item.get_hooks_internal() | self.item.get_hooks()
+        else:
+            return self.item._get_all_hooks_internal() | self.item._get_all_hooks()
 
     def get_custom_components(self) -> set[CustomComponent]:
         return {self.item} if isinstance(self.item, CustomComponent) else set()
 
     def get_custom_code(self) -> set[str]:
-        return self.item.get_custom_code() if isinstance(self.item, BaseComponent) else set()
+        if version <= '000.004.006':
+            return self.item.get_custom_code() if isinstance(self.item, BaseComponent) else set()
+        return self.item._get_all_custom_code() if isinstance(self.item, BaseComponent) else set()
 
 
 class ExComponentItem(ExComponentItemBase):
@@ -194,7 +204,7 @@ class ExEventHandlerItem(ExItem):
         else:
             return self.item.js % dict(name=hd_name)
 
-    def get_hooks(self) -> Set[str]:
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
         return self.hd_item.get_hooks()
 
     def get_imports(self) -> imports.ImportDict:
@@ -225,16 +235,19 @@ class ExLambdaHandlerItem(ExItem):
     def get_imports(self) -> imports.ImportDict:
         return {"react": [imports.ImportVar(tag="useCallback")]}
 
-    def get_hooks(self) -> Set[str]:
-        if version >= '000.004.006':
-            key = self._get_event_trigger()
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
+        if version <= '000.004.005':
+            key = self._get_event_trigger_key()
             chain = self.parent._create_event_chain(key, self.item)
         else:
-            key = self._get_event_trigger_key()
+            key = self._get_event_trigger()
             chain = self.parent._create_event_chain(key, self.item)
         rendered_chain = format.format_prop(chain).strip("{}")
         _hook = f"""const {self._get_fn_name()} = useCallback({rendered_chain}, [addEvents, Event]);"""
-        return {_hook}
+
+        if version <= '000.004.006':
+            return {_hook}
+        return {_hook: None}
 
 
 class ExCallableItem(ExItem):
@@ -248,10 +261,16 @@ class ExCallableItem(ExItem):
         return str(self.item())
 
     def get_imports(self) -> imports.ImportDict:
-        return self.item().get_imports()
+        if version <= '000.004.006':
+            return self.item().get_imports()
+        else:
+            return self.item()._get_all_imports()
 
-    def get_hooks(self) -> Set[str]:
-        return self.item().get_hooks()
+    def get_hooks(self) -> Set[str] |Dict[str, None]:
+        _item = self.item()
+        if version <= '000.004.006':
+            return _item.get_hooks_internal() | _item.get_hooks()
+        return _item._get_all_hooks_internal() | _item._get_all_hooks()
 
 
 class ExStateItem(ExItem):
@@ -267,7 +286,7 @@ class ExStateItem(ExItem):
     def get_imports(self) -> imports.ImportDict:
         return self.item._var_data.imports
 
-    def get_hooks(self) -> Set[str]:
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
         return self.item._var_data.hooks
 
     def get_state(self) -> str:
@@ -294,8 +313,10 @@ class JsValue:
     def get_state(self) -> str:
         return ''
 
-    def get_hooks(self) -> Set[str]:
-        return set()
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
+        if version <= '000.004.006':
+            return set()
+        return {}
 
     def get_var_data(self) -> VarData:
         return VarData(
@@ -331,11 +352,15 @@ class JsFunctionValue(JsValue):
         {sep_1} {v} {sep_2} """
 
     def get_imports(self) -> imports.ImportDict:
-        return {} if isinstance(self._value, str) else self._value.get_imports()
+        if version <= '000.004.006':
+            return {} if isinstance(self._value, str) else self._value.get_imports()
+        return {} if isinstance(self._value, str) else self._value._get_all_imports()
 
-    def get_hooks(self) -> Set[str]:
-        return set() if isinstance(self._value, str) else self._value.get_hooks()
-        # return set(['const abc = 1;'])
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
+        if version <= '000.004.006':
+            return set() if isinstance(self._value, str) else self._value.get_hooks()
+        return set() if isinstance(self._value, str) \
+            else self._value._get_all_hooks_internal() | self._value._get_all_hooks()
 
     def get_custom_components(self) -> set[CustomComponent]:
         return set() if not isinstance(self._value, CustomComponent) else {self._value}
@@ -362,7 +387,7 @@ class ExJsItem(ExItem):
     def get_imports(self) -> imports.ImportDict:
         return self.item.get_imports()
 
-    def get_hooks(self) -> Set[str]:
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
         return self.item.get_hooks()
 
     def get_custom_components(self) -> set[CustomComponent]:
@@ -444,8 +469,11 @@ class ExFormatter:
                 return _state
         return ''
 
-    def get_hooks(self) -> Set[str]:
-        hooks = set()
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
+        if version <= '000.004.006':
+            hooks = set()
+        else:
+            hooks = {}
         for _, ex in self._coms.items():
             _hooks = ex.get_hooks()
             hooks.update(_hooks)
@@ -540,16 +568,16 @@ class VarDataMixin:
 
 
 class AntdBaseMixin:
-    def get_custom_components(
+    def _get_all_custom_components(
             self, seen: set[str] | None = None
     ) -> Set[CustomComponent]:
-        _coms = super().get_custom_components(seen=seen)
+        _coms = super()._get_all_custom_components(seen=seen)
         if hasattr(self, '_custom_components') and self._custom_components:
             _coms |= self._custom_components
         return _coms
 
-    def get_custom_code(self) -> Set[str]:
-        code = super().get_custom_code()
+    def _get_all_custom_code(self) -> Set[str]:
+        code = super()._get_all_custom_code()
         for k, v in self._iter_contains():
             code.update(v.get_custom_code())
         return code
@@ -562,18 +590,23 @@ class AntdBaseMixin:
         """
         return {"style": self.style}
 
-    def _get_events_hooks(self) -> set[str]:
+    def _get_events_hooks(self) -> set[str] | Dict[str, None]:
         _hooks = super()._get_events_hooks()
         js_events: List[BaseVar] = [
             v for k, v in self.event_triggers.items()
             if isinstance(v, BaseVar) and v._var_data is not None and v._var_data.hooks]
-        rs = OrderedSet(_hooks)
+
+        if version <= '000.004.006':
+            rs = OrderedSet(_hooks)
+        else:
+            rs = _hooks
+
         if js_events:
             for ev in js_events:
                 rs |= ev._var_data.hooks
         return rs
 
-    def _get_hooks_internal(self) -> Set[str]:
+    def _get_hooks_internal(self) -> Set[str] | Dict[str, None]:
         """Get the React hooks for this component managed by the framework.
 
         Downstream components should NOT override this method to avoid breaking
@@ -583,18 +616,33 @@ class AntdBaseMixin:
             Set of internally managed hooks.
         """
         # need order hooks, useContext code need first
-        s = OrderedSet(
-            hook
-            for hook in [self._get_mount_lifecycle_hook(), self._get_ref_hook()]
-            if hook
-        )
-        s |= self._get_events_hooks()
-        var_hooks = self._get_vars_hooks()
-        if [h for h in var_hooks if 'addEvents' in h]:
-            s.add(Hooks.EVENTS)
-        s |= var_hooks
-        s |= self._get_special_hooks()
-        return s
+        if version <= '000.004.006':
+            s = OrderedSet(
+                hook
+                for hook in [self._get_mount_lifecycle_hook(), self._get_ref_hook()]
+                if hook
+            )
+
+            s |= self._get_events_hooks()
+            var_hooks = self._get_vars_hooks()
+            if [h for h in var_hooks if 'addEvents' in h]:
+                s.add(Hooks.EVENTS)
+            s |= var_hooks
+            s |= self._get_special_hooks()
+            return s
+        else:
+            s = {
+                hook: None
+                for hook in [self._get_ref_hook(), self._get_mount_lifecycle_hook()]
+                if hook is not None
+            }
+            var_hooks = self._get_vars_hooks()
+            if [h for h in var_hooks if 'addEvents' in h]:
+                s[Hooks.EVENTS] = None
+            s |= var_hooks
+            s |= self._get_events_hooks()
+            s |= self._get_special_hooks()
+            return s
 
     def _iter_contains(self) -> Iterable[Tuple[str, ContainVar]]:
         for k in self.get_fields().keys():
@@ -654,10 +702,12 @@ class AntdComponent(AntdBaseMixin, Component):
                 exs[k] = v
             else:
                 kw[k] = v
+        # super().__init__(*args, **kw)
         try:
             super().__init__(*args, **kw)
         except Exception as err:
-            raise TypeError(f"class<{self}>, args={args}, kw={kw}, error: {err}")
+            print(f"class<{self}>, args={args}, kw={kw}, error: {err}")
+            raise
         self._init_contains(contains, exs)
 
 
@@ -691,10 +741,17 @@ def patch_all():
     old_extract_var_data = vars._extract_var_data
     def _my_extract_var_data(value: Union[Iterable, Component]) -> list[VarData | None]:
         if isinstance(value, Component):
+            if version <= '000.004.006':
+                return [
+                    VarData(
+                        imports=value.get_imports(),
+                        hooks=set(value.get_hooks()),
+                    )
+                ]
             return [
                 VarData(
-                    imports=value.get_imports(),
-                    hooks=set(value.get_hooks()),
+                    imports=value._get_all_imports(),
+                    hooks=value._get_all_hooks_internal() | value._get_all_hooks(),
                 )
             ]
         var_datas = old_extract_var_data(value)

@@ -3,7 +3,7 @@ from typing import Optional, Union, Dict, Any, List, Set
 from reflex import Component, Var
 from reflex.utils import imports
 import uuid
-from ..base import AntdComponent, ContainVar, JsValue, ReactNode
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode, version
 from ..constant import PlacementType, RoleType
 
 
@@ -26,7 +26,7 @@ class Notification(JsValue):
         }
         return _imports
 
-    def get_hooks(self) -> Set[str]:
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
         open_func = """
         const %(name)s = () => {
           notification.open({
@@ -38,10 +38,15 @@ class Notification(JsValue):
         };
         """ % dict(name=self.get_open_notification(), message=self.message, description=self.description,
                    placement=self.placement, duration=self.duration)
-        return {
+
+        _hooks = []
+        _hooks.extend([
             """const [api, contextHolder] = notification.useNotification();""",
             open_func,
-        }
+        ])
+        if version <= '000.004.006':
+            return set(_hooks)
+        return dict((h, None) for h in _hooks)
 
     @property
     def uid(self) -> str:

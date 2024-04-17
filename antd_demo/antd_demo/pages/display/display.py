@@ -797,6 +797,3 @@ def tree_page() -> rx.Component:
             ),
         ),
     )
-
-
-

@@ -6,7 +6,7 @@ from reflex.utils import imports
 from reflex.components.base.bare import Bare
 from reflex.vars import BaseVar
 
-from ..base import AntdComponent, AntdSubComponent, ContainVar, JsValue, ReactNode, ExStateItem
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, version
 from ..constant import MessageType
 
 
@@ -54,7 +54,7 @@ class Message(JsValue):
         }
         return _imports
 
-    def get_hooks(self) -> Set[str]:
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
         if self.config_item is not None:
             open_func = """const %(name)s = () => {
                            %(mn)s.open(%(cfg)s);
@@ -97,15 +97,20 @@ class Message(JsValue):
                 ),
             ])
 
+        _hooks = []
         if self.is_global:
-            return {
+            _hooks.extend([
+                open_func
+            ])
+        else:
+            _hooks.extend([
+                """const [messageApi, contextHolder] = message.useMessage();""",
                 open_func,
-            }
-        return {
-            """const [messageApi, contextHolder] = message.useMessage();""",
-            open_func,
-            *others,
-        }
+                *others,
+            ])
+        if version <= '000.004.006':
+            return set(_hooks)
+        return dict((h, None) for h in _hooks)
 
     def serialize(self) -> str:
         # if self.config_item is not None:
