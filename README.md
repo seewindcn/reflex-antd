@@ -1,6 +1,6 @@
 # reflex-antd
 
-A Reflex custom component demo1.
+A Reflex custom component wrap [ant.design](https://ant.design/).
 
 ## Installation
 
