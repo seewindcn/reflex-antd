@@ -1,12 +1,14 @@
 Metadata-Version: 2.1
 Name: reflex-antd
-Version: 0.0.1
+Version: 0.0.2
 Summary: Reflex custom component antd
 Author-email: seewind <seewindcn@gmail.com>
 License: Apache-2.0
 Project-URL: Homepage, https://github.com/seewindcn/reflex-antd
+Project-URL: homepage, https://github.com/seewindcn/reflex-antd
+Project-URL: source, https://github.com/seewindcn/reflex-antd
 Keywords: reflex,reflex-custom-components
-Classifier: Development Status :: 1 - Beta
+Classifier: Development Status :: 4 - Beta
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 License-File: LICENSE
