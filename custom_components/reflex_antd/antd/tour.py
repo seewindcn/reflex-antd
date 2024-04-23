@@ -4,7 +4,7 @@ from reflex import Component, Var
 from reflex.utils import imports
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode
 from ..constant import StatusType, PlacementType, TypeType
 
 
@@ -12,7 +12,7 @@ class Tour(AntdComponent):
     tag = 'Tour'
 
     arrow: Optional[Var[bool]]
-    close_icon: Optional[Var[Component]]
+    close_icon: Optional[Var[ReactNode]]
     disabled_interaction: Optional[Var[bool]]
     placement: Optional[Var[PlacementType]]
     mask: Optional[Var[Union[bool, Dict]]]

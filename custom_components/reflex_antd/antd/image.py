@@ -2,7 +2,7 @@ from typing import Optional, Union, Dict, Any, List
 
 from reflex import Component, Var
 
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode
 
 
 class Image(AntdComponent):
@@ -11,8 +11,8 @@ class Image(AntdComponent):
     alt: Optional[Var[str]]
     fallback: Optional[Var[str]]
     height: Optional[Var[Union[str, int]]]
-    placeholder: Optional[Var[Component]]
-    description: Optional[Var[Component]]
+    placeholder: Optional[Var[ReactNode]]
+    description: Optional[Var[ReactNode]]
     preview: Optional[Var[Union[bool, dict]]]
     src: Optional[Var[str]]
     width: Optional[Var[Union[str, int]]]

@@ -2,7 +2,7 @@ from typing import Optional, Union, Dict, Any, List
 from reflex import Var, Component
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue, js_value
+from ..base import AntdComponent, ContainVar, JsValue, js_value, ReactNode
 from ..constant import StatusType
 
 
@@ -12,7 +12,7 @@ class Transfer(AntdComponent):
 
     data_source: Optional[Var[List]]
     disabled: Optional[Var[bool]]
-    selections_icon: Optional[Var[Component]]
+    selections_icon: Optional[Var[ReactNode]]
     filter_option: Optional[Var[JsValue]]
     footer: Optional[Var[JsValue]]
     list_style: Optional[Var[Union[Dict, JsValue]]]

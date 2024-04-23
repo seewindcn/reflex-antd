@@ -2,7 +2,7 @@ from typing import Optional, Union, Dict, Any
 
 from reflex import Component, Var
 
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode
 
 
 class Avatar(AntdComponent):
@@ -10,17 +10,17 @@ class Avatar(AntdComponent):
 
     alt: Optional[Var[str]]
     gap: Optional[Var[int]]
-    icon: Optional[Var[Component]]
+    icon: Optional[Var[ReactNode]]
     shape: Optional[Var[str]]
     size: Optional[Var[Union[str, int, Dict]]]
-    src: Optional[Var[Union[Component, str]]]
+    src: Optional[Var[ReactNode]]
     src_set: Optional[Var[str]]
     draggable: Optional[Var[bool]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
         _triggers.update({
-            "on_error": lambda :[],
+            "on_error": lambda: [],
         })
         return _triggers
 

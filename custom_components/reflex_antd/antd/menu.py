@@ -4,7 +4,7 @@ from reflex import Component, Var, EventChain, Base
 from reflex.utils import imports
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, AntdSubComponent, ContainVar
+from ..base import AntdComponent, AntdSubComponent, ContainVar, ReactNode
 from ..constant import ThemeType, DirectionType, TriggerType
 
 
@@ -30,7 +30,7 @@ class Menu(AntdComponent):
 
     default_open_keys: Optional[Var[List[str]]]
     default_selected_keys: Optional[Var[List[str]]]
-    expand_icon: Optional[Var[Component]]
+    expand_icon: Optional[Var[ReactNode]]
     force_sub_menu_render: Optional[Var[bool]]
     inline_collapsed: Optional[Var[bool]]
     inline_indent: Optional[Var[bool]]
@@ -39,7 +39,7 @@ class Menu(AntdComponent):
     mode: Optional[Var[DirectionType]]
     multiple: Optional[Var[bool]]
     open_keys: Optional[Var[List[str]]]
-    overflowed_indicator: Optional[Var[Component]]
+    overflowed_indicator: Optional[Var[ReactNode]]
     selectable: Optional[Var[bool]]
     selected_keys: Optional[Var[List[str]]]
     sub_menu_close_delay: Optional[Var[float]]

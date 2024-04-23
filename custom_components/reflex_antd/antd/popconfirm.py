@@ -17,8 +17,8 @@ class Popconfirm(AntdComponent):
     ok_type: Optional[Var[TypeType]]
     open: Optional[Var[bool]]
     show_cancel: Optional[Var[bool]]
-    title: Optional[Var[Component]]
-    description: Optional[Var[Component]]
+    title: Optional[Var[ReactNode]]
+    description: Optional[Var[ReactNode]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

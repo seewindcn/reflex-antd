@@ -2,7 +2,7 @@ from typing import Optional, Union, Dict, Any, List
 from reflex import Var, Component
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode
 from ..constant import AlignType, DirectionType, SizeType, VariantType
 
 
@@ -43,11 +43,11 @@ class FormItem(AntdComponent):
 
     colon: Optional[Var[bool]]
     dependencies: Optional[Var[List[Union[str, int, List[Union[str, int]]]]]]
-    extra: Optional[Var[Component]]
+    extra: Optional[Var[ReactNode]]
     getValue_from_event: Optional[Var[JsValue]]
     get_value_props: Optional[Var[JsValue]]
     has_feedback: Optional[Var[Union[bool, ContainVar]]]
-    help: Optional[Var[Component]]
+    help: Optional[Var[ReactNode]]
     hidden: Optional[Var[bool]]
     html_for: Optional[Var[str]]
     initial_value: Optional[Var[str]]

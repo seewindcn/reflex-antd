@@ -2,26 +2,26 @@ from typing import Optional, Union, Dict, Any
 from reflex import Var, Component
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode
 from ..constant import StatusType, SizeType, VariantType
 
 
 class Input(AntdComponent):
     tag = "Input"
 
-    addon_after: Optional[Var[Component]]
-    addon_before: Optional[Var[Component]]
+    addon_after: Optional[Var[ReactNode]]
+    addon_before: Optional[Var[ReactNode]]
     allow_clear: Optional[Var[Union[bool, ContainVar]]]
     count: Optional[Var[Union[Dict, ContainVar]]]
     default_value: Optional[Var[str]]
     disabled: Optional[Var[bool]]
     id: Optional[Var[str]]
     max_length: Optional[Var[int]]
-    prefix: Optional[Var[Component]]
+    prefix: Optional[Var[ReactNode]]
     show_count: Optional[Var[Union[bool, JsValue]]]
     status: Optional[Var[StatusType]]
     size: Optional[Var[SizeType]]
-    suffix: Optional[Var[Component]]
+    suffix: Optional[Var[ReactNode]]
     type: Optional[Var[str]]
     value: Optional[Var[str]]
     variant: Optional[Var[VariantType]]
@@ -45,7 +45,7 @@ class TextArea(Input):
 class Search(Input):
     tag = 'Input.Search'
 
-    enter_button: Optional[Var[Component]]
+    enter_button: Optional[Var[ReactNode]]
     loading: Optional[Var[bool]]
 
     def get_event_triggers(self) -> Dict[str, Any]:

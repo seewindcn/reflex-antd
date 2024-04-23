@@ -28,7 +28,7 @@ class Modal(AntdComponent):
     ok_button_props: Optional[Var[ContainVar]]
     ok_text: Optional[Var[ReactNode]]
     ok_type: Optional[Var[TypeType]]
-    title: Optional[Var[Component]]
+    title: Optional[Var[ReactNode]]
     open: Optional[Var[bool]]
     width: Optional[Var[Union[str, int]]]
     wrapClassName: Optional[Var[str]]

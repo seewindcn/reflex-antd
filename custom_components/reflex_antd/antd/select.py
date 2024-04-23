@@ -2,7 +2,7 @@ from typing import Optional, Union, Dict, Any, List
 from reflex import Var, Component
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode
 from ..constant import StatusType, SizeType, SelectModeType, PlacementType, VariantType
 
 
@@ -29,24 +29,24 @@ class Select(AntdComponent):
     loading: Optional[Var[bool]]
     max_count: Optional[Var[int]]
     max_tag_count: Optional[Var[Union[int, str]]]
-    max_tag_placeholder: Optional[Var[Union[Component, JsValue]]]
+    max_tag_placeholder: Optional[Var[Union[ReactNode, JsValue]]]
     max_tag_text_length: Optional[Var[int]]
-    menu_item_selected_icon: Optional[Var[Component]]
+    menu_item_selected_icon: Optional[Var[ReactNode]]
     mode: Optional[Var[SelectModeType]]
-    not_found_content: Optional[Var[Component]]
+    not_found_content: Optional[Var[ReactNode]]
     open: Optional[Var[bool]]
     option_filter_prop: Optional[Var[str]]
     option_label_prop: Optional[Var[str]]
     options: Optional[Var[Union[list, ContainVar]]]
     option_render: Optional[Var[JsValue]]
-    placeholder: Optional[Var[Component]]
+    placeholder: Optional[Var[ReactNode]]
     placement: Optional[Var[PlacementType]]
-    remove_icon: Optional[Var[Component]]
+    remove_icon: Optional[Var[ReactNode]]
     search_value: Optional[Var[str]]
     show_search: Optional[Var[bool]]
     size: Optional[Var[SizeType]]
     status: Optional[Var[StatusType]]
-    suffix_icon: Optional[Var[Component]]
+    suffix_icon: Optional[Var[ReactNode]]
     tag_render: Optional[Var[JsValue]]
     label_render: Optional[Var[JsValue]]
     token_separators: Optional[Var[List[str]]]

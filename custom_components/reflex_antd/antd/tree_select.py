@@ -2,13 +2,13 @@ from typing import Optional, Union, Dict, Any, List
 from reflex import Var, Component
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsNode
+from ..base import AntdComponent, ContainVar, JsNode, ReactNode
 
 
 class TreeSelect(AntdComponent):
     tag = 'TreeSelect'
 
-    allow_clear: Optional[Var[Union[bool, Component]]]
+    allow_clear: Optional[Var[Union[bool, ReactNode]]]
     auto_clear_search_value: Optional[Var[bool]]
     default_value: Optional[Var[Union[str, List[str]]]]
     disabled: Optional[Var[bool]]
@@ -23,10 +23,10 @@ class TreeSelect(AntdComponent):
     list_height: Optional[Var[int]]
     load_data: Optional[Var[JsNode]]
     max_tag_count: Optional[Var[int]]
-    max_tag_placeholder: Optional[Var[Union[Component, JsNode]]]
+    max_tag_placeholder: Optional[Var[Union[ReactNode, JsNode]]]
     max_tag_text_length: Optional[Var[int]]
     multiple: Optional[Var[bool]]
-    not_found_content: Optional[Var[Component]]
+    not_found_content: Optional[Var[ReactNode]]
     placeholder: Optional[Var[str]]
     placement: Optional[Var[str]]
     search_value: Optional[Var[str]]
@@ -34,8 +34,8 @@ class TreeSelect(AntdComponent):
     show_search: Optional[Var[bool]]
     size: Optional[Var[str]]
     status: Optional[Var[str]]
-    suffix_icon: Optional[Var[Component]]
-    switcher_icon: Optional[Var[Union[Component, ContainVar]]]
+    suffix_icon: Optional[Var[ReactNode]]
+    switcher_icon: Optional[Var[Union[ReactNode, ContainVar]]]
     tag_render: Optional[Var[JsNode]]
     tree_checkable: Optional[Var[bool]]
     tree_check_strictly: Optional[Var[bool]]

@@ -4,7 +4,7 @@ from reflex import Component, Var
 from reflex.utils import imports
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode
 from ..constant import PlacementType, DirectionType
 
 
@@ -37,7 +37,7 @@ class DropdownButton(Dropdown):
     buttons_render: Optional[Var[JsValue]]
     loading: Optional[Var[bool]]
     danger: Optional[Var[bool]]
-    icon: Optional[Var[Component]]
+    icon: Optional[Var[ReactNode]]
     size: Optional[Var[str]]
     type: Optional[Var[str]]
 

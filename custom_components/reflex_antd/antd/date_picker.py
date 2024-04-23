@@ -4,7 +4,7 @@ from reflex import Component, Var
 from reflex.utils import imports
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode
 from ..constant import DatePickerModeType, DatePickerType, SizeType, PlacementType, StatusType, VariantType
 
 from .base import Locale
@@ -21,7 +21,7 @@ class BaseDatePicker(AntdComponent):
     auto_focus: Optional[Var[bool]]
     date_render: Optional[Var[JsValue]]
     cell_render: Optional[Var[JsValue]]
-    components: Optional[Var[Component]]
+    components: Optional[Var[Union[ReactNode, list, dict, ContainVar]]]
     disabled: Optional[Var[bool]]
     disabled_date: Optional[Var[JsValue]]
     format: Optional[Var[ContainVar]]
@@ -35,7 +35,7 @@ class BaseDatePicker(AntdComponent):
     max_date: Optional[Var[JsValue]]
     mode: Optional[Var[DatePickerModeType]]
     need_confirm: Optional[Var[bool]]
-    next_icon: Optional[Var[Component]]
+    next_icon: Optional[Var[ReactNode]]
     open: Optional[Var[bool]]
     panel_render: Optional[Var[JsValue]]
     picker: Optional[Var[DatePickerType]]
@@ -43,12 +43,12 @@ class BaseDatePicker(AntdComponent):
     placement: Optional[Var[PlacementType]]
     popup_style: Optional[Var[ContainVar]]
     presets: Optional[Var[ContainVar]]
-    prev_icon: Optional[Var[Component]]
+    prev_icon: Optional[Var[ReactNode]]
     size: Optional[Var[SizeType]]
     status: Optional[Var[StatusType]]
-    suffix_icon: Optional[Var[Component]]
-    super_next_icon: Optional[Var[Component]]
-    super_prev_icon: Optional[Var[Component]]
+    suffix_icon: Optional[Var[ReactNode]]
+    super_next_icon: Optional[Var[ReactNode]]
+    super_prev_icon: Optional[Var[ReactNode]]
     variant: Optional[Var[VariantType]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
@@ -108,7 +108,7 @@ class RangePicker(BaseDatePicker):
     picker_value: Optional[Var[ContainVar]]
     presets: Optional[Var[ContainVar]]
     render_extra_footer: Optional[Var[JsValue]]
-    separator: Optional[Var[Component]]
+    separator: Optional[Var[ReactNode]]
     show_time: Optional[Var[Union[bool, ContainVar]]]
     # showTime.defaultValue
     value: Optional[Var[ContainVar]]

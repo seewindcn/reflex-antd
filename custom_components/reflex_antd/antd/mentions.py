@@ -2,7 +2,7 @@ from typing import Optional, Union, Dict, Any, List
 from reflex import Var, Component
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode
 from ..constant import StatusType, SizeType, VariantType, PlacementType
 
 
@@ -15,7 +15,7 @@ class Mention(AntdComponent):
     default_value: Optional[Var[str]]
     filter_option: Optional[Var[Union[bool, JsValue]]]
     get_popup_container: Optional[Var[JsValue]]
-    not_found_content: Optional[Var[Component]]
+    not_found_content: Optional[Var[ReactNode]]
     placement: Optional[Var[PlacementType]]
     prefix: Optional[Var[Union[str, List[str]]]]
     split: Optional[Var[str]]

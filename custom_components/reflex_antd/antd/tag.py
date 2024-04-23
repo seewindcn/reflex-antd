@@ -4,16 +4,16 @@ from reflex import Component, Var
 from reflex.utils import imports
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode
 from ..constant import TimelineModeType
 
 
 class Tag(AntdComponent):
     tag = 'Tag'
 
-    close_icon: Optional[Var[Union[bool, Component]]]
+    close_icon: Optional[Var[Union[bool, ReactNode]]]
     color: Optional[Var[str]]
-    icon: Optional[Var[Component]]
+    icon: Optional[Var[ReactNode]]
     bordered: Optional[Var[bool]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
