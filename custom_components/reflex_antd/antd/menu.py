@@ -1,5 +1,5 @@
 from typing import Optional, Union, Type, Dict, List, Any, Iterator
-from pydantic import BaseModel
+from reflex.base import pydantic
 from reflex import Component, Var, EventChain, Base
 from reflex.utils import imports
 from reflex.constants import EventTriggers
@@ -8,7 +8,7 @@ from ..base import AntdComponent, AntdSubComponent, ContainVar, ReactNode
 from ..constant import ThemeType, DirectionType, TriggerType
 
 
-class MenuItem(BaseModel):
+class MenuItem(pydantic.BaseModel):
     key: str
     label: str
     icon: Component

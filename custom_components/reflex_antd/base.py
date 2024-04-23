@@ -8,10 +8,10 @@ import uuid
 import dataclasses
 import inspect
 import re
-from pydantic import PrivateAttr
 
 import reflex as rx
 from reflex import Component, Var, State, Base
+from reflex.base import pydantic
 from reflex.components.component import BaseComponent, CustomComponent, StatefulComponent
 from reflex.constants import Hooks, Reflex, MemoizationDisposition
 from reflex.utils import imports, format
@@ -681,7 +681,7 @@ class AntdComponent(AntdBaseMixin, Component):
 
     library = "antd"
 
-    _custom_components: Set[CustomComponent] = PrivateAttr(default_factory=set)
+    _custom_components: Set[CustomComponent] = pydantic.PrivateAttr(default_factory=set)
 
     @staticmethod
     @lru_cache(maxsize=None)
