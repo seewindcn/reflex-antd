@@ -32,7 +32,6 @@ custom_components/reflex_antd/antd/avatar.pyi
 custom_components/reflex_antd/antd/badge.py
 custom_components/reflex_antd/antd/badge.pyi
 custom_components/reflex_antd/antd/base.py
-custom_components/reflex_antd/antd/base.pyi
 custom_components/reflex_antd/antd/breadcrumb.py
 custom_components/reflex_antd/antd/breadcrumb.pyi
 custom_components/reflex_antd/antd/button.py

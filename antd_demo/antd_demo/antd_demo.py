@@ -7,7 +7,7 @@ custom_components_path = path.join(path.dirname(my_path), '..', 'custom_componen
 if path.exists(custom_components_path):
     sys.path.insert(0, custom_components_path)
 
-from reflex_antd.helper import patch_all, default_config, config_provider, Locale, contain
+from reflex_antd.helper import patch_all, default_config, config_provider, Locale, theme
 
 patch_all()
 app = rx.App(
@@ -26,7 +26,7 @@ app = rx.App(
 default_config(config_provider(
     # locale=Locale('en_US'),
     locale=Locale('zh_CN'),
-    theme=contain(
+    theme=theme(
         token={
             'colorPrimary': '#00B96B',
             'colorPrimaryBg': '#e6f7ff',

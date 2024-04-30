@@ -1,14 +1,45 @@
 from typing import Optional, Union, Dict
+from types import SimpleNamespace
 from functools import lru_cache
 
 import reflex as rx
 from reflex import Var, Component
+from reflex.vars import BaseVar, VarData
 from reflex.utils import imports
 
 
 from .. import base
 from ..base import AntdComponent, ContainVar, JsValue
 from ..constant import SizeType
+
+
+next_theme_var_data = VarData(  # type: ignore
+    imports={
+        f"next-themes": {imports.ImportVar(tag="useTheme")},
+        "react": {imports.ImportVar(tag="useContext")},
+        "antd": {imports.ImportVar(tag="theme", alias="AntdTheme")}
+    },
+    hooks={
+        f"const nextTheme = useTheme()": None,
+    },
+)
+next_theme_var = BaseVar(
+    _var_name='nextTheme.theme',
+    _var_type="str",
+    _var_data=next_theme_var_data,
+)
+light_theme_var = BaseVar(
+    _var_name='AntdTheme.defaultAlgorithm',
+)
+dark_theme_var = BaseVar(
+    _var_name='AntdTheme.darkAlgorithm',
+)
+
+
+def theme(**kwargs):
+    if 'algorithm' not in kwargs:
+        kwargs['algorithm'] = rx.cond(next_theme_var == 'dark', dark_theme_var, light_theme_var)
+    return ContainVar.create(**kwargs)
 
 
 class Locale(JsValue):

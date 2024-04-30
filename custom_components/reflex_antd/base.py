@@ -394,8 +394,32 @@ class ExJsItem(ExItem):
         return self.item.get_custom_components()
 
 
+class ExVarItem(ExItem):
+    item: Var
+
+    @classmethod
+    def isinstance(cls, item: Any) -> bool:
+        return isinstance(item, Var)
+
+    def serialize(self) -> str:
+        return str(self.item).strip('{}')
+
+    def get_imports(self) -> imports.ImportDict:
+        return self.item._var_data.imports if self.item._var_data else {}
+
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
+        return self.item._var_data.hooks if self.item._var_data else {}
+
+    def get_state(self) -> str:
+        return self.item._var_data.state if self.item._var_data else ""
+
+    def get_interpolations(self) -> List[Tuple[int, int]]:
+        return self.item._var_data.interpolations if self.item._var_data else []
+
+
 class ExFormatter:
     items: List[Type[ExItem]] = [
+        ExVarItem,
         ExStatefulComponentItem,
         ExComponentItem,
         ExStateItem,
@@ -688,7 +712,7 @@ class AntdComponent(AntdBaseMixin, Component):
     def _get_app_wrap_components() -> dict[tuple[int, str], Component]:
         from .antd.base import config_provider
         return {
-            (160, "AntdProvider"): _config_provider if _config_provider is not None else config_provider(),
+            (40, "AntdProvider"): _config_provider if _config_provider is not None else config_provider(),
         }
 
     def __init__(self, *args, **kwargs):
