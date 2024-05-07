@@ -279,7 +279,7 @@ def antd_tree_select() -> rx.Component:
         ),
         layout.divider(),
         rx.box(
-            rx.heading('异步加载数据'),
+            rx.heading('async load data'),
             rx.hstack(
                 entry.tree_select(
                     tree_data=TreeState.init_data,
@@ -303,7 +303,7 @@ def antd_tree_select() -> rx.Component:
             return;
           }
           %(name)s(node);
-          setTimeout(() => { resolve(); }, 1000);
+          setTimeout(() => { resolve(); }, 500);
     }); 
     }""", fmt=True),
                 ),
@@ -311,7 +311,7 @@ def antd_tree_select() -> rx.Component:
         ),
         layout.divider(),
         rx.box(
-            rx.heading('异步加载简单数据'),
+            rx.heading('async load simple data'),
             rx.hstack(
                 entry.tree_select(
                     tree_data=TreeState.simple_data,
@@ -336,7 +336,7 @@ def antd_tree_select() -> rx.Component:
             return;
           }
           %(name)s(node);
-          setTimeout(() => { resolve(); }, 1000);
+          setTimeout(() => { resolve(); }, 500);
     }); 
     }""", fmt=True),
                 ),
@@ -350,7 +350,7 @@ def antd_tree_select() -> rx.Component:
 def antd_upload() -> rx.Component:
     return rx.vstack(
         rx.box(
-            rx.heading('基本上传'),
+            rx.heading('base upload'),
             rx.hstack(
                 entry.upload(
                     general.button(
@@ -371,7 +371,7 @@ def antd_upload() -> rx.Component:
             ),
         ),
         rx.box(
-            rx.heading('文件夹上传'),
+            rx.heading('file dir upload'),
             rx.hstack(
                 entry.upload(
                     general.button(

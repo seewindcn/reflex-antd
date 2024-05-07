@@ -11,21 +11,12 @@ from reflex_antd.helper import patch_all, default_config, config_provider, Local
 
 patch_all()
 app = rx.App(
-    style=dict(
-        # antd theme
-        # antd=dict(
-        #     token={
-        #         'colorPrimary': '#1890ff',
-        #     },
-        #     inherit=True,
-        # )
-    ),
 )
 
 # config antd
 default_config(config_provider(
     # locale=Locale('en_US'),
-    locale=Locale('zh_CN'),
+    locale=Locale(value='zh_CN'),
     theme=theme(
         token={
             'colorPrimary': '#00B96B',
