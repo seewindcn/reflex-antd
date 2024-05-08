@@ -1,8 +1,10 @@
-from typing import Optional, Union, Dict, Any, List
+from typing import Optional, Union, Dict, Any, List, Set
+import uuid
 
 from reflex import Component, Var
+from reflex.utils import imports
 
-from ..base import AntdComponent, ContainVar, JsValue, ReactNode
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, FakeComponentMixin
 from ..constant import TypeType
 
 
@@ -38,11 +40,82 @@ class Modal(AntdComponent):
         _triggers = super().get_event_triggers()
         _triggers.update({
             "after_close": lambda: [],
-            "on_cancel": lambda event: [],
-            "on_ok": lambda event: [],
-            "after_open_change": lambda open: [],
+            "on_cancel": lambda e: [],
+            "on_ok": lambda e: [],
+            "after_open_change": lambda open: [open],
         })
         return _triggers
 
 
+class Confirm(FakeComponentMixin, JsValue):
+    config: Optional[Var[dict]]
+
+    @property
+    def config_item(self) -> Optional[ExStateItem]:
+        if not hasattr(self, 'config') or self.config is None:
+            return None
+        try:
+            return self._config_item
+        except AttributeError:
+            if isinstance(self.config, Var):
+                self._config_item = ExStateItem(self.config, self)
+            else:
+                self._config_item = ContainVar.create(self.config).init(self, 'config')
+            return self._config_item
+
+    @property
+    def uid(self) -> str:
+        try:
+            return self._uid
+        except AttributeError:
+            self._uid = uuid.uuid4().hex
+            return self._uid
+
+    def get_name(self) -> str:
+        return f'confirm_{self.uid}'
+
+    def get_imports(self) -> imports.ImportDict:
+        _imports = {
+            "antd": [imports.ImportVar(tag='Modal')],
+        }
+        return imports.merge_imports(
+            _imports,
+            self.config_item.get_imports(),
+        )
+
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
+        before_open = None
+        if isinstance(self.config_item, ContainVar):
+            before_open = self.config_item._var_fmt.get_ex_item('config.before_open')
+        call_before_open = f'({before_open.serialize()})();' \
+            if before_open is not None else ''
+        confirm_func = """const %(name)s = () => {
+                                %(call_before_open)s
+                               Modal.confirm(%(cfg)s);
+                               };""" % dict(
+            name=self.get_name(),
+            call_before_open=call_before_open,
+            cfg=self.config_item.serialize() if hasattr(self.config_item, 'serialize') else str(self.config_item),
+        )
+        return {
+            **self.config_item.get_hooks(),
+            confirm_func: None,
+        }
+
+    def get_event_triggers(self) -> Dict[str, Any]:
+        _triggers = {}
+        _triggers.update({
+            "config.after_close": lambda: [],
+            "config.on_cancel": lambda e: [],
+            "config.on_ok": lambda e: [],
+            "config.before_open": lambda e: [],
+            # not support: "config.after_open_change": lambda open: [open],
+        })
+        return _triggers
+
+    def serialize(self) -> str:
+        return self.get_name()
+
+
 modal = Modal.create
+confirm = Confirm

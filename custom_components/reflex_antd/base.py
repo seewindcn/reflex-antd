@@ -1,4 +1,4 @@
-from typing import Type, Any, Tuple, Dict, List, Iterable, Callable, Set, Union, Optional
+from typing import Type, Any, Tuple, Dict, List, Iterable, Callable, Set, Union, Optional, Self
 import sys
 from os import path
 from abc import ABC, abstractmethod
@@ -147,12 +147,15 @@ class ExStatefulComponentItem(ExComponentItemBase):
 
 class JsEvent:
     hd: EventHandler
+    # event_trigger use for custom trigger, must work with fmt=True
+    event_trigger: Callable
 
-    def __init__(self, hd: Any, js: str, fmt: bool = False):
+    def __init__(self, hd: Any, js: str = '', fmt: bool = False, event_trigger: Callable = None):
         assert isinstance(hd, EventHandler)
         self.hd = hd
         self.js = js
         self.fmt = fmt
+        self.event_trigger = event_trigger
 
     def get_state_full_name(self) -> str:
         name = str(self.hd.fn).split(' ')[1]
@@ -167,6 +170,10 @@ class JsEvent:
                 continue
             rs.append(f'{_arg}:{self.args[idx-1]}')
         return ','.join(rs)
+
+    def get_ex_item(self, parent, key) -> ExItem:
+        item = ExEventHandlerItem(self, parent, key=key)
+        return item
 
 
 js_event = JsEvent
@@ -185,6 +192,7 @@ class ExEventHandlerItem(ExItem):
             return self._hd_item
         except AttributeError:
             self._hd_item = ExLambdaHandlerItem(self.item.hd, self.parent, key=self.key)
+            self._hd_item.event_trigger = self.item.event_trigger
             return self._hd_item
 
     def _get_fn_name(self) -> str:
@@ -213,6 +221,7 @@ class ExEventHandlerItem(ExItem):
 
 class ExLambdaHandlerItem(ExItem):
     item: Callable
+    event_trigger: Callable = None
 
     @classmethod
     def isinstance(cls, item: Any) -> bool:
@@ -225,6 +234,8 @@ class ExLambdaHandlerItem(ExItem):
         return RE_KEY_IDX.sub('.*.', self.key)
 
     def _get_event_trigger(self) -> Callable:
+        if self.event_trigger is not None:
+            return self.event_trigger
         triggers = self.parent.get_event_triggers()
         rs = triggers.get(self._get_event_trigger_key(), lambda: [])
         return rs
@@ -293,6 +304,20 @@ class ExStateItem(ExItem):
         return self.item._var_data.state
 
 
+class FakeComponentMixin:
+    def _create_event_chain(self, *args, **kwargs):
+        return Component._create_event_chain(self, *args, **kwargs)
+
+    def get_event_triggers(self) -> Dict[str, Any]:
+        return {}
+
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
+        return {}
+
+    def get_imports(self) -> imports.ImportDict:
+        return {}
+
+
 class JsValue:
     value: Callable | str
 
@@ -303,6 +328,10 @@ class JsValue:
     def _init(self, **kwargs) -> None:
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+    def get_ex_item(self, parent, key) -> ExItem:
+        item = ExJsItem(self, parent, key=key)
+        return item
 
     def serialize(self) -> str:
         return self.value
@@ -474,6 +503,11 @@ class ExFormatter:
         rs = _op(value, key=self.name)
         self._value = rs
 
+    def get_ex_item(self, key: str) -> ExItem | None:
+        for i in self._coms.values():
+            if i.key == key:
+                return i
+
     def get_value(self) -> str:
         v = pretty_dumps(self._value)
         for k, ex in self._coms.items():
@@ -547,7 +581,7 @@ class ContainVar(ExVar):
         return self._var_name
 
     @classmethod
-    def create(cls, _args_: Any = None, **kwargs) -> Var | None:
+    def create(cls, _args_: Any = None, **kwargs) -> Self:
         value = _args_ if _args_ is not None else kwargs
         # v: BaseVar = super().create(_name, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
         return cls(
@@ -559,11 +593,12 @@ class ContainVar(ExVar):
             _var_value=value,
         )
 
-    def init(self, parent: Component, name: str):
+    def init(self, parent: Component, name: str) -> Self:
         fmt = ExFormatter(self._var_value, parent=parent, name=name)
         self._var_fmt = fmt
         self._var_name = fmt.get_value()
         self._var_data = fmt.get_var_data()
+        return self
 
     def get_custom_components(self) -> set[CustomComponent]:
         rs = set()
@@ -576,6 +611,12 @@ class ContainVar(ExVar):
         for ex in self._var_fmt._coms.values():
             rs |= ex.get_custom_code()
         return rs
+
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
+        return self._var_data.hooks
+
+    def get_imports(self) -> imports.ImportDict:
+        return self._var_data.imports
 
 
 contain = ContainVar.create
@@ -682,13 +723,11 @@ class AntdBaseMixin:
 
         event_keys = self.get_event_triggers().keys()
         for k, v in exs.items():
-            if isinstance(v, JsValue):
-                item = ExJsItem(v, self, key=k)
-                self._custom_components |= item.get_custom_components()
-            elif isinstance(v, JsEvent):
-                item = ExEventHandlerItem(v, self, key=k)
+            if isinstance(v, (JsValue, JsEvent)):
+                item = v.get_ex_item(self, k)
             else:
                 raise NotImplementedError(f"Unsupported type: {type(v)}")
+            self._custom_components |= item.get_custom_components()
             _v = BaseVar(
                 _var_name=item.serialize(),
                 _var_is_local=True,

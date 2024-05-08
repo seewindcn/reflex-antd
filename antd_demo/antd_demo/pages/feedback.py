@@ -26,15 +26,32 @@ class FeedbackDrawerState(State):
 
 class FeedbackModalState(State):
     open: bool = False
+    count: int = 0
+    initial_values: Dict[str, Any] = dict(
+        username='user-0',
+    )
 
     def change_open(self):
         self.open = True
 
     def on_ok(self):
+        self.before_open('on_ok')
         self.open = not self.open
 
     def on_cancel(self):
-        self.open = not self.open
+        self.open = False
+
+    def on_finish(self, values):
+        print('on_finish:', values)
+        self.on_cancel()
+
+    def after_open_change(self, open):
+        print('after_open_change:', open)
+
+    def before_open(self, key):
+        self.count += 1
+        print('before_open:', key, self.count)
+        self.initial_values['username'] = f'user-{self.count}'
 
 
 class FeedbackSyncModalState(State):
@@ -257,22 +274,84 @@ def antd_feedback_notification() -> rx.Component:
     )
 
 
-@rx.memo
+@helper.stateful
+def _stateful_test() -> rx.Component:
+    return rx.button('okkkkkkkkkk')
+
+
+def _modal_form1() -> rx.Component:
+    from .entry import entry as antd_entry
+    return rx.flex(
+        general.button(
+            'modal +form',
+            on_click=entry.confirm_form(
+                *antd_entry.form1_items(submit=False),
+                confirm_config=dict(
+                    title='modal + form',
+                    icon=general.icon('ExclamationCircleFilled'),
+                    before_open=helper.js_event(
+                        FeedbackModalState.before_open,
+                        js="""(e) => {
+                        let key= 1;
+                        %(name)s(key);
+                        }""",
+                        fmt=True,
+                        event_trigger=lambda v: [v],
+                    ),
+                ),
+                form_id='myForm',
+                on_finish=helper.js_event(FeedbackModalState.on_finish),
+                initial_values=FeedbackModalState.initial_values,
+            ),
+        )
+    )
+
+
+def _modal_form2() -> rx.Component:
+    from .entry import entry as antd_entry
+    return rx.flex(
+        entry.modal_form(
+            *antd_entry.form1_items(submit=False),
+            modal_config=dict(
+                open=FeedbackModalState.open,
+                on_cancel=FeedbackModalState.on_cancel,
+                mask_closable=False,
+                title='modal + form2',
+                icon=general.icon('ExclamationCircleFilled'),
+                before_open=helper.js_event(
+                    FeedbackModalState.before_open,
+                    js="""(e) => {
+                let key= 1;
+                %(name)s(key);
+                }""",
+                    fmt=True,
+                    event_trigger=lambda v: [v],
+                ),
+            ),
+            form_id='myForm2',
+            on_finish=helper.js_event(FeedbackModalState.on_finish),
+            initial_values=FeedbackModalState.initial_values,
+        ),
+        rx.button('open-modal2', on_click=FeedbackModalState.on_ok)
+    )
+
+
+@helper.stateful
 def antd_feedback_modal() -> rx.Component:
     return rx.flex(
         rx.vstack(
             rx.text("基础弹框。"),
-            general.button(
-                "Open Modal",
-                on_click=FeedbackModalState.change_open
-            ),
+            # general.button(
+            #     "Open Modal",
+            #     on_click=FeedbackModalState.change_open
+            # ),
             feedback.modal(
                 rx.box(
                     rx.el.p('Data disk type: MongoDB'),
                     rx.el.p('Database version: 3.4'),
                 ),
                 title=rx.text("Basic Modal"),
-                open=FeedbackModalState.open,
+                # open=FeedbackModalState.open,
                 ok_type="default",
                 on_ok=FeedbackModalState.on_ok,
                 on_cancel=FeedbackModalState.on_cancel
@@ -291,13 +370,28 @@ def antd_feedback_modal() -> rx.Component:
                 on_ok=FeedbackSyncModalState.on_ok,
                 on_cancel=FeedbackSyncModalState.on_cancel
             ),
-
+            layout.divider(),
+            general.button(
+                "Open Modal by confirm",
+                on_click=feedback.confirm(
+                    config=dict(
+                        title='Do you want to delete these items?',
+                        icon=general.icon('ExclamationCircleFilled'),
+                        content='Some descriptions',
+                        on_ok=helper.js_event(FeedbackModalState.on_ok),
+                    ),
+                ),
+            ),
+            layout.divider(),
+            _modal_form1(),
+            layout.divider(),
+            _modal_form2(),
         ),
         width="100%",
     )
 
 
-@page('/feedback/feedback', 'feedback')
+@page('/demo/feedback', 'feedback')
 def feedback_page() -> rx.Component:
     return rx.box(
         display.tabs(

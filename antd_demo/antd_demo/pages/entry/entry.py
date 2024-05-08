@@ -211,170 +211,204 @@ class EntryFormState(State):
         self.componentDisabled = checked_value['target']['checked']
 
 
+def form1_items(submit) -> list:
+    return [
+        entry.form_item(
+            entry.input(),
+            name="username",
+            label="username",
+            rules=[{"required": True, "message": 'Please input your username!'}]
+        ),
+        entry.form_item(
+            entry.input(),
+            name="password",
+            label="password",
+            rules=[{"required": True, "message": 'Please input your password!'}]
+        ),
+        entry.form_item(
+            entry.checkbox(
+                "Remember me"
+            ),
+            name="remember",
+            value_prop_name="checked",
+            wrapper_col={"offset": 8, "span": 16},
+        ),
+        entry.form_item(
+            general.button("Submit", html_type="submit"),
+            wrapper_col={"offset": 8, "span": 16},
+        ) if submit else "",
+    ]
+
+
+def form1(submit=True) -> rx.Component:
+    return entry.form(
+        *form1_items(submit=submit),
+        form="myForm",
+        name="basic",
+        label_col={"span": 8},
+        style={"maxWidth": "600"},
+        initial_values={"remember": True},
+    )
+
+
+def form2_items() -> list:
+    return [
+        entry.form_item(
+            entry.radio_group(
+                entry.radio_button("Horizontal", value="horizontal"),
+                entry.radio_button("Vertical", value="vertical"),
+                entry.radio_button("Inline", value="inline"),
+                value=EntryFormState.formLayout
+            ),
+            label="Form Layout",
+            name="layout"
+        ),
+        entry.form_item(
+            entry.input(placeholder="input placeholder"),
+            label="Field A"
+        ),
+        entry.form_item(
+            entry.input(placeholder="input placeholder"),
+            label="Field B"
+        ),
+        entry.form_item(
+            entry.password(),
+            name="password",
+            label="password",
+            rules=[{"required": False, "message": 'Please input your password!'}]
+        ),
+        entry.form_item(
+            rx.button("Submit")
+        ),
+    ]
+
+
+def form2() -> rx.Component:
+    return entry.form(
+        *form2_items(),
+        on_values_change=EntryFormState.on_values_change,
+        initial_values={"layout": EntryFormState.formLayout},
+        layout=EntryFormState.formLayout
+    )
+
+
+def form3() -> rx.Component:
+    return rx.vstack(
+        rx.text("设置表单组件禁用，仅对 antd 组件有效。"),
+        entry.checkbox(
+            "Form disabled",
+            checked=EntryFormState.componentDisabled,
+            on_change=EntryFormState.on_change
+        ),
+        entry.form(
+            entry.form_item(
+                entry.checkbox("Checkbox"),
+                label="Checkbox",
+                name="disabled",
+                valuePropName="checked",
+            ),
+            entry.form_item(
+                entry.radio_group(
+                    entry.radio("Apple", value="apple"),
+                    entry.radio("Pear", value="pear"),
+                ),
+                label="Radio"
+            ),
+            entry.form_item(
+                entry.input(),
+                label="Input"
+            ),
+            entry.form_item(
+                entry.select(
+                    options=[
+                        {"value": "http://", "label": "http://"},
+                        {"value": "https://", "label": "https://"}
+                    ]
+                ),
+                label="Select"
+            ),
+            entry.form_item(
+                entry.tree_select(
+                    tree_data=[
+                        {"title": "Light", "value": "Light", "children": [{"value": "Bamboo", "label": "Bamboo"}]},
+                    ]
+                ),
+                label="TreeSelect"
+            ),
+            entry.form_item(
+                entry.cascader(
+                    options=[
+                        {"value": "zhejiang", "label": "Zhejiang",
+                         "children": [{"value": "hangzhou", "label": "hangzhou"}]}
+                    ]
+                ),
+                label="Cascader"
+            ),
+            entry.form_item(
+                entry.date_picker(),
+                label="DatePicker"
+            ),
+            entry.form_item(
+                entry.range_picker(),
+                label="RangePicker"
+            ),
+            entry.form_item(
+                entry.input_number(),
+                label="InputNumber"
+            ),
+            entry.form_item(
+                entry.text_area(),
+                label="TextArea"
+            ),
+            entry.form_item(
+                entry.switch(),
+                label="Switch",
+                value_prop_name="checked"
+            ),
+            entry.form_item(
+                entry.upload(
+                    general.button(
+                        general.icon("PlusOutlined"),
+                        rx.text("upload"),
+                    ),
+                    action="/upload.do",
+                    list_type="picture-card",
+                ),
+                label="Upload",
+                value_prop_name="fileList"
+            ),
+            entry.form_item(
+                general.button("Button"),
+                label="Button",
+            ),
+            entry.form_item(
+                entry.slider(),
+                label="Slider",
+            ),
+            entry.form_item(
+                entry.color_picker(),
+                label="color_picker",
+            ),
+            layout="horizontal",
+            disabled=EntryFormState.componentDisabled,
+            style={"maxWidth": 600}
+        ),
+    )
+
+
 @rx.memo
 def antd_entry_form() -> rx.Component:
     return rx.vstack(
         rx.vstack(
-            rx.text("基本的表单数据域控制展示，包含布局、初始化、验证、提交。"),
-            entry.form(
-                entry.form_item(
-                    entry.input(),
-                    name="username",
-                    label="username",
-                    rules=[{"required": True, "message": 'Please input your username!'}]
-                ),
-                entry.form_item(
-                    entry.password(),
-                    name="password",
-                    label="password",
-                    rules=[{"required": True, "message": 'Please input your password!'}]
-                ),
-                entry.form_item(
-                    entry.checkbox(
-                        "Remember me"
-                    ),
-                    name="remember",
-                    value_prop_name="checked",
-                    wrapper_col={"offset": 8, "span": 16},
-                ),
-                entry.form_item(
-                    general.button("Submit", html_type="submit"),
-                    wrapper_col={"offset": 8, "span": 16},
-                ),
-                name="basic",
-                label_col={"span": 8},
-                style={"maxWidth": "600"},
-                initial_values={"remember": True},
-
+            rx.vstack(
+                rx.text("基本的表单数据域控制展示，包含布局、初始化、验证、提交。"),
+                form1(),
             ),
-            rx.text("表单有三种布局。"),
-            entry.form(
-                entry.form_item(
-                    entry.radio_group(
-                        entry.radio_button("Horizontal", value="horizontal"),
-                        entry.radio_button("Vertical", value="vertical"),
-                        entry.radio_button("Inline", value="inline"),
-                        value=EntryFormState.formLayout
-                    ),
-                    label="Form Layout",
-                    name="layout"
-                ),
-                entry.form_item(
-                    entry.input(placeholder="input placeholder"),
-                    label="Field A"
-                ),
-                entry.form_item(
-                    entry.input(placeholder="input placeholder"),
-                    label="Field B"
-                ),
-                entry.form_item(
-                    rx.button("Submit")
-                ),
-                on_values_change=EntryFormState.on_values_change,
-                initial_values={"layout": EntryFormState.formLayout},
-                layout=EntryFormState.formLayout
+            rx.vstack(
+                rx.text("表单有三种布局。"),
+                form2(),
             ),
-            rx.text("设置表单组件禁用，仅对 antd 组件有效。"),
-            entry.checkbox(
-                "Form disabled",
-                checked=EntryFormState.componentDisabled,
-                on_change=EntryFormState.on_change
-            ),
-            entry.form(
-                entry.form_item(
-                    entry.checkbox("Checkbox"),
-                    label="Checkbox",
-                    name="disabled",
-                    valuePropName="checked",
-                ),
-                entry.form_item(
-                    entry.radio_group(
-                        entry.radio("Apple", value="apple"),
-                        entry.radio("Pear", value="pear"),
-                    ),
-                    label="Radio"
-                ),
-                entry.form_item(
-                    entry.input(),
-                    label="Input"
-                ),
-                entry.form_item(
-                    entry.select(
-                        options=[
-                            {"value": "http://", "label": "http://"},
-                            {"value": "https://", "label": "https://"}
-                        ]
-                    ),
-                    label="Select"
-                ),
-                entry.form_item(
-                    entry.tree_select(
-                        tree_data=[
-                            {"title": "Light", "value": "Light", "children": [{"value": "Bamboo", "label": "Bamboo"}]},
-                        ]
-                    ),
-                    label="TreeSelect"
-                ),
-                entry.form_item(
-                    entry.cascader(
-                        options=[
-                            {"value": "zhejiang", "label": "Zhejiang",
-                             "children": [{"value": "hangzhou", "label": "hangzhou"}]}
-                        ]
-                    ),
-                    label="Cascader"
-                ),
-                entry.form_item(
-                    entry.date_picker(),
-                    label="DatePicker"
-                ),
-                entry.form_item(
-                    entry.range_picker(),
-                    label="RangePicker"
-                ),
-                entry.form_item(
-                    entry.input_number(),
-                    label="InputNumber"
-                ),
-                entry.form_item(
-                    entry.text_area(),
-                    label="TextArea"
-                ),
-                entry.form_item(
-                    entry.switch(),
-                    label="Switch",
-                    value_prop_name="checked"
-                ),
-                entry.form_item(
-                    entry.upload(
-                        general.button(
-                            general.icon("PlusOutlined"),
-                            rx.text("upload"),
-                        ),
-                        action="/upload.do",
-                        list_type="picture-card",
-                    ),
-                    label="Upload",
-                    value_prop_name="fileList"
-                ),
-                entry.form_item(
-                    general.button("Button"),
-                    label="Button",
-                ),
-                entry.form_item(
-                    entry.slider(),
-                    label="Slider",
-                ),
-                entry.form_item(
-                    entry.color_picker(),
-                    label="color_picker",
-                ),
-
-                layout="horizontal",
-                disabled=EntryFormState.componentDisabled,
-                style={"maxWidth": 600}
-            )
-
+            form3(),
         ),
         width="100%",
     )
@@ -462,7 +496,7 @@ def antd_entry_inputnumber() -> rx.Component:
     )
 
 
-@page('/entry/entry', 'entry')
+@page('/demo/entry', 'entry')
 def entry_page() -> rx.Component:
     return rx.box(
         display.tabs(

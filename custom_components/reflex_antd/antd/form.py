@@ -1,8 +1,9 @@
+import uuid
 from typing import Optional, Union, Dict, Any, List
 from reflex import Var, Component
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue, ReactNode
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode, js_value
 from ..constant import AlignType, DirectionType, SizeType, VariantType
 
 
@@ -12,6 +13,7 @@ class Form(AntdComponent):
     colon: Optional[Var[bool]]
     disabled: Optional[Var[bool]]
     fields: Optional[Var[ContainVar]]
+    form: Optional[Var[str]]
     initial_values: Optional[Var[Dict]]
     label_align: Optional[Var[AlignType]]
     label_wrap: Optional[Var[bool]]
@@ -26,6 +28,17 @@ class Form(AntdComponent):
     validate_trigger: Optional[Var[Union[str, List[str]]]]
     variant: Optional[Var[VariantType]]
     wrapper_col: Optional[Var[Dict]]
+
+    @classmethod
+    def create(cls, *children, **props) -> Component:
+        if 'form' in props and isinstance(props['form'], str):
+            props['form'] = Var.create_safe(f'{props["form"]}', _var_is_local=False)
+        rs = super().create(*children, **props)
+        return rs
+
+    def _get_hooks(self) -> str | None:
+        if hasattr(self, 'form') and self.form is not None:
+            return f"const [{str(self.form).strip('{}')}] = Form.useForm();"
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
@@ -99,3 +112,48 @@ form = Form.create
 form_item = FormItem.create
 form_list = FormList.create
 form_provider = FormProvider.create
+
+
+def _modal_form(modal_type: str, *children, modal_config=None, form_id: str = None, **props) -> JsValue | Component:
+    from . import modal
+    if form_id is None:
+        form_id = f'form_{uuid.uuid4().hex}'
+    props.update(
+        form=form_id,
+        preserve=False,
+    )
+    f = form(*children, **props)
+
+    modal_config['on_ok'] = js_value(f"""() => {{
+        return new Promise((resolve, reject) => {{
+    {form_id}
+      .validateFields({{
+        validateOnly: false,
+      }})
+      .then(() => {{
+        {form_id}.submit();
+      resolve()}})
+      .catch(() => {{
+      reject()}});
+      }});//if catch will close the form //.catch(() => console.log('Oops errors!'));
+      }}
+    """)
+    op = getattr(modal, modal_type)
+    if modal_type == 'confirm':
+        modal_config['content'] = f
+        return op(config=modal_config)
+    else:
+        modal_config['after_open_change'] = js_value(f"""(open) => {{{form_id}.resetFields()}}""")
+        return op(
+            f,
+            **modal_config)
+
+
+def modal_form(*children, modal_config=None, form_id: str = None, **props) -> Component:
+    return _modal_form('modal',
+                       *children, modal_config=modal_config, form_id=form_id, **props)
+
+
+def confirm_form(*children, confirm_config=None, form_id: str = None, **props) -> JsValue:
+    return _modal_form('confirm',
+                       *children, modal_config=confirm_config, form_id=form_id, **props)

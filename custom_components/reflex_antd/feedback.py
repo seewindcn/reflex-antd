@@ -7,5 +7,5 @@ from .antd.alert import alert, alert_error_boundary  # noqa
 from .antd.drawer import drawer  # noqa
 from .antd.message import message, message_holder  # noqa
 from .antd.notification import notification  # noqa
-from .antd.modal import modal  # noqa
+from .antd.modal import modal, confirm  # noqa
 from .antd.popconfirm import popconfirm  # noqa

@@ -51,7 +51,7 @@ class Search(Input):
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
         _triggers.update({
-            'on_search': lambda value, event, info: [value, event, info],
+            'on_search': lambda value, event, info: [value],
         })
         return _triggers
 
