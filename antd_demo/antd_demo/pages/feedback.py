@@ -275,8 +275,8 @@ def antd_feedback_notification() -> rx.Component:
 
 
 @helper.stateful
-def _stateful_test() -> rx.Component:
-    return rx.button('okkkkkkkkkk')
+def stateful_test() -> rx.Component:
+    return rx.button('okkkkkkkkkk', id='ccccccc')
 
 
 def _modal_form1() -> rx.Component:
@@ -307,6 +307,7 @@ def _modal_form1() -> rx.Component:
     )
 
 
+@helper.stateful
 def _modal_form2() -> rx.Component:
     from .entry import entry as antd_entry
     return rx.flex(
@@ -336,7 +337,7 @@ def _modal_form2() -> rx.Component:
     )
 
 
-@helper.stateful
+@rx.memo
 def antd_feedback_modal() -> rx.Component:
     return rx.flex(
         rx.vstack(
@@ -406,4 +407,5 @@ def feedback_page() -> rx.Component:
             ]),
             on_change=FeedbackBaseState.set_active_key,
         ),
+        id='abcde',
     )

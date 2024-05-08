@@ -42,8 +42,9 @@ def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:
                 _com._memoization_mode = _com._memoization_mode.__class__()
                 _com._memoization_mode.disposition = MemoizationDisposition.ALWAYS
                 # _com._memoization_mode.recursive = False
-            _sc = StatefulComponent.create(_com)
-            return _sc if _sc is not None else _com
+            # _sc = StatefulComponent.create(_com)
+            # return _sc if _sc is not None else _com
+            return _com
         return _wrap
 
     if hd is None:
