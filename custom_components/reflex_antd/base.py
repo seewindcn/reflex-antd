@@ -335,7 +335,7 @@ class JsValue:
         return item
 
     def serialize(self) -> str:
-        return self.value
+        return f"({self.value})"
 
     def get_imports(self) -> imports.ImportDict:
         return {}
@@ -378,8 +378,8 @@ class JsFunctionValue(JsValue):
         else:
             raise TypeError(self._value)
         sep_1, sep_2 = ('{{', '}}') if not is_component else ('(', ')')
-        return f"""({','.join(self._args.args)}) => 
-        {sep_1} {v} {sep_2} """
+        return f"""(({','.join(self._args.args)}) => 
+        {sep_1} {v} {sep_2} )"""
 
     def get_imports(self) -> imports.ImportDict:
         if version <= '000.004.006':
