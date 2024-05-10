@@ -101,6 +101,9 @@ class ConfigProvider(AntdComponent):
         _imports.setdefault("/utils/theme.js", []).append(
             imports.ImportVar(tag="theme", is_default=True),
         )
+        _imports.setdefault("@ant-design/cssinjs", []).append(
+            imports.ImportVar(tag="Theme", alias='antdTheme'),
+        )
         return _imports
 
     @staticmethod

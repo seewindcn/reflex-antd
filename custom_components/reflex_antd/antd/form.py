@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional, Union, Dict, Any, List
 from reflex import Var, Component
-from reflex.constants import EventTriggers
+from reflex.constants import EventTriggers, MemoizationMode, MemoizationDisposition
 
 from ..base import AntdComponent, ContainVar, JsValue, ReactNode, js_value
 from ..constant import AlignType, DirectionType, SizeType, VariantType
@@ -34,6 +34,10 @@ class Form(AntdComponent):
         if 'form' in props and isinstance(props['form'], str):
             props['form'] = Var.create_safe(f'{props["form"]}', _var_is_local=False)
         rs = super().create(*children, **props)
+        # form and form.item can not split, if split some components like select don't work;
+        rs._memoization_mode = MemoizationMode()
+        rs._memoization_mode.disposition = MemoizationDisposition.NEVER
+        rs._memoization_mode.recursive = False
         return rs
 
     def _get_hooks(self) -> str | None:
@@ -124,6 +128,8 @@ def _modal_form(modal_type: str, *children, modal_config=None, form_id: str = No
     )
     f = form(*children, **props)
 
+    modal_config = modal_config or {}
+    modal_config.update(destroy_on_close=True)
     modal_config['on_ok'] = js_value(f"""() => {{
         return new Promise((resolve, reject) => {{
     {form_id}
@@ -135,7 +141,7 @@ def _modal_form(modal_type: str, *children, modal_config=None, form_id: str = No
       resolve()}})
       .catch(() => {{
       reject()}});
-      }});//if catch will close the form //.catch(() => console.log('Oops errors!'));
+      }});//if catch, modal will close the form //.catch(() => console.log('Oops errors!'));
       }}
     """)
     op = getattr(modal, modal_type)
@@ -144,9 +150,11 @@ def _modal_form(modal_type: str, *children, modal_config=None, form_id: str = No
         return op(config=modal_config)
     else:
         modal_config['after_open_change'] = js_value(f"""(open) => {{{form_id}.resetFields()}}""")
-        return op(
+        modal = op(
             f,
+            # on_open=JsValue(f'{form_id}.resetFields()'),
             **modal_config)
+        return modal
 
 
 def modal_form(*children, modal_config=None, form_id: str = None, **props) -> Component:

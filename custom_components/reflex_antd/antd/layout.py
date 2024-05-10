@@ -4,7 +4,7 @@ from reflex import Component, Var
 from reflex.utils import imports
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, AntdSubComponent, ReactNode, ContainVar
+from ..base import AntdComponent, ReactNode, ContainVar
 from ..constant import BreakpointType, ThemeType
 
 

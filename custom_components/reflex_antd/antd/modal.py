@@ -7,6 +7,8 @@ from reflex.utils import imports
 from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, FakeComponentMixin
 from ..constant import TypeType
 
+from . import helper
+
 
 class Modal(AntdComponent):
     tag = 'Modal'
@@ -35,6 +37,15 @@ class Modal(AntdComponent):
     width: Optional[Var[Union[str, int]]]
     wrapClassName: Optional[Var[str]]
     zIndex: Optional[Var[int]]
+
+    def _get_hooks(self) -> str | None:
+        _hooks = []
+        # if self.open is not None and 'on_open' in self.event_triggers:
+        #     _hooks.append(helper.hook_state(
+        #         state_field=self.open,
+        #         on_update=f'{str(self.event_triggers["on_open"])}()',
+        #     ))
+        return '\n'.join(_hooks) if _hooks else None
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

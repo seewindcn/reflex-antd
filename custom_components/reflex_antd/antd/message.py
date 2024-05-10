@@ -8,6 +8,7 @@ from reflex.vars import BaseVar
 
 from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, version
 from ..constant import MessageType
+from . import helper
 
 
 class Message(JsValue):
@@ -86,14 +87,13 @@ class Message(JsValue):
             )
         others = []
         if self.config_item:
+            state = self.config_item.serialize()
             others.extend([
                 *self.config_item.get_hooks(),
-                """useEffect(() => {
-    if (%(state)s === null) {messageApi.destroy(); return;}
-    %(name)s(%(state)s);
-}, [%(state)s]); """ % dict(
-                    state=self.config_item.serialize(),
-                    name=self.get_open_message(),
+                helper.hook_state(
+                    state_field=state,
+                    on_update='%(name)s(%(state)s)' % dict(name=self.get_open_message(), state=state),
+                    on_null='messageApi.destroy()',
                 ),
             ])
 

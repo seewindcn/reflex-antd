@@ -3,7 +3,7 @@ from typing import Optional, Union
 from reflex import Component, Var
 from reflex.utils import imports
 
-from ..base import AntdComponent, AntdSubComponent
+from ..base import AntdComponent
 from ..constant import OrientationType, DirectionType
 
 

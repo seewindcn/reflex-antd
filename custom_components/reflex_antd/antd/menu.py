@@ -1,10 +1,9 @@
 from typing import Optional, Union, Type, Dict, List, Any, Iterator
-from reflex.base import pydantic
 from reflex import Component, Var, EventChain, Base
 from reflex.utils import imports
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, AntdSubComponent, ContainVar, ReactNode
+from ..base import AntdComponent, ContainVar, ReactNode, pydantic
 from ..constant import ThemeType, DirectionType, TriggerType
 
 

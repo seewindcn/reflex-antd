@@ -633,7 +633,28 @@ class VarDataMixin:
         yield from [v]
 
 
-class AntdBaseMixin:
+class AntdBaseComponent(Component):
+    _custom_components: Set[CustomComponent] = pydantic.PrivateAttr(default_factory=set)
+
+    def __init__(self, *args, **kwargs):
+        contains = {}
+        exs = {}
+        kw = {}
+        for k, v in kwargs.items():
+            if isinstance(v, ContainVar):
+                contains[k] = v
+            elif isinstance(v, (JsValue, JsEvent)):
+                exs[k] = v
+            else:
+                kw[k] = v
+        # super().__init__(*args, **kw)
+        try:
+            super().__init__(*args, **kw)
+        except Exception as err:
+            print(f"class<{self}>, args={args}, kw={kw}, error: {err}")
+            raise
+        self._init_contains(contains, exs)
+
     def _get_all_custom_components(
             self, seen: set[str] | None = None
     ) -> Set[CustomComponent]:
@@ -729,10 +750,11 @@ class AntdBaseMixin:
             else:
                 raise NotImplementedError(f"Unsupported type: {type(v)}")
             self._custom_components |= item.get_custom_components()
-            _v = BaseVar(
+            _v = ExVar(
                 _var_name=item.serialize(),
                 _var_is_local=True,
                 _var_data=item.get_var_data(),
+                _var_value=v,
             )
             if k in event_keys:
                 self.event_triggers[k] = _v
@@ -740,12 +762,9 @@ class AntdBaseMixin:
                 setattr(self, k, _v)
 
 
-class AntdComponent(AntdBaseMixin, Component):
-    """A component that wraps a Chakra component."""
-
+class AntdComponent(AntdBaseComponent):
+    """A component that wraps an Antd component."""
     library = "antd"
-
-    _custom_components: Set[CustomComponent] = pydantic.PrivateAttr(default_factory=set)
 
     @staticmethod
     @lru_cache(maxsize=None)
@@ -755,27 +774,8 @@ class AntdComponent(AntdBaseMixin, Component):
             (40, "AntdProvider"): _config_provider if _config_provider is not None else config_provider(),
         }
 
-    def __init__(self, *args, **kwargs):
-        contains = {}
-        exs = {}
-        kw = {}
-        for k, v in kwargs.items():
-            if isinstance(v, ContainVar):
-                contains[k] = v
-            elif isinstance(v, (JsValue, JsEvent)):
-                exs[k] = v
-            else:
-                kw[k] = v
-        # super().__init__(*args, **kw)
-        try:
-            super().__init__(*args, **kw)
-        except Exception as err:
-            print(f"class<{self}>, args={args}, kw={kw}, error: {err}")
-            raise
-        self._init_contains(contains, exs)
 
-
-class AntdSubComponent(AntdBaseMixin, Component):
+class AntdSubComponent(AntdBaseComponent, Component):
     base_tag: str = None
 
     def _get_imports(self) -> imports.ImportDict:
@@ -822,6 +822,15 @@ def patch_all():
         return var_datas
 
     vars._extract_var_data = _my_extract_var_data
+
+    def _my_get_memoized_event_triggers(
+            cls,
+            component: Component,
+    ) -> dict[str, tuple[Var, str]]:
+        """ fix: some js function can not memo """
+        pass
+
+    # StatefulComponent._get_memoized_event_triggers = classmethod(_my_get_memoized_event_triggers)
 
 
 ReactNode = Union[str, Component]
