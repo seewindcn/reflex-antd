@@ -1,4 +1,4 @@
-from typing import Iterable, Callable, Dict
+from typing import Iterable, Callable, Dict, Type
 from types import ModuleType
 from typing_extensions import Self
 import importlib
@@ -42,6 +42,9 @@ class Route(Base):
     component: Callable[[], rx.Component]
 
     on_load: EventHandler | EventSpec | list[EventHandler | EventSpec] | None
+    sub_on_load: EventHandler | EventSpec | list[EventHandler | EventSpec] | None
+
+    state: Type[rx.State] | None = None
 
     def register(self) -> Self:
         routes[self.path] = self
@@ -76,6 +79,7 @@ def page(path: str, group: str = 'other',
          on_load: (
                  EventHandler | EventSpec | list[EventHandler | EventSpec] | None
          ) = None,
+         state: Type[rx.State] = None,
          ) -> Callable:
     props = props or {}
 
@@ -106,9 +110,15 @@ def page(path: str, group: str = 'other',
                 **props,
             )
 
+        from .state import GlobalState
+
         r = Route(group=group, path=path,
                   icon=icon, title=title,
-                  component=wrapper, on_load=on_load).register()
+                  component=wrapper,
+                  on_load=GlobalState.on_page_load,
+                  sub_on_load=on_load,
+                  state=state,
+                  ).register()
         return r
 
     return _webpage

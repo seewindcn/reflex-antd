@@ -78,13 +78,19 @@ def navbar() -> rx.Component:
     )
 
 
+def _sub_item(i: dict) -> rx.Component:
+    b = helper.container(
+        dict(title=rx.link(i['title'], href=i['href'])),
+    )
+    return b
+
+
 def subnav() -> rx.Component:
-    return navigation.breadcrumb(
-        items=helper.contain([
-            dict(title=rx.link('Home', href='/')),
-            dict(title=rx.link('Level1', href='/general')),
-            dict(title=rx.link('Level2')),
-        ]),
+    return rx.hstack(
+        navigation.breadcrumb(
+            items=helper.js_value(rx.foreach(GlobalState.subnav_items, _sub_item)),
+        ),
+        height='22px',
     )
 
 
