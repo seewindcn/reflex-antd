@@ -13,7 +13,7 @@ import reflex as rx
 from reflex import Component, Var, State, Base
 from reflex.base import pydantic
 from reflex.components.component import BaseComponent, CustomComponent, StatefulComponent
-from reflex.constants import Hooks, Reflex, MemoizationDisposition
+from reflex.constants import Hooks, Reflex, MemoizationDisposition, MemoizationMode
 from reflex.utils import imports, format
 from reflex.vars import BaseVar, VarData
 from reflex.event import EventHandler, EventSpec, EventChain
@@ -29,6 +29,9 @@ template_path = path.join(my_path, '.templates')
 
 APP_ROUTER = False
 RE_KEY_IDX = re.compile(r'\.\d+\.')
+
+memo_never = MemoizationMode().set(disposition=MemoizationDisposition.NEVER)
+memo_never_no_recursive = MemoizationMode().set(disposition=MemoizationDisposition.NEVER, recursive=False)
 
 
 def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:

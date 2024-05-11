@@ -1,9 +1,8 @@
 import uuid
 from typing import Optional, Union, Dict, Any, List
 from reflex import Var, Component
-from reflex.constants import EventTriggers, MemoizationMode, MemoizationDisposition
 
-from ..base import AntdComponent, ContainVar, JsValue, ReactNode, js_value
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode, js_value, memo_never_no_recursive
 from ..constant import AlignType, DirectionType, SizeType, VariantType
 
 
@@ -29,15 +28,14 @@ class Form(AntdComponent):
     variant: Optional[Var[VariantType]]
     wrapper_col: Optional[Var[Dict]]
 
+    # form and form.item can not split, if split some components like select don't work;
+    _memoization_mode = memo_never_no_recursive
+
     @classmethod
     def create(cls, *children, **props) -> Component:
         if 'form' in props and isinstance(props['form'], str):
             props['form'] = Var.create_safe(f'{props["form"]}', _var_is_local=False)
         rs = super().create(*children, **props)
-        # form and form.item can not split, if split some components like select don't work;
-        rs._memoization_mode = MemoizationMode()
-        rs._memoization_mode.disposition = MemoizationDisposition.NEVER
-        rs._memoization_mode.recursive = False
         return rs
 
     def _get_hooks(self) -> str | None:

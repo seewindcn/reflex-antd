@@ -9,6 +9,7 @@ import reflex as rx
 from reflex import Component
 from reflex.base import Base
 from reflex.event import EventHandler, EventSpec
+from reflex.components.core.cond import color_mode_cond
 
 from reflex_antd import layout, general
 
@@ -78,12 +79,12 @@ def page(path: str, group: str = 'other',
          ) -> Callable:
     props = props or {}
 
-    # props.setdefault('height', '100%')
+    props.setdefault('min_height', '100vh')
 
     def _webpage(contents: Callable[[tuple, dict], rx.Component]) -> Route:
         def wrapper(*children, **c_props) -> rx.Component:
             from antd_demo.components import footer, navbar, header, subnav, content
-            color_bg_contain = 'white'
+            # color_bg_contain = 'white'
 
             return layout.layout(
                 header(),
@@ -93,12 +94,12 @@ def page(path: str, group: str = 'other',
                         subnav(),
                         content(
                             contents(*children, **c_props),
-                            background=color_bg_contain,
+                            # background=color_bg_contain,
                             min_height=280,
-                            margin=0,
-                            padding=24,
+                            background=color_mode_cond('#f5f5f5', '#000'),
+                            padding='24px 24px 24px 24px',
                         ),
-                        padding='0 24px 24px',
+                        # padding='0 24px 24px',
                     ),
                     footer(),
                 ),

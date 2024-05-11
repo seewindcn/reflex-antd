@@ -1,5 +1,6 @@
 import reflex as rx
-
+from reflex.constants import MemoizationDisposition
+from reflex.components.core.cond import color_mode_cond
 from reflex_antd import navigation, layout, general, display, helper
 
 from .state import GlobalState
@@ -13,14 +14,20 @@ def header() -> rx.Component:
                 dict(key='nav2', label='Nav 2'),
                 dict(key='nav3', label='Nav 3'),
             ],
-            theme='dark',
             mode='horizontal',
             flex=1,
             min_width=0,
         ),
 
+        layout.space(size='middle'),
+        rx.color_mode.switch(),
         align_items='center',
         display='flex',
+        padding='0 24px 16px 16px',
+        justify_content='space-between',
+        background=color_mode_cond('#fff', '#141414'),
+        border_bottom=color_mode_cond('1px solid #343A46', '1px solid #EBECF0'),
+
     )
 
 
@@ -32,7 +39,7 @@ def footer() -> rx.Component:
     )
 
 
-def nav_items() -> rx.Component:
+def nav_items() -> list:
     from .layout import routes, route_groups
     items = []
     for _, g in route_groups.items():
@@ -53,18 +60,21 @@ def nav_items() -> rx.Component:
 def navbar() -> rx.Component:
     return layout.sider(
         navigation.menu(
-            mode='inline',
             items=nav_items(),
             # selected_keys=['nav1-1'],
             open_keys=GlobalState.navbar_open_keys,
             selected_keys=GlobalState.navbar_selected_keys,
             on_open_change=GlobalState.set_navbar_open_keys,
             on_select=GlobalState.set_navbar_selected_keys,
+            mode='inline',
             height='100%',
-            class_name="border-2 border-gray-300"
+            border_right=0,
+            class_name="border-2 border-gray-300",
         ),
         width=200,
-        background='white',
+        # background='white',
+        border_right=color_mode_cond('1px solid #343A46', '1px solid #EBECF0'),
+        box_shadow='0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
     )
 
 
@@ -98,4 +108,3 @@ def content(*args, **kwargs) -> rx.Component:
         *args,
         **kwargs
     )
-

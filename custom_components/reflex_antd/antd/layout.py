@@ -4,7 +4,7 @@ from reflex import Component, Var
 from reflex.utils import imports
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ReactNode, ContainVar
+from ..base import AntdComponent, ReactNode, ContainVar, memo_never
 from ..constant import BreakpointType, ThemeType
 
 
@@ -30,13 +30,19 @@ class SubLayout(AntdComponent):
 class Header(SubLayout):
     tag = 'Layout.Header'
 
+    _memoization_mode = memo_never
+
 
 class Content(SubLayout):
     tag = 'Layout.Content'
 
+    _memoization_mode = memo_never
+
 
 class Footer(SubLayout):
     tag = 'Layout.Footer'
+
+    _memoization_mode = memo_never
 
 
 class Sider(SubLayout):
@@ -51,6 +57,8 @@ class Sider(SubLayout):
     theme: Optional[Var[ThemeType]]
     trigger: Optional[Var[ReactNode]]
     zero_width_trigger_style: Optional[Var[Union[Dict, ContainVar]]]
+
+    _memoization_mode = memo_never
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
