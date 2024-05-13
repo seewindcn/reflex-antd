@@ -128,6 +128,7 @@ def _modal_form(modal_type: str, *children, modal_config=None, form_id: str = No
         preserve=False,
     )
     f = form(*children, **props)
+    f._memoization_mode = memo_never_no_recursive
 
     modal_config = modal_config or {}
     modal_config.update(destroy_on_close=True)
