@@ -30,9 +30,6 @@ class Button(AntdComponent):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 button = Button.create

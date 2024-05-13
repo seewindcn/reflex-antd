@@ -5,7 +5,7 @@ from reflex.style import Style
 from typing import Optional, Union
 from reflex import Component, Var
 from reflex.utils import imports
-from ..base import AntdComponent, AntdSubComponent, ReactNode
+from ..base import AntdComponent, ReactNode
 from ..constant import OrientationType, DirectionType
 
 class Divider(AntdComponent):
@@ -27,9 +27,6 @@ class Divider(AntdComponent):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 divider = Divider.create

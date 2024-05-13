@@ -28,9 +28,6 @@ class Carousel(AntdComponent):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 carousel = Carousel.create

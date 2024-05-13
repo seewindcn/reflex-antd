@@ -29,9 +29,6 @@ class Upload(AntdComponent):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 upload = Upload.create

@@ -5,7 +5,7 @@ from reflex.style import Style
 from typing import Optional, Union
 from reflex import Component, Var
 from reflex.utils import imports
-from ..base import AntdComponent, AntdSubComponent
+from ..base import AntdComponent
 from ..constant import OrientationType, DirectionType
 
 class Flex(AntdComponent):
@@ -27,9 +27,6 @@ class Flex(AntdComponent):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 flex = Flex.create
