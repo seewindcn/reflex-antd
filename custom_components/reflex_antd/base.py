@@ -33,6 +33,8 @@ RE_KEY_IDX = re.compile(r'\.\d+\.')
 
 memo_never = MemoizationMode().set(disposition=MemoizationDisposition.NEVER)
 memo_never_no_recursive = MemoizationMode().set(disposition=MemoizationDisposition.NEVER, recursive=False)
+memo_always = MemoizationMode().set(disposition=MemoizationDisposition.ALWAYS)
+memo_always_no_recursive = MemoizationMode().set(disposition=MemoizationDisposition.ALWAYS, recursive=False)
 
 
 def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:
@@ -43,8 +45,7 @@ def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:
         def _wrap(*args, **kwargs):
             _com = _hd(*args, **kwargs)
             if forced:
-                _com._memoization_mode = _com._memoization_mode.__class__()
-                _com._memoization_mode.disposition = MemoizationDisposition.ALWAYS
+                _com._memoization_mode = memo_always
                 # _com._memoization_mode.recursive = False
             # _sc = StatefulComponent.create(_com)
             # return _sc if _sc is not None else _com

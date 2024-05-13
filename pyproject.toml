@@ -15,7 +15,9 @@ requires-python = ">=3.8"
 authors = [{ name = "seewind", email = "seewindcn@gmail.com" }]
 keywords = [
     "reflex",
-    "reflex-custom-components"]
+    "reflex-custom-components",
+    "ant-design", "antd",
+]
 
 dependencies = [
     "reflex>=0.4.2"

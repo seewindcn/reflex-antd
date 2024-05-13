@@ -94,8 +94,9 @@ def subnav() -> rx.Component:
     )
 
 
-def content(*args, **kwargs) -> rx.Component:
+def content(children, **kwargs) -> rx.Component:
     return layout.content(
+        children,
         general.float_group(
             general.float_button(
                 icon=general.icon('CommentOutlined'),
@@ -111,6 +112,5 @@ def content(*args, **kwargs) -> rx.Component:
             icon=general.icon('CustomerServiceOutlined'),
             close_icon=general.icon('CloseCircleOutlined'),
         ),
-        *args,
         **kwargs
     )

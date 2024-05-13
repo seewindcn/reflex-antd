@@ -72,6 +72,32 @@ route_groups: Dict[str, RouteGroup] = dict(
 )
 
 
+@rx.memo
+def layout1(children: rx.Component, min_height: str = '50vh', **kwargs) -> rx.Component:
+    from antd_demo.components import footer, navbar, header, subnav, content
+    # color_bg_contain = 'white'
+    return layout.layout(
+        header(),
+        layout.layout(
+            navbar(),
+            layout.layout(
+                subnav(),
+                content(
+                    children,
+                    # background=color_bg_contain,
+                    min_height=280,
+                    background=color_mode_cond('#f5f5f5', '#000'),
+                    padding='24px 24px 24px 24px',
+                ),
+                # padding='0 24px 24px',
+            ),
+            footer(),
+        ),
+        min_height=min_height,
+        **kwargs
+    )
+
+
 def page(path: str, group: str = 'other',
          icon: Component = None,
          title: str = "antd demo",
@@ -87,28 +113,8 @@ def page(path: str, group: str = 'other',
 
     def _webpage(contents: Callable[[tuple, dict], rx.Component]) -> Route:
         def wrapper(*children, **c_props) -> rx.Component:
-            from antd_demo.components import footer, navbar, header, subnav, content
-            # color_bg_contain = 'white'
-
-            return layout.layout(
-                header(),
-                layout.layout(
-                    navbar(),
-                    layout.layout(
-                        subnav(),
-                        content(
-                            contents(*children, **c_props),
-                            # background=color_bg_contain,
-                            min_height=280,
-                            background=color_mode_cond('#f5f5f5', '#000'),
-                            padding='24px 24px 24px 24px',
-                        ),
-                        # padding='0 24px 24px',
-                    ),
-                    footer(),
-                ),
-                **props,
-            )
+            child = contents(*children, **c_props)
+            return layout1(child, **props)
 
         from .state import GlobalState
 

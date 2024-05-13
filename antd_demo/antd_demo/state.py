@@ -1,4 +1,5 @@
 from typing import List, Optional, Type
+import inspect
 
 import reflex as rx
 
@@ -67,7 +68,11 @@ class GlobalState(MyBaseState):
             path = r.sub_on_load.state_full_name.split('.')
             bs = await self.get_base_state()
             ss = bs.get_substate(path)
-            await r.sub_on_load.fn(ss)
+
+            if inspect.iscoroutinefunction(r.sub_on_load.fn):
+                await r.sub_on_load.fn(ss)
+            else:
+                r.sub_on_load.fn(ss)
 
     def tooltip_click(self):
         """ https://babeljs.io/repl """

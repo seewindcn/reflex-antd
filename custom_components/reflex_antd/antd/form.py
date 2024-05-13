@@ -2,7 +2,8 @@ import uuid
 from typing import Optional, Union, Dict, Any, List
 from reflex import Var, Component
 
-from ..base import AntdComponent, ContainVar, JsValue, ReactNode, js_value, memo_never_no_recursive
+from ..base import (AntdComponent, ContainVar, JsValue, ReactNode, js_value,
+                    memo_never_no_recursive, memo_always_no_recursive)
 from ..constant import AlignType, DirectionType, SizeType, VariantType
 
 
@@ -35,8 +36,10 @@ class Form(AntdComponent):
     def create(cls, *children, **props) -> Component:
         if 'form' in props and isinstance(props['form'], str):
             props['form'] = Var.create_safe(f'{props["form"]}', _var_is_local=False)
-        rs = super().create(*children, **props)
-        return rs
+        comp = super().create(*children, **props)
+        if comp._get_all_hooks() or comp._get_all_hooks_internal():
+            comp._memoization_mode = memo_always_no_recursive
+        return comp
 
     def _get_hooks(self) -> str | None:
         if hasattr(self, 'form') and self.form is not None:
