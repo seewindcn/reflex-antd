@@ -119,6 +119,15 @@ class Message(JsValue):
 
 
 class MessageHolder(Bare):
+    """
+    Message.hook:
+        const [messageApi, contextHolder] = message.useMessage();
+
+    MessageHolder:
+        <>
+            {contextHolder}
+        </>
+     """
     msg: Optional[Message]
 
     @classmethod

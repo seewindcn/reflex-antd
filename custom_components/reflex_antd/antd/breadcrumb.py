@@ -1,5 +1,5 @@
 from typing import Optional, Union, Dict, Any
-from reflex import Var
+from reflex import Var, Component
 
 from ..base import AntdComponent, ContainVar, ReactNode
 
@@ -8,7 +8,7 @@ class Breadcrumb(AntdComponent):
     tag = "Breadcrumb"
 
     params: Optional[Var[dict]]
-    items: Optional[Var[Union[ContainVar, list]]]
+    items: Optional[Var[Union[ContainVar, list, Component]]]
     separator: Optional[Var[ReactNode]]
 
 

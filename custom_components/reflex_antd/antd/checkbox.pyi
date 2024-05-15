@@ -30,9 +30,6 @@ class Checkbox(AntdComponent):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 
@@ -58,9 +55,6 @@ class CheckboxGroup(AntdComponent):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 checkbox = Checkbox.create

@@ -13,7 +13,8 @@ import reflex as rx
 from reflex import Component, Var, State, Base
 from reflex.base import pydantic
 from reflex.components.component import BaseComponent, CustomComponent, StatefulComponent
-from reflex.constants import Hooks, Reflex, MemoizationDisposition
+from reflex.components.base.bare import Bare
+from reflex.constants import Hooks, Reflex, MemoizationDisposition, MemoizationMode
 from reflex.utils import imports, format
 from reflex.vars import BaseVar, VarData
 from reflex.event import EventHandler, EventSpec, EventChain
@@ -30,6 +31,11 @@ template_path = path.join(my_path, '.templates')
 APP_ROUTER = False
 RE_KEY_IDX = re.compile(r'\.\d+\.')
 
+memo_never = MemoizationMode().set(disposition=MemoizationDisposition.NEVER)
+memo_never_no_recursive = MemoizationMode().set(disposition=MemoizationDisposition.NEVER, recursive=False)
+memo_always = MemoizationMode().set(disposition=MemoizationDisposition.ALWAYS)
+memo_always_no_recursive = MemoizationMode().set(disposition=MemoizationDisposition.ALWAYS, recursive=False)
+
 
 def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:
     """ render a component into a function """
@@ -39,8 +45,7 @@ def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:
         def _wrap(*args, **kwargs):
             _com = _hd(*args, **kwargs)
             if forced:
-                _com._memoization_mode = _com._memoization_mode.__class__()
-                _com._memoization_mode.disposition = MemoizationDisposition.ALWAYS
+                _com._memoization_mode = memo_always
                 # _com._memoization_mode.recursive = False
             # _sc = StatefulComponent.create(_com)
             # return _sc if _sc is not None else _com
@@ -55,6 +60,26 @@ def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:
 
 def pretty_dumps(value: Any, indent=2) -> str:
     return format.json.dumps(value, ensure_ascii=False, default=format.serialize, indent=indent)
+
+
+def get_component_all_imports(com: Component) -> imports.ImportDict:
+    if version <= '000.004.006':
+        return {} if isinstance(com, str) else com.get_imports()
+    else:
+        return {} if isinstance(com, str) else com._get_all_imports()
+
+
+def get_component_hooks(com) -> Set[str] | Dict[str, None]:
+    if version <= '000.004.006':
+        return set() if isinstance(com, str) else com.get_hooks()
+    return set() if isinstance(com, str) \
+        else com._get_all_hooks_internal() | com._get_all_hooks()
+
+
+def get_component_custom_code(com: Component) -> Set[str]:
+    if version <= '000.004.006':
+        return com.get_custom_code() if isinstance(com, BaseComponent) else set()
+    return com._get_all_custom_code() if isinstance(com, BaseComponent) else set()
 
 
 class ExItem(ABC):
@@ -111,24 +136,16 @@ class ExComponentItemBase(ExItem):
         return str(self.item)
 
     def get_imports(self) -> imports.ImportDict:
-        if version <= '000.004.006':
-            return self.item.get_imports()
-        else:
-            return self.item._get_all_imports()
+        return get_component_all_imports(self.item)
 
     def get_hooks(self) -> Set[str] | Dict[str, None]:
-        if version <= '000.004.006':
-            return self.item.get_hooks_internal() | self.item.get_hooks()
-        else:
-            return self.item._get_all_hooks_internal() | self.item._get_all_hooks()
+        return get_component_hooks(self.item)
 
     def get_custom_components(self) -> set[CustomComponent]:
         return {self.item} if isinstance(self.item, CustomComponent) else set()
 
     def get_custom_code(self) -> set[str]:
-        if version <= '000.004.006':
-            return self.item.get_custom_code() if isinstance(self.item, BaseComponent) else set()
-        return self.item._get_all_custom_code() if isinstance(self.item, BaseComponent) else set()
+        return get_component_custom_code(self.item)
 
 
 class ExComponentItem(ExComponentItemBase):
@@ -273,16 +290,10 @@ class ExCallableItem(ExItem):
         return str(self.item())
 
     def get_imports(self) -> imports.ImportDict:
-        if version <= '000.004.006':
-            return self.item().get_imports()
-        else:
-            return self.item()._get_all_imports()
+        return get_component_all_imports(self.item())
 
-    def get_hooks(self) -> Set[str] |Dict[str, None]:
-        _item = self.item()
-        if version <= '000.004.006':
-            return _item.get_hooks_internal() | _item.get_hooks()
-        return _item._get_all_hooks_internal() | _item._get_all_hooks()
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
+        return get_component_hooks(self.item())
 
 
 class ExStateItem(ExItem):
@@ -320,9 +331,22 @@ class FakeComponentMixin:
 
 
 class JsValue:
-    value: Callable | str
+    """
+    Component: support rx.foreach...,
+      <Breadcrumb items={(state__global_state.subnav_items.map((i, index_de38f21f196b8746f2b4ca2b3fd6b46b) => (
+        {
+          "title": <RadixThemesLink asChild={true}>
+              <NextLink href={i["href"]} passHref={true}>
+              {i["title"]}
+              </NextLink>
+          </RadixThemesLink>
+        }
+          )))}
+      />
+    """
+    value: Callable | str | Component
 
-    def __init__(self, value: Union[str, Callable, Any] = None, **kwargs):
+    def __init__(self, value: Union[str, Callable, Component] = None, **kwargs):
         self.value = value
         self._init(**kwargs)
 
@@ -335,18 +359,16 @@ class JsValue:
         return item
 
     def serialize(self) -> str:
-        return f"({self.value})"
+        return f"({self.value if isinstance(self.value, str) else str(self.value).strip('{}')})"
 
     def get_imports(self) -> imports.ImportDict:
-        return {}
+        return get_component_all_imports(self.value)
 
     def get_state(self) -> str:
         return ''
 
     def get_hooks(self) -> Set[str] | Dict[str, None]:
-        if version <= '000.004.006':
-            return set()
-        return {}
+        return get_component_hooks(self.value)
 
     def get_var_data(self) -> VarData:
         return VarData(
@@ -356,7 +378,7 @@ class JsValue:
         )
 
     def get_custom_components(self) -> set[CustomComponent]:
-        return set()
+        return get_component_custom_code(self.value)
 
 
 class JsFunctionValue(JsValue):
@@ -382,22 +404,17 @@ class JsFunctionValue(JsValue):
         {sep_1} {v} {sep_2} )"""
 
     def get_imports(self) -> imports.ImportDict:
-        if version <= '000.004.006':
-            return {} if isinstance(self._value, str) else self._value.get_imports()
-        return {} if isinstance(self._value, str) else self._value._get_all_imports()
+        return get_component_all_imports(self._value)
 
     def get_hooks(self) -> Set[str] | Dict[str, None]:
-        if version <= '000.004.006':
-            return set() if isinstance(self._value, str) else self._value.get_hooks()
-        return set() if isinstance(self._value, str) \
-            else self._value._get_all_hooks_internal() | self._value._get_all_hooks()
+        return get_component_hooks(self._value)
 
     def get_custom_components(self) -> set[CustomComponent]:
         return set() if not isinstance(self._value, CustomComponent) else {self._value}
 
 
-def js_value(value: Union[str, Callable], **kwargs) -> JsValue:
-    if isinstance(value, str):
+def js_value(value: Union[str, Callable, Component], **kwargs) -> JsValue:
+    if isinstance(value, (str, Component)):
         return JsValue(value, **kwargs)
     if isinstance(value, Callable):
         return JsFunctionValue(value, **kwargs)
@@ -623,6 +640,23 @@ class ContainVar(ExVar):
 contain = ContainVar.create
 
 
+def container(data: Union[list, dict], name: str = '') -> rx.Component:
+    """ wrap contain to Component, use for:
+        .foreach:  rx.foreach(GlobalState.subnav_items, _sub_item)
+            GlobalState.subnav_items = [{"title": "home", "href": "/home"}, ]
+            def _sub_item(i: dict) -> rx.Component:
+                b = helper.container(
+                    dict(title=rx.link(i['title'], href=i['href']))
+                )
+                return b
+    """
+    d = contain(data)
+    b = Bare()
+    d.init(b, name)
+    b.contents = d
+    return b
+
+
 # no use
 class VarDataMixin:
     def __iter__(self):
@@ -801,21 +835,14 @@ def patch_all():
                                                constants.Templates.Dirs.JINJA_TEMPLATE]
 
     templates.DOCUMENT_ROOT = templates.get_template("web/pages/_document.js.jinja2")
-
     old_extract_var_data = vars._extract_var_data
+
     def _my_extract_var_data(value: Union[Iterable, Component]) -> list[VarData | None]:
         if isinstance(value, Component):
-            if version <= '000.004.006':
-                return [
-                    VarData(
-                        imports=value.get_imports(),
-                        hooks=set(value.get_hooks()),
-                    )
-                ]
             return [
                 VarData(
-                    imports=value._get_all_imports(),
-                    hooks=value._get_all_hooks_internal() | value._get_all_hooks(),
+                    imports=get_component_all_imports(value),
+                    hooks=get_component_hooks(value),
                 )
             ]
         var_datas = old_extract_var_data(value)

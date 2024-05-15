@@ -31,9 +31,6 @@ class FloatButton(AntdComponent):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 
@@ -59,9 +56,6 @@ class FloatGroup(FloatButton):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 
@@ -84,9 +78,6 @@ class FloatBackTop(FloatButton):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 float_button = FloatButton.create

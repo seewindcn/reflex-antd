@@ -31,9 +31,6 @@ class Segmented(AntdComponent):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 segmented = Segmented.create

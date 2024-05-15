@@ -7,7 +7,7 @@ from reflex import State, Var
 from reflex_antd import general, entry, display, helper, navigation
 
 from antd_demo.layout import page
-from antd_demo.state import GlobalState
+from antd_demo.state import GlobalState, MyBaseState
 
 
 def random_data(i) -> Dict[str, Any]:
@@ -32,7 +32,7 @@ _gender_filter = [
 ]
 
 
-class TableState(State):
+class TableState(MyBaseState):
     row_select_type = 'checkbox'  # checkbox | radio
     selected_row_keys: List[int] = []
     table_gender_filter = [
@@ -56,6 +56,15 @@ class TableState(State):
     @rx.var
     def selected_row_count(self) -> str:
         return str(len(self.selected_row_keys))
+
+    async def on_page_load(self):
+        g = await self.get_global_state()
+        g.update_subnav([('display', table2_page.path if '1' in self.current_path else table1_page.path),
+                         ('table', self.current_path)])
+        self.on_table_change(
+            pagination={}, filters={},
+            sorter=dict(column='key', field='key', order='descend'),
+        )
 
     @classmethod
     def get_columns(cls):
@@ -149,12 +158,6 @@ class TableState(State):
         ])
         return ex_columns
 
-    def on_load(self):
-        self.on_table_change(
-            pagination={}, filters={},
-            sorter=dict(column='key', field='key', order='descend'),
-        )
-
     def on_table_change(self, pagination, filters, sorter):
         print("on_table_change:", pagination, filters, sorter)
         self.page_current = int(pagination.get('current', self.page_current))
@@ -203,7 +206,7 @@ class TableState(State):
         print("on_page_change:", page, size)
 
 
-@page('/display/table1', 'display')
+@page('/display/table1', 'display', state=TableState)
 def table1_page() -> rx.Component:
     return rx.center(
         display.table(
@@ -213,8 +216,7 @@ def table1_page() -> rx.Component:
     )
 
 
-@page('/display/table2', 'display',
-      on_load=TableState.on_load)
+@page('/display/table2', 'display', state=TableState)
 def table2_page() -> rx.Component:
     return rx.center(
         rx.vstack(

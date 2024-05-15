@@ -31,9 +31,6 @@ class QRCode(AntdComponent):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 qrcode = QRCode.create

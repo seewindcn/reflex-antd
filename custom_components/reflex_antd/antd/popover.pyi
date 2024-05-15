@@ -29,9 +29,6 @@ class Popover(Tooltip):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 popover = Popover.create

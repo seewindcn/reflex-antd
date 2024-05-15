@@ -1,4 +1,4 @@
-from typing import Iterable, Callable, Dict
+from typing import Iterable, Callable, Dict, Type
 from types import ModuleType
 from typing_extensions import Self
 import importlib
@@ -9,6 +9,7 @@ import reflex as rx
 from reflex import Component
 from reflex.base import Base
 from reflex.event import EventHandler, EventSpec
+from reflex.components.core.cond import color_mode_cond
 
 from reflex_antd import layout, general
 
@@ -41,6 +42,9 @@ class Route(Base):
     component: Callable[[], rx.Component]
 
     on_load: EventHandler | EventSpec | list[EventHandler | EventSpec] | None
+    sub_on_load: EventHandler | EventSpec | list[EventHandler | EventSpec] | None
+
+    state: Type[rx.State] | None = None
 
     def register(self) -> Self:
         routes[self.path] = self
@@ -69,9 +73,9 @@ route_groups: Dict[str, RouteGroup] = dict(
 
 
 @rx.memo
-def layout1(children: rx.Var) -> rx.Component:
+def layout1(children: rx.Component, min_height: str = '50vh', **kwargs) -> rx.Component:
     from antd_demo.components import footer, navbar, header, subnav, content
-    color_bg_contain = 'white'
+    # color_bg_contain = 'white'
     return layout.layout(
         navbar(),
         layout.layout(
@@ -79,16 +83,18 @@ def layout1(children: rx.Var) -> rx.Component:
             layout.layout(
                 subnav(),
                 content(
-                    children=children,
-                    background=color_bg_contain,
+                    children,
+                    # background=color_bg_contain,
                     min_height=280,
-                    margin=0,
-                    padding=24,
+                    background=color_mode_cond('#f5f5f5', '#000'),
+                    padding='24px 24px 24px 24px',
                 ),
-                padding='0 24px 24px',
+                # padding='0 24px 24px',
             ),
             footer(),
         ),
+        min_height=min_height,
+        **kwargs
     )
 
 
@@ -99,19 +105,26 @@ def page(path: str, group: str = 'other',
          on_load: (
                  EventHandler | EventSpec | list[EventHandler | EventSpec] | None
          ) = None,
+         state: Type[rx.State] = None,
          ) -> Callable:
     layout_props = props or {}
 
-    # props.setdefault('height', '100%')
+    layout_props.setdefault('min_height', '100vh')
 
     def _webpage(contents: Callable[[tuple, dict], rx.Component]) -> Route:
         def wrapper(*children, **c_props) -> rx.Component:
             child = contents(*children, **c_props)
-            return layout1(child)
+            return layout1(child, **layout_props)
+
+        from .state import GlobalState
 
         r = Route(group=group, path=path,
                   icon=icon, title=title,
-                  component=wrapper, on_load=on_load).register()
+                  component=wrapper,
+                  on_load=GlobalState.on_page_load,
+                  sub_on_load=on_load,
+                  state=state,
+                  ).register()
         return r
 
     return _webpage

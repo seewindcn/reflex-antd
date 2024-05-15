@@ -8,8 +8,9 @@ from reflex import Component, Var
 from reflex.utils import imports
 from reflex.components.base.bare import Bare
 from reflex.vars import BaseVar
-from ..base import AntdComponent, AntdSubComponent, ContainVar, JsValue, ReactNode, ExStateItem
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, version
 from ..constant import MessageType
+from . import helper
 
 class Message(JsValue):
     is_global: bool
@@ -40,7 +41,7 @@ class Message(JsValue):
     def get_imports(self) -> imports.ImportDict:
         ...
 
-    def get_hooks(self) -> Set[str]:
+    def get_hooks(self) -> Set[str] | Dict[str, None]:
         ...
 
     def serialize(self) -> str:

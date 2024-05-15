@@ -30,9 +30,6 @@ class ColorPicker(AntdComponent):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 color_picker = ColorPicker.create

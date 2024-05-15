@@ -1,6 +1,7 @@
 # reflex-antd
 
 A Reflex custom component wrap [ant.design](https://ant.design/).
+pypi: [reflex-antd](https://pypi.org/pypi/reflex-antd/)
 
 ## Installation
 

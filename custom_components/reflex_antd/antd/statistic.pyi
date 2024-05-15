@@ -28,9 +28,6 @@ class StatisticBase(AntdComponent):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 
@@ -53,9 +50,6 @@ class Statistic(StatisticBase):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 
@@ -81,9 +75,6 @@ class StatisticCountdown(StatisticBase):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 statistic = Statistic.create

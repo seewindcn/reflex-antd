@@ -31,9 +31,6 @@ class TypographyBase(AntdComponent):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 
@@ -56,9 +53,6 @@ class TypographyText(TypographyBase):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 
@@ -81,9 +75,6 @@ class TypographyTitle(TypographyBase):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 
@@ -106,9 +97,6 @@ class TypographyParagraph(TypographyBase):
 
         Returns:
             The component.
-
-        Raises:
-            TypeError: If an invalid child is passed.
         """
         ...
 typography_text = TypographyText.create
