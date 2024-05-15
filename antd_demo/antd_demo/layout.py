@@ -59,13 +59,37 @@ class RouteGroup(Base):
 routes: Dict[str, Route] = OrderedDict()
 route_groups: Dict[str, RouteGroup] = dict(
     general=RouteGroup(name='general', icon=general.icon('UserOutlined'), path='/'),
-    layout=RouteGroup(name='layout', icon=general.icon('LaptopOutlined')),
-    navigation=RouteGroup(name='navigation', icon=general.icon('PicLeftOutlined')),
-    feedback=RouteGroup(name='feedback', icon=general.icon('PicLeftOutlined')),
+    layout=RouteGroup(name='layout', icon=general.icon('AlignCenterOutlined')),
+    navigation=RouteGroup(name='navigation', icon=general.icon('RadarChartOutlined')),
+    feedback=RouteGroup(name='feedback', icon=general.icon('MediumOutlined')),
     display=RouteGroup(name='display', icon=general.icon('PicLeftOutlined')),
     entry=RouteGroup(name='entry', icon=general.icon('LaptopOutlined')),
     other=RouteGroup(name='other', icon=general.icon('QuestionOutlined')),
 )
+
+
+@rx.memo
+def layout1(children: rx.Var) -> rx.Component:
+    from antd_demo.components import footer, navbar, header, subnav, content
+    color_bg_contain = 'white'
+    return layout.layout(
+        navbar(),
+        layout.layout(
+            header(),
+            layout.layout(
+                subnav(),
+                content(
+                    children=children,
+                    background=color_bg_contain,
+                    min_height=280,
+                    margin=0,
+                    padding=24,
+                ),
+                padding='0 24px 24px',
+            ),
+            footer(),
+        ),
+    )
 
 
 def page(path: str, group: str = 'other',
@@ -76,34 +100,14 @@ def page(path: str, group: str = 'other',
                  EventHandler | EventSpec | list[EventHandler | EventSpec] | None
          ) = None,
          ) -> Callable:
-    props = props or {}
+    layout_props = props or {}
 
     # props.setdefault('height', '100%')
 
     def _webpage(contents: Callable[[tuple, dict], rx.Component]) -> Route:
         def wrapper(*children, **c_props) -> rx.Component:
-            from antd_demo.components import footer, navbar, header, subnav, content
-            color_bg_contain = 'white'
-
-            return layout.layout(
-                header(),
-                layout.layout(
-                    navbar(),
-                    layout.layout(
-                        subnav(),
-                        content(
-                            contents(*children, **c_props),
-                            background=color_bg_contain,
-                            min_height=280,
-                            margin=0,
-                            padding=24,
-                        ),
-                        padding='0 24px 24px',
-                    ),
-                    footer(),
-                ),
-                **props,
-            )
+            child = contents(*children, **c_props)
+            return layout1(child)
 
         r = Route(group=group, path=path,
                   icon=icon, title=title,

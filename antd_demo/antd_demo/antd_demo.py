@@ -15,8 +15,8 @@ app = rx.App(
 
 # config antd
 default_config(config_provider(
-    # locale=Locale('en_US'),
-    locale=Locale(value='zh_CN'),
+    locale=Locale('en_US'),
+    # locale=Locale(value='zh_CN'),
     theme=theme(
         token={
             'colorPrimary': '#00B96B',

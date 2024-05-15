@@ -75,6 +75,7 @@ class DisplayState(State):
 
     def badge_random_count(self):
         self.badge_count = random.randint(1, 100)
+        return DisplayState.on_tag_close(f'badge_random_count:{self.badge_count}')
 
     def on_select_calendar(self, date, info):
         self.select_calendar = date

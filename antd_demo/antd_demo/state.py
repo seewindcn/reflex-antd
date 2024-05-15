@@ -6,11 +6,15 @@ from reflex_antd import general, helper
 
 
 class GlobalState(rx.State):
+    collapsed: bool = False
     navbar_open_keys: List[str]
     navbar_selected_keys: List[str]
 
     icon: rx.Component = general.icon('InsertRowAboveOutlined')
     tooltip: str = 'abc'
+
+    def collapsed_switch(self):
+        self.collapsed = not self.collapsed
 
     def tooltip_click(self):
         """ https://babeljs.io/repl """

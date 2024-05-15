@@ -7,6 +7,17 @@ from .state import GlobalState
 
 def header() -> rx.Component:
     return layout.header(
+        rx.cond(
+            GlobalState.collapsed,
+            general.button(
+                icon=general.icon('MenuUnfoldOutlined'),
+                on_click=GlobalState.collapsed_switch,
+            ),
+            general.button(
+                icon=general.icon('MenuFoldOutlined'),
+                on_click=GlobalState.collapsed_switch,
+            ),
+        ),
         navigation.menu(
             items=[
                 dict(key='nav1', label='Nav 1'),
@@ -63,6 +74,7 @@ def navbar() -> rx.Component:
             height='100%',
             class_name="border-2 border-gray-300"
         ),
+        collapsed=GlobalState.collapsed,
         width=200,
         background='white',
     )
@@ -78,7 +90,7 @@ def subnav() -> rx.Component:
     )
 
 
-def content(*args, **kwargs) -> rx.Component:
+def content(children=None, **kwargs) -> rx.Component:
     return layout.content(
         general.float_group(
             general.float_button(
@@ -95,7 +107,7 @@ def content(*args, **kwargs) -> rx.Component:
             icon=general.icon('CustomerServiceOutlined'),
             close_icon=general.icon('CloseCircleOutlined'),
         ),
-        *args,
+        children,
         **kwargs
     )
 
