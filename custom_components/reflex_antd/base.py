@@ -10,7 +10,7 @@ import inspect
 import re
 
 import reflex as rx
-from reflex import Component, Var, State, Base
+from reflex import Component, Var, State, Base, ImportVar
 from reflex.base import pydantic
 from reflex.components.component import BaseComponent, CustomComponent, StatefulComponent
 from reflex.components.base.bare import Bare
@@ -168,6 +168,7 @@ class JsEvent:
     hd: EventHandler
     # event_trigger use for custom trigger, must work with fmt=True
     event_trigger: Callable
+    _item: "ExEventHandlerItem" = None
 
     def __init__(self, hd: Any, js: str = '', fmt: bool = False, event_trigger: Callable = None):
         assert isinstance(hd, EventHandler)
@@ -191,8 +192,15 @@ class JsEvent:
         return ','.join(rs)
 
     def get_ex_item(self, parent, key) -> ExItem:
-        item = ExEventHandlerItem(self, parent, key=key)
-        return item
+        if self._item is not None:
+            return self._item
+        self._item = ExEventHandlerItem(self, parent, key=key)
+        return self._item
+
+    def to_hook_code(self, name: str) -> str:
+        assert self._item is not None, 'JsEvent to_hook_code depend get_ex_item'
+        code = self._item.serialize()
+        return code.strip('()')
 
 
 js_event = JsEvent
@@ -226,11 +234,10 @@ class ExEventHandlerItem(ExItem):
         args = inspect.getfullargspec(trigger).args
 
         if not self.item.fmt:
-            return f"""({','.join(args)}) => {{
+            return f"""(({','.join(args)}) => {{
                 {self.item.js}
                 {hd_name}({','.join(args)})
-            }}
-            """
+            }})"""
         else:
             return self.item.js % dict(name=hd_name)
 
@@ -387,6 +394,10 @@ class JsValue:
     def get_custom_components(self) -> set[CustomComponent]:
         return get_component_custom_code(self.value)
 
+    def to_hook_code(self, name: str) -> str:
+        code = self.serialize()
+        return code.strip('()')
+
 
 class JsFunctionValue(JsValue):
     _value: Union[str, Component]
@@ -418,6 +429,11 @@ class JsFunctionValue(JsValue):
 
     def get_custom_components(self) -> set[CustomComponent]:
         return set() if not isinstance(self._value, CustomComponent) else {self._value}
+
+    def to_hook_code(self, name: str) -> str:
+        code = self.serialize().strip('()')
+        code = f"{name}{code.replace('=>', ' ', 1)}"
+        return code
 
 
 def js_value(value: Union[str, Callable, Component], **kwargs) -> JsValue:
@@ -661,7 +677,8 @@ class ContainVar(ExVar):
 
     @property
     def _var_full_name(self) -> str:
-        return self._var_name
+        """ ContainVar used at Component property """
+        return self._var_fmt.get_value()
 
     @classmethod
     def create(cls, _args_: Any = None, **kwargs) -> Self:
@@ -679,7 +696,6 @@ class ContainVar(ExVar):
     def init(self, parent: Component, name: str) -> Self:
         fmt = ExFormatter(self._var_value, parent=parent, name=name)
         self._var_fmt = fmt
-        self._var_name = fmt.get_value()
         self._var_data = fmt.get_var_data()
         return self
 
@@ -700,6 +716,34 @@ class ContainVar(ExVar):
 
     def get_imports(self) -> imports.ImportDict:
         return self._var_data.imports
+
+    def to_hook_code(self) -> Dict[str, None]:
+        """ ContainVar used at hook code
+        . only support list or dict
+        . list item only support: JsValue, JsFunctionValue
+        """
+        assert isinstance(self._var_value, (list, dict)), 'ContainVar.to_hook_code only supports list'
+        items = self._var_value if isinstance(self._var_value, list) else self._var_value.values()
+        for item in items:
+            assert isinstance(item, (JsValue, JsFunctionValue, JsEvent)), \
+                'ContainVar.to_hook_code list item only support: JsValue, JsFunctionValue'
+
+        def _iter_items():
+            if isinstance(self._var_value, list):
+                for idx, item in enumerate(self._var_value):
+                    yield f'{self._var_fmt.name}_{idx}', item
+            elif isinstance(self._var_value, dict):
+                for k, v in self._var_value.items():
+                    yield f'{self._var_fmt.name}_{k}', v
+
+        hooks: Dict[str, None] = {}
+        for name, ex in _iter_items():
+            if isinstance(ex, JsEvent):
+                ex.get_ex_item(self, name)
+            hook = ex.to_hook_code(name)
+            hooks[hook] = None
+
+        return hooks
 
 
 contain = ContainVar.create
@@ -734,8 +778,9 @@ class VarDataMixin:
 
 class AntdBaseComponent(Component):
     _custom_components: Set[CustomComponent] = pydantic.PrivateAttr(default_factory=set)
+    _ex_hooks: List[ContainVar] = pydantic.PrivateAttr(default_factory=list)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, ex_hooks: List[ContainVar] = None, **kwargs):
         contains = {}
         exs = {}
         kw = {}
@@ -752,7 +797,7 @@ class AntdBaseComponent(Component):
         except Exception as err:
             print(f"class<{self}>, args={args}, kw={kw}, error: {err}")
             raise
-        self._init_contains(contains, exs)
+        self._init_contains(contains, exs, ex_hooks)
 
     def _get_all_custom_components(
             self, seen: set[str] | None = None
@@ -775,6 +820,27 @@ class AntdBaseComponent(Component):
             The dictionary of the component style as value and the style notation as key.
         """
         return {"style": self.style}
+
+    def add_imports(self) -> dict[str, str | ImportVar | list[str | ImportVar]]:
+        _imports = {}
+        if self._ex_hooks:
+            for ex in self._ex_hooks:
+                _imports = imports.merge_imports(
+                    ex.get_imports(),
+                    _imports,
+                )
+        return _imports
+
+    def add_hooks(self) -> list[str]:
+        hooks = []
+        if self._ex_hooks:
+            for ex in self._ex_hooks:
+                hooks.extend(ex.get_hooks().keys())
+                codes = ex.to_hook_code()
+                if codes:
+                    hooks.extend(codes)
+
+        return hooks
 
     def _get_events_hooks(self) -> set[str] | Dict[str, None]:
         _hooks = super()._get_events_hooks()
@@ -836,7 +902,12 @@ class AntdBaseComponent(Component):
             if isinstance(v, ContainVar):
                 yield k, v
 
-    def _init_contains(self, contains: Dict[str, ContainVar], exs: Dict[str, Any]):
+    def _init_contains(self, contains: Dict[str, ContainVar], exs: Dict[str, Any], ex_hooks: List[ContainVar]) -> None:
+        self._ex_hooks = []
+        if ex_hooks:
+            for ex in ex_hooks:
+                self._ex_hooks.append(ex.init(self, ''))
+
         for k, v in contains.items():
             v.init(self, k)
             self._custom_components |= v.get_custom_components()
