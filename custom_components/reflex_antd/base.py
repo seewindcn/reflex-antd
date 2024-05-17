@@ -50,6 +50,7 @@ def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:
             # _sc = StatefulComponent.create(_com)
             # return _sc if _sc is not None else _com
             return _com
+
         return _wrap
 
     if hd is None:
@@ -186,7 +187,7 @@ class JsEvent:
         for idx, _arg in enumerate(_args.args):
             if idx == 0:  # ignore self
                 continue
-            rs.append(f'{_arg}:{self.args[idx-1]}')
+            rs.append(f'{_arg}:{self.args[idx - 1]}')
         return ','.join(rs)
 
     def get_ex_item(self, parent, key) -> ExItem:
@@ -214,7 +215,10 @@ class ExEventHandlerItem(ExItem):
             return self._hd_item
 
     def _get_fn_name(self) -> str:
-        return f"{self.key.replace('.', '_')}_{md5(f'{str(self.item.hd)}'.encode('utf-8')).hexdigest()}_{id(self)}"
+        if 0:
+            return (f"{self.key.replace('.', '_')}_{md5(f'{str(self.item.hd)}'.encode('utf-8')).hexdigest()}"
+                    f"_{id(self)}")
+        return f"{self.key.replace('.', '_')}_{md5(f'{str(self.item.hd)}'.encode('utf-8')).hexdigest()}"
 
     def serialize(self) -> str:
         hd_name = self.hd_item.serialize()
@@ -246,7 +250,10 @@ class ExLambdaHandlerItem(ExItem):
         return isinstance(item, Callable)
 
     def _get_fn_name(self) -> str:
-        return f"{self.key.replace('.', '_')}_{md5(f'{str(self.item)}'.encode('utf-8')).hexdigest()}_{id(self)}"
+        if 0:
+            return (f"{self.key.replace('.', '_')}_{md5(f'{str(self.item)}'.encode('utf-8')).hexdigest()}"
+                    f"_{id(self)}")
+        return f"{self.key.replace('.', '_')}_{md5(f'{str(self.item)}'.encode('utf-8')).hexdigest()}"
 
     def _get_event_trigger_key(self) -> str:
         return RE_KEY_IDX.sub('.*.', self.key)
@@ -388,7 +395,7 @@ class JsFunctionValue(JsValue):
         super()._init(**kwargs)
         self._args = inspect.getfullargspec(self.value)
         args = self._args.args
-        self._value = self.value(*args)
+        self._value = self.value(*[CasualVar.create_safe(arg) for arg in args])
 
     def serialize(self) -> str:
         is_component = False
@@ -576,6 +583,64 @@ class ExFormatter:
 )
 class ExVar(BaseVar):
     _var_value: Any = dataclasses.field(default=Any)
+
+    @classmethod
+    def create(
+            cls, value: Any, _var_is_local: bool = True, _var_is_string: bool = False
+    ) -> Var | None:
+        v = BaseVar.create(value, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
+        return cls(
+            _var_name=v._var_name,
+            _var_type=v._var_type,
+            _var_is_local=v._var_is_local,
+            _var_is_string=v._var_is_string,
+            _var_data=v._var_data,
+        )
+
+    def _replace(self, merge_var_data=None, **kwargs: Any) -> Self:
+        return self.__class__(
+            _var_name=kwargs.pop("_var_name", self._var_name),
+            _var_type=kwargs.pop("_var_type", self._var_type),
+            _var_is_local=kwargs.pop("_var_is_local", self._var_is_local),
+            _var_is_string=kwargs.pop("_var_is_string", self._var_is_string),
+            _var_full_name_needs_state_prefix=kwargs.pop(
+                "_var_full_name_needs_state_prefix",
+                self._var_full_name_needs_state_prefix,
+            ),
+            _var_data=VarData.merge(
+                kwargs.get("_var_data", self._var_data), merge_var_data
+            ),
+        )
+
+
+class CasualVar(ExVar):
+    # def __getitem__(self, item):
+    #     try:
+    #         super().__getitem__(item)
+    #     except (TypeError, ):
+    #         self.create_safe(
+    #             f'{self._var_name}.{item}'
+    #         )
+
+    def __getattribute__(self, name: str) -> Any:
+        try:
+            return super().__getattribute__(name)
+        except (AttributeError, ):
+            if name.startswith("_"):
+                raise
+            return self.create_safe(
+                f'{self._var_name}.{name}'
+            )
+
+    def to_js(self) -> Self:
+        return self._replace(
+            _var_name=f'({self._var_name})'
+        )
+
+    def to_react(self) -> Self:
+        return self._replace(
+            _var_name=f'{{{self._var_name}}}'
+        )
 
 
 class NodeVar(ExVar):
@@ -862,4 +927,3 @@ def patch_all():
 
 ReactNode = Union[str, Component]
 JsNode = Union[JsValue, JsEvent]
-

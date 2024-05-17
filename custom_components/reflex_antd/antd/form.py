@@ -89,8 +89,6 @@ class FormItem(AntdComponent):
     value_prop_name: Optional[Var[str]]
     wrapper_col: Optional[Var[Dict]]
 
-    rules: Optional[Var[List[Dict]]]
-
 
 class FormList(AntdComponent):
     tag = 'Form.List'

@@ -1,4 +1,31 @@
+from typing import List, Tuple, Any, Callable
 import collections
+
+import reflex as rx
+
+
+def switch(
+        val: rx.Var,
+        values: List[Tuple[Callable[[rx.Var, ], rx.Var] | str, rx.Component | Callable[..., rx.Component]]],
+        default: rx.Component | Callable[..., rx.Component] = None,
+) -> rx.Component | None:
+    """
+    chain cond, like:
+    cond(condition1, com1,
+        cond(condition2, com2,
+            cond(condition3, com3, default)
+        )
+    )
+     """
+    conds = None
+    for v in reversed(values):
+        _op, _com = v
+        _cond = _op(val) if callable(_op) else val == _op
+        if conds is not None:
+            conds = rx.cond(_cond, _com, conds)
+        else:
+            conds = rx.cond(_cond, _com, default)
+    return conds
 
 
 class OrderedSet(collections.abc.MutableSet):
