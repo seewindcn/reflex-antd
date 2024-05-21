@@ -630,14 +630,6 @@ class ExVar(BaseVar):
 
 
 class CasualVar(ExVar):
-    # def __getitem__(self, item):
-    #     try:
-    #         super().__getitem__(item)
-    #     except (TypeError, ):
-    #         self.create_safe(
-    #             f'{self._var_name}.{item}'
-    #         )
-
     def __getattribute__(self, name: str) -> Any:
         try:
             return super().__getattribute__(name)
