@@ -3,12 +3,17 @@ import uuid
 
 from reflex import Component, Var
 from reflex.utils import imports
+from reflex.components.component import ComponentNamespace
 from reflex.components.base.bare import Bare
 from reflex.vars import BaseVar
+from reflex.event import EventSpec, call_script
+from reflex.utils.serializers import serialize
 
 from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, version
 from ..constant import MessageType
 from . import helper
+
+_ref = Var.create_safe("refs['__antd_message']")
 
 
 class Message(JsValue):
@@ -52,6 +57,7 @@ class Message(JsValue):
         _imports = {
             "antd": [imports.ImportVar(tag='message')],
             "react": [imports.ImportVar(tag="useEffect")],
+            "/utils/state": [imports.ImportVar(tag="refs")],
         }
         return _imports
 
@@ -97,7 +103,9 @@ class Message(JsValue):
                 ),
             ])
 
-        _hooks = []
+        _hooks = [
+            str(f"{_ref} = message"),
+        ]
         if self.is_global:
             _hooks.extend([
                 open_func
@@ -150,8 +158,46 @@ class MessageHolder(Bare):
         )
 
 
+class Messages(ComponentNamespace):
+    @staticmethod
+    def send(content: ReactNode, type: str | None = None, **props) -> EventSpec:
+        """Send a message. """
+        if type is None:
+            type = 'info'
+        cmd = f"{_ref}.{type}"
+        config = dict(
+            content=content,
+            **props
+        )
+
+        send_cmd = f"{cmd}({serialize(config)})"
+        send_action = Var.create(send_cmd, _var_is_string=False, _var_is_local=True)
+        return call_script(send_action)  # type: ignore
+
+    @staticmethod
+    def info(content: ReactNode, **kwargs):
+        return MessageHolder.send(message, type="info", **kwargs)
+
+    @staticmethod
+    def warning(content: ReactNode, **kwargs):
+        return MessageHolder.send(message, type="warning", **kwargs)
+
+    @staticmethod
+    def error(content: ReactNode, **kwargs):
+        return MessageHolder.send(message, type="error", **kwargs)
+
+    @staticmethod
+    def success(content: ReactNode, **kwargs):
+        return MessageHolder.send(message, type="success", **kwargs)
+
+    @staticmethod
+    def loading(content: ReactNode, **kwargs):
+        return MessageHolder.send(message, type="success", **kwargs)
+
+
 message = Message
 message_holder = MessageHolder.create
+messages = Messages()
 
 # def message_holder():
 #     return Var.create_safe('{contextHolder}')

@@ -73,7 +73,7 @@ def get_component_all_imports(com: Component) -> imports.ImportDict:
 def get_component_hooks(com) -> Set[str] | Dict[str, None]:
     if version <= '000.004.006':
         return set() if isinstance(com, str) else com.get_hooks()
-    return set() if isinstance(com, str) \
+    return {} if isinstance(com, str) \
         else com._get_all_hooks_internal() | com._get_all_hooks()
 
 
@@ -602,9 +602,10 @@ class ExVar(BaseVar):
 
     @classmethod
     def create(
-            cls, value: Any, _var_is_local: bool = True, _var_is_string: bool = False
+            cls, value: Any, _var_is_local: bool = True, _var_is_string: bool = False,
+            _var_data: VarData | None = None,
     ) -> Var | None:
-        v = BaseVar.create(value, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
+        v = BaseVar.create(value, _var_is_local=_var_is_local, _var_is_string=_var_is_string, _var_data=_var_data)
         return cls(
             _var_name=v._var_name,
             _var_type=v._var_type,
@@ -822,6 +823,12 @@ class AntdBaseComponent(Component):
                     _imports,
                 )
         return _imports
+
+    def _get_all_hooks(self) -> dict[str, None]:
+        """ fix 0.5.1 bug #3365 """
+        rs = super()._get_all_hooks()
+        rs = dict((k, None) for k in rs.keys())
+        return rs
 
     def add_hooks(self) -> list[str]:
         hooks = []
