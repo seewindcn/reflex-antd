@@ -139,7 +139,8 @@ def _modal_form(modal_type: str, *children, modal_config=None, form_id: str = No
       .then(() => {{
         {form_id}.submit();
       resolve()}})
-      .catch(() => {{
+      .catch((err) => {{
+      console.log('{form_id}.validateFields error:', err)
       reject()}});
       }});//if catch, modal will close the form //.catch(() => console.log('Oops errors!'));
       }}

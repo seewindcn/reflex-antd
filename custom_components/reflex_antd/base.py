@@ -47,9 +47,9 @@ def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:
             if forced:
                 _com._memoization_mode = memo_always
                 # _com._memoization_mode.recursive = False
-            # _sc = StatefulComponent.create(_com)
-            # return _sc if _sc is not None else _com
-            return _com
+            _sc = StatefulComponent.create(_com)
+            return _sc if _sc is not None else _com
+            # return _com
 
         return _wrap
 
@@ -146,7 +146,10 @@ class ExComponentItemBase(ExItem):
         return {self.item} if isinstance(self.item, CustomComponent) else set()
 
     def get_custom_code(self) -> set[str]:
-        return get_component_custom_code(self.item)
+        rs = get_component_custom_code(self.item)
+        if isinstance(self.item, StatefulComponent):
+            rs.add(self.item.code)
+        return rs
 
 
 class ExComponentItem(ExComponentItemBase):
@@ -643,13 +646,18 @@ class CasualVar(ExVar):
 
     def to_js(self) -> Self:
         return self._replace(
+            _var_type=str,
             _var_name=f'({self._var_name})'
         )
 
     def to_react(self) -> Self:
         return self._replace(
+            _var_type=str,
             _var_name=f'{{{self._var_name}}}'
         )
+
+
+casual_var = CasualVar.create
 
 
 class NodeVar(ExVar):
