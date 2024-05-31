@@ -12,7 +12,7 @@ import re
 import reflex as rx
 from reflex import Component, Var, State, Base, ImportVar
 from reflex.base import pydantic
-from reflex.components.component import BaseComponent, CustomComponent, StatefulComponent
+from reflex.components.component import BaseComponent, CustomComponent, StatefulComponent, ComponentStyle
 from reflex.components.base.bare import Bare
 from reflex.constants import Hooks, Reflex, MemoizationDisposition, MemoizationMode
 from reflex.utils import imports, format
@@ -637,7 +637,7 @@ class CasualVar(ExVar):
     def __getattribute__(self, name: str) -> Any:
         try:
             return super().__getattribute__(name)
-        except (AttributeError, ):
+        except (AttributeError,):
             if name.startswith("_"):
                 raise
             return self.create_safe(
@@ -821,6 +821,31 @@ class AntdBaseComponent(Component):
             The dictionary of the component style as value and the style notation as key.
         """
         return {"style": self.style}
+
+    def _add_style_recursive(
+            self, style: ComponentStyle
+            , theme: Optional[Component] = None
+    ) -> Component:
+        # hack: support style for properties
+        _prop_keys = []
+        if type(self) in style:
+            component_style = style[type(self)]
+        elif self.create in style:
+            component_style = style[self.create]
+        else:
+            component_style = None
+        if component_style:
+            for k, v in component_style.copy().items():
+                # is property
+                if hasattr(self, k) and getattr(self, k) is None:
+                    setattr(self, k, v)
+                    _prop_keys.append(k)
+
+        rs = super()._add_style_recursive(style, theme=theme)
+        # remove from style
+        for _k in _prop_keys:
+            self.style.pop(_k, None)
+        return rs
 
     def add_imports(self) -> dict[str, str | ImportVar | list[str | ImportVar]]:
         _imports = {}

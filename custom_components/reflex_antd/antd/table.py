@@ -24,7 +24,7 @@ class Table(AntdComponent):
     scroll: Optional[Var[Union[ContainVar, Dict]]]
     show_header: Optional[Var[bool]]
     show_sorter_tooltip: Optional[Var[Union[bool, ContainVar]]]
-    size: Optional[Var[SizeType]] = 'middle'
+    size: Optional[Var[SizeType]]
     sort_directions: Optional[Var[ContainVar]]
     sticky: Optional[Var[Union[bool, JsValue]]]
     summary: Optional[Var[JsValue]]

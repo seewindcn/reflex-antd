@@ -14,7 +14,7 @@ class Descriptions(AntdComponent):
     column: Optional[Var[Union[int,dict]]]
     content_style: Optional[Var[Union[dict,ContainVar]]]
     extra: Optional[Var[ReactNode]]
-    items: Optional[Var[Union[ContainVar,list]]]
+    items: Optional[Var[Union[ContainVar, list]]]
     label_style: Optional[Var[dict]]
     layout: Optional[Var[DirectionType]]
     size: Optional[Var[SizeType]]
