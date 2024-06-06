@@ -15,7 +15,7 @@ from reflex.base import pydantic
 from reflex.components.component import BaseComponent, CustomComponent, StatefulComponent, ComponentStyle
 from reflex.components.base.bare import Bare
 from reflex.constants import Hooks, Reflex, MemoizationDisposition, MemoizationMode
-from reflex.utils import imports, format
+from reflex.utils import imports, format, serializers
 from reflex.vars import BaseVar, VarData
 from reflex.event import EventHandler, EventSpec, EventChain
 
@@ -60,7 +60,7 @@ def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:
 
 
 def pretty_dumps(value: Any, indent=2) -> str:
-    return format.json.dumps(value, ensure_ascii=False, default=format.serialize, indent=indent)
+    return format.json.dumps(value, ensure_ascii=False, default=serializers.serialize, indent=indent)
 
 
 def get_component_all_imports(com: Component) -> imports.ImportDict:
@@ -596,12 +596,12 @@ class ExFormatter:
         )
 
 
-@dataclasses.dataclass(
-    eq=False,
-    **{"slots": True} if sys.version_info >= (3, 10) else {},
-)
 class ExVar(BaseVar):
-    _var_value: Any = dataclasses.field(default=Any)
+    _var_value: Any
+
+    def __init__(self, *args, _var_value=None, **kwargs):
+        self._var_value = _var_value
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def create(
@@ -669,23 +669,21 @@ class NodeVar(ExVar):
     pass
 
 
-@dataclasses.dataclass(
-    eq=False,
-    **{"slots": True} if sys.version_info >= (3, 10) else {},
-)
 class ContainVar(ExVar):
-    _var_fmt: ExFormatter = dataclasses.field(default=None)
+    _var_fmt: ExFormatter
 
     @property
     def _var_full_name(self) -> str:
         """ ContainVar used at Component property """
+        if getattr(self, '_var_fmt', None) is None:
+            raise AttributeError('please call init first')
         return self._var_fmt.get_value()
 
     @classmethod
     def create(cls, _args_: Any = None, **kwargs) -> Self:
         value = _args_ if _args_ is not None else kwargs
         # v: BaseVar = super().create(_name, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
-        return cls(
+        rs = cls(
             _var_name='',
             _var_type=cls,
             _var_is_local=True,
@@ -693,6 +691,7 @@ class ContainVar(ExVar):
             _var_data=None,
             _var_value=value,
         )
+        return rs
 
     def init(self, parent: Component, name: str) -> Self:
         fmt = ExFormatter(self._var_value, parent=parent, name=name)
@@ -750,7 +749,7 @@ class ContainVar(ExVar):
 contain = ContainVar.create
 
 
-def container(data: Union[list, dict], name: str = '') -> rx.Component:
+def container(data: Union[list, dict, JsValue], name: str = '') -> rx.Component:
     """ wrap contain to Component, use for:
         .foreach:  rx.foreach(GlobalState.subnav_items, _sub_item)
             GlobalState.subnav_items = [{"title": "home", "href": "/home"}, ]

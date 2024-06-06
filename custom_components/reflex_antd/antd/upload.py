@@ -34,7 +34,7 @@ class Upload(AntdComponent):
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
         _triggers.update({
-            EventTriggers.ON_CHANGE: lambda file, file_list: [file, file_list],
+            EventTriggers.ON_CHANGE: lambda file, file_list,event: [file, file_list,event],
             "on_drop": lambda event: [event],
             "on_download": lambda file: [file],
             "on_preview": lambda file: [file],

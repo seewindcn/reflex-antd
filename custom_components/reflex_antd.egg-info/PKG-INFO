@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: reflex-antd
-Version: 0.0.9
+Version: 0.0.10
 Summary: Reflex custom component antd
 Author-email: seewind <seewindcn@gmail.com>
 License: Apache-2.0
@@ -19,7 +19,8 @@ Requires-Dist: twine; extra == "dev"
 
 # reflex-antd
 
-A Reflex custom component wrap [ant.design](https://ant.design/).
+A [Reflex](https://github.com/reflex-dev/reflex) custom component wrap [ant.design](https://ant.design/).
+
 pypi: [reflex-antd](https://pypi.org/pypi/reflex-antd/)
 
 ## Installation
@@ -43,4 +44,10 @@ pip install reflex-antd
 - ...
 
 
+## build
+```
+reflex component build|publish
+
+
+```
 
