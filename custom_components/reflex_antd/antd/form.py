@@ -80,7 +80,7 @@ class FormItem(AntdComponent):
     required: Optional[Var[bool]]
     rules: Optional[Var[Union[List[Dict], ContainVar]]]
     should_update: Optional[Var[bool]]
-    tooltip: Optional[Var[Union[Component, ContainVar]]]
+    tooltip: Optional[Var[Union[ReactNode, ContainVar]]]
     trigger: Optional[Var[str]]
     validate_debounce: Optional[Var[float]]
     validate_first: Optional[Var[Union[bool, str]]]

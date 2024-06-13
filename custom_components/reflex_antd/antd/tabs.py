@@ -1,16 +1,16 @@
 from typing import Optional, Union, Dict, Any, List, Tuple
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 from reflex import Component, Var, Base
 from reflex.utils import imports
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue, ReactNode
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode, DataClassMixin
 from ..constant import SizeType, PlacementType, TabsType
 
 
 @dataclass(frozen=True)
-class TabItem:
+class TabItem(DataClassMixin):
     close_icon: Optional[Var[ReactNode]] = None
     destroy_inactive_tab_pane: Optional[Var[bool]] = None
     disabled: Optional[Var[bool]] = None

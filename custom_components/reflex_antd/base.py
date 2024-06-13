@@ -14,8 +14,9 @@ from reflex import Component, Var, State, Base, ImportVar
 from reflex.base import pydantic
 from reflex.components.component import BaseComponent, CustomComponent, StatefulComponent, ComponentStyle
 from reflex.components.base.bare import Bare
+from reflex.components.core import Foreach, Match
 from reflex.constants import Hooks, Reflex, MemoizationDisposition, MemoizationMode
-from reflex.utils import imports, format, serializers
+from reflex.utils import imports, format, serializers, exceptions
 from reflex.vars import BaseVar, VarData
 from reflex.event import EventHandler, EventSpec, EventChain
 
@@ -203,7 +204,7 @@ class JsEvent:
     def to_hook_code(self, name: str) -> str:
         assert self._item is not None, 'JsEvent to_hook_code depend get_ex_item'
         code = self._item.serialize()
-        return code.strip('()')
+        return f'const {name} = {code}'
 
 
 js_event = JsEvent
@@ -439,7 +440,8 @@ class JsFunctionValue(JsValue):
         return code
 
 
-def js_value(value: Union[str, Callable, Component], **kwargs) -> JsValue:
+def js_value(value: Union[str, Callable, Foreach, Match], **kwargs) -> JsValue:
+    """ """
     if isinstance(value, (str, Component)):
         return JsValue(value, **kwargs)
     if isinstance(value, Callable):
@@ -641,7 +643,19 @@ class CasualVar(ExVar):
             if name.startswith("_"):
                 raise
             return self.create_safe(
-                f'{self._var_name}.{name}'
+                f'{self._var_name}.{name}',
+                _var_is_local=False,
+            )
+
+    def __getitem__(self, i: Any) -> Var:
+        try:
+            return super().__getitem__(i)
+        except (exceptions.VarTypeError,):
+            if str(i).startswith("_"):
+                raise
+            return self.create_safe(
+                f'{self._var_name}["{i}"]',
+                _var_is_local=False,
             )
 
     def to_js(self) -> Self:
@@ -729,12 +743,13 @@ class ContainVar(ExVar):
                 'ContainVar.to_hook_code list item only support: JsValue, JsFunctionValue'
 
         def _iter_items():
+            _prefix = f'{self._var_fmt.name}_' if self._var_fmt.name else '_'
             if isinstance(self._var_value, list):
                 for idx, item in enumerate(self._var_value):
-                    yield f'{self._var_fmt.name}_{idx}', item
+                    yield f'{_prefix}{idx}', item
             elif isinstance(self._var_value, dict):
                 for k, v in self._var_value.items():
-                    yield f'{self._var_fmt.name}_{k}', v
+                    yield f'{_prefix}{k}', v
 
         hooks: Dict[str, None] = {}
         for name, ex in _iter_items():
@@ -776,11 +791,27 @@ class VarDataMixin:
         yield from [v]
 
 
+class DataClassMixin:
+    def to_component(self) -> Component:
+        fields = dataclasses.fields(self)
+        result = []
+        for f in fields:
+            v = getattr(self, f.name)
+            if v is None:
+                continue
+            elif isinstance(v, BaseVar):
+                ...  # v = v._var_full_name
+            result.append((f.name, v))
+        d = dict(result)
+        c = container(d)
+        return c
+
+
 class AntdBaseComponent(Component):
     _custom_components: Set[CustomComponent] = pydantic.PrivateAttr(default_factory=set)
     _ex_hooks: List[ContainVar] = pydantic.PrivateAttr(default_factory=list)
 
-    def __init__(self, *args, ex_hooks: List[ContainVar] = None, **kwargs):
+    def __init__(self, *args, ex_hooks: List[ContainVar | list | dict] = None, **kwargs):
         contains = {}
         exs = {}
         kw = {}
@@ -937,6 +968,8 @@ class AntdBaseComponent(Component):
         self._ex_hooks = []
         if ex_hooks:
             for ex in ex_hooks:
+                if not isinstance(ex, ContainVar):
+                    ex = contain(ex)
                 self._ex_hooks.append(ex.init(self, ''))
 
         for k, v in contains.items():
