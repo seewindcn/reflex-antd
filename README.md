@@ -30,5 +30,8 @@ pip install reflex-antd
 reflex component build
 reflex component publish -t <pypi-token>
 
+# ant-demo update
+cd antd_demo/
+reflex deploy
 ```
 

@@ -96,7 +96,7 @@ class TableState(MyBaseState):
                 key='age',
                 sorter=True,
                 render=helper.js_value(
-                    lambda text: rx.badge(Var.create_safe('{text}'))
+                    lambda text: rx.badge(text.to_react())
                 ),
             ),
             dict(
@@ -133,7 +133,7 @@ class TableState(MyBaseState):
                             rx.menu.item("Edit", shortcut="⌘ E"),
                             rx.menu.item("Duplicate", shortcut="⌘ D",
                                          on_select=lambda _: GlobalState.on_event1(
-                                             Var.create_safe('("Duplicate:" + record.key)'))
+                                             Var.create_safe('("Duplicate:" + record.key)', _var_is_string=False))
                                          ),
                             rx.menu.separator(),
                             rx.menu.item("Archive", shortcut="⌘ N"),

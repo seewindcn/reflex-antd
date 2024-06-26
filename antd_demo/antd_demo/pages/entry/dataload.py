@@ -127,9 +127,9 @@ def antd_transfer() -> rx.Component:
                         item_render=helper.js_value(
                             lambda record:
                             rx.hstack(
-                                rx.badge(Var.create_safe('{record.key}')),
+                                rx.badge(record.key.to_react()),
                                 '-',
-                                rx.code(Var.create_safe('{record.title}')),
+                                rx.code(record.title.to_react()),
                             )
                         ),
                     ),

@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: reflex-antd
-Version: 0.0.10
+Version: 0.0.11
 Summary: Reflex custom component antd
 Author-email: seewind <seewindcn@gmail.com>
 License: Apache-2.0
@@ -46,8 +46,8 @@ pip install reflex-antd
 
 ## build
 ```
-reflex component build|publish
-
+reflex component build
+reflex component publish -t <pypi-token>
 
 ```
 
