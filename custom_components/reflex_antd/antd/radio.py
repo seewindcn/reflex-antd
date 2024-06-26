@@ -28,7 +28,7 @@ class RadioGroup(AntdComponent):
     disabled: Optional[Var[bool]]
     name: Optional[Var[str]]
     options: Optional[Var[Union[List[Union[str, int]], ContainVar]]]
-    optionType: Optional[Var[RadioType]]
+    option_type: Optional[Var[RadioType]]
     size: Optional[Var[SizeType]]
     value: Optional[Var[Any]]
 

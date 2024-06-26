@@ -11,7 +11,11 @@ import re
 
 import reflex as rx
 from reflex import Component, Var, State, Base, ImportVar
-from reflex.base import pydantic
+try:
+    from reflex.base import pydantic_main as pydantic
+except ImportError:
+    from reflex.base import pydantic
+
 from reflex.components.component import BaseComponent, CustomComponent, StatefulComponent, ComponentStyle
 from reflex.components.base.bare import Bare
 from reflex.components.core import Foreach, Match
@@ -410,7 +414,7 @@ class JsFunctionValue(JsValue):
         super()._init(**kwargs)
         self._args = inspect.getfullargspec(self.value)
         args = self._args.args
-        self._value = self.value(*[CasualVar.create_safe(arg) for arg in args])
+        self._value = self.value(*[CasualVar.create_safe(arg, _var_is_string=False) for arg in args])
 
     def serialize(self) -> str:
         is_component = False
@@ -644,6 +648,7 @@ class CasualVar(ExVar):
                 raise
             return self.create_safe(
                 f'{self._var_name}.{name}',
+                _var_is_string=False,
                 _var_is_local=False,
             )
 
@@ -655,6 +660,7 @@ class CasualVar(ExVar):
                 raise
             return self.create_safe(
                 f'{self._var_name}["{i}"]',
+                _var_is_string=False,
                 _var_is_local=False,
             )
 

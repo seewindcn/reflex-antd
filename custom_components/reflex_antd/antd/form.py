@@ -35,7 +35,7 @@ class Form(AntdComponent):
     @classmethod
     def create(cls, *children, **props) -> Component:
         if 'form' in props and isinstance(props['form'], str):
-            props['form'] = Var.create_safe(f'{props["form"]}', _var_is_local=False)
+            props['form'] = Var.create_safe(f'{props["form"]}', _var_is_local=False, _var_is_string=False)
         comp = super().create(*children, **props)
         if comp._get_all_hooks() or comp._get_all_hooks_internal():
             comp._memoization_mode = memo_always_no_recursive

@@ -10,7 +10,7 @@ SizeType = Literal["default", "small", "medium", "middle", "large"]
 StatusType = Literal['default', 'success', 'error', 'warning', 'info', 'exception', 'normal', 'active']
 TriggerType = Literal["click", "hover", "focus", 'contextMenu']
 VariantType = Literal['outlined', 'borderless', 'filled']
-TypeType = Literal['default', 'primary']
+TypeType = Literal['default', 'primary', 'dashed', 'link', 'text']
 RoleType = Literal['alert', 'status']
 BreakpointType = Literal['xs', 'sm', 'md', 'lg', 'xl', 'xxl']
 

@@ -13,7 +13,7 @@ from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, v
 from ..constant import MessageType
 from . import helper
 
-_ref = Var.create_safe("refs['__antd_message']")
+_ref = Var.create_safe("refs['__antd_message']", _var_is_string=False)
 
 
 class Message(JsValue):
