@@ -11,10 +11,7 @@ import re
 
 import reflex as rx
 from reflex import Component, Var, State, Base, ImportVar
-try:
-    from reflex.base import pydantic_main as pydantic
-except ImportError:
-    from reflex.base import pydantic
+from reflex.base import pydantic_main as pydantic_md
 
 from reflex.components.component import BaseComponent, CustomComponent, StatefulComponent, ComponentStyle
 from reflex.components.base.bare import Bare
@@ -27,6 +24,7 @@ from reflex.event import EventHandler, EventSpec, EventChain
 from .constant import SizeType
 from .util import OrderedSet
 
+pydantic = pydantic_md
 # 0.4.6 -> 000.004.006
 version = '.'.join(map(lambda x: x.zfill(3), Reflex.VERSION.split('.')))
 

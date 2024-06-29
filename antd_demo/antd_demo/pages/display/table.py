@@ -343,7 +343,7 @@ def _table_columns(col: dict) -> rx.Component:
                         rx.fragment(
                             rx.link(
                                 'Edit',
-                                on_click=helper.CasualVar('() => edit(record)').to_event()),
+                                on_click=helper.casual_var('() => edit(record)').to_event()),
                         ),
                     )),
                     rx.text(helper.casual_var('text ? String(text): ""').to_react()),
