@@ -214,8 +214,8 @@ class TableState(MyBaseState):
     def on_page_change(self, page, size):
         print("on_page_change:", page, size)
 
-    def on_edit_save(self, values):
-        print("on_edit_save:", values)
+    def on_edit_save(self, key, values):
+        print("on_edit_save:", key, values)
 
 
 @page('/display/table1', 'display', state=TableState)
@@ -367,7 +367,6 @@ def table_editable_page() -> rx.Component:
           name: '',
           age: '',
           address: '',
-          id: 0,
           ...record,
         });
         setEditingkey(record.key);
@@ -385,7 +384,7 @@ def table_editable_page() -> rx.Component:
     const save = async (key) => {
     try {
       const row = await form.validateFields();
-      _on_save(row);
+      _on_save(key, row);
       setEditingkey('');
     } catch (errInfo) {
       console.log('Validate Failed:', errInfo);
@@ -427,6 +426,11 @@ def table_editable_page() -> rx.Component:
   );
 };
     """
+    hk_editing_key = hooks.useState('editingkey', '')
+    hk_data = hooks.useState('data', "'originData'")
+    # fix hooks.useState bug
+    for hk in [hk_editing_key, hk_data]:
+        hk._var_data.imports['react'][0].install = True
 
     return rx.center(
         entry.form(
@@ -442,10 +446,10 @@ def table_editable_page() -> rx.Component:
                     }
                 )),
                 ex_hooks=[
-                    hooks.useState('editingkey', ''),
-                    hooks.useState('data', "'originData'"),
+                    hk_editing_key,
+                    hk_data,
                     dict(
-                        on_save=helper.js_event(TableState.on_edit_save, event_trigger=lambda values: [values]),
+                        on_save=helper.js_event(TableState.on_edit_save, event_trigger=lambda key, values: [key, values]),
                         others=helper.js_value(_others_js),
                         custom_cell=helper.js_value(_editable_cols),
                         custom_col=helper.js_value(_table_columns),
