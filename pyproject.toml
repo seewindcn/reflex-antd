@@ -6,7 +6,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "reflex-antd"
+name = "reflex_antd"
 version = "0.0.11"
 description = "Reflex custom component antd"
 readme = "README.md"

@@ -6,11 +6,15 @@ from typing import Optional, Union, Dict, Any, List, Set, Iterator
 import uuid
 from reflex import Component, Var
 from reflex.utils import imports
+from reflex.components.component import ComponentNamespace
 from reflex.components.base.bare import Bare
 from reflex.vars import BaseVar
+from reflex.event import EventSpec, call_script
+from reflex.utils.serializers import serialize
 from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, version
 from ..constant import MessageType
 from . import helper
+_ref = Var.create_safe("refs['__antd_message']", _var_is_string=False)
 
 class Message(JsValue):
     is_global: bool
@@ -54,5 +58,32 @@ class MessageHolder(Bare):
     def create(cls, *children, msg: Optional[Message]=None, contents: Optional[Union[Var[str], str]]=None, style: Optional[Style]=None, key: Optional[Any]=None, id: Optional[Any]=None, class_name: Optional[Any]=None, autofocus: Optional[bool]=None, custom_attrs: Optional[Dict[str, Union[Var, str]]]=None, on_blur: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_click: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_context_menu: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_double_click: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_focus: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mount: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_down: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_enter: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_leave: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_move: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_out: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_over: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_mouse_up: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_scroll: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, on_unmount: Optional[Union[EventHandler, EventSpec, list, function, BaseVar]]=None, **props) -> 'MessageHolder':
         """"""
         ...
+
+class Messages(ComponentNamespace):
+
+    @staticmethod
+    def send(content: ReactNode, type: str | None=None, **props) -> EventSpec:
+        ...
+
+    @staticmethod
+    def info(content: ReactNode, **kwargs):
+        ...
+
+    @staticmethod
+    def warning(content: ReactNode, **kwargs):
+        ...
+
+    @staticmethod
+    def error(content: ReactNode, **kwargs):
+        ...
+
+    @staticmethod
+    def success(content: ReactNode, **kwargs):
+        ...
+
+    @staticmethod
+    def loading(content: ReactNode, **kwargs):
+        ...
 message = Message
 message_holder = MessageHolder.create
+messages = Messages()
