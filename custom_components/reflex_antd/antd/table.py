@@ -12,6 +12,7 @@ class Table(AntdComponent):
 
     bordered: Optional[Var[bool]]
     columns: Optional[Var[Union[ContainVar, list]]]
+    components: Optional[Var[Union[ContainVar, dict]]]
     data_source: Optional[Var[List[Dict[str, Any]]]]
     expandable: Optional[Var[ContainVar]]
     footer: Optional[Var[JsValue]]
@@ -19,6 +20,7 @@ class Table(AntdComponent):
     loading: Optional[Var[bool]]
     locale: Optional[Var[ContainVar]]
     pagination: Optional[Var[Union[bool, ContainVar]]]
+    row_class_name: Optional[Var[Union[str, JsValue]]]
     row_key: Optional[Var[Union[str, JsValue]]]
     row_selection: Optional[Var[ContainVar]]
     scroll: Optional[Var[Union[ContainVar, Dict]]]

@@ -3,8 +3,9 @@ import random
 import uuid
 import reflex as rx
 from reflex import State, Var
+from reflex.experimental import hooks
 
-from reflex_antd import general, entry, display, helper, navigation
+from reflex_antd import general, entry, display, helper, navigation, feedback
 
 from antd_demo.layout import page
 from antd_demo.state import GlobalState, MyBaseState
@@ -43,9 +44,17 @@ class TableState(MyBaseState):
 
     columns = [
         dict(title='Id', dataIndex='key', key='key', ),
-        dict(title='Name', dataIndex='name', key='name', ),
-        dict(title='Age', dataIndex='age', key='age', ),
-        dict(title='Address', dataIndex='address', key='address', ),
+        dict(title='Name', dataIndex='name', key='name', editable=True),
+        dict(title='Age', dataIndex='age', key='age', editable=True),
+        dict(title='Address', dataIndex='address', key='address', editable=True),
+    ]
+
+    editable_columns: list[dict[str, Any]] = [
+        dict(title='Id', dataIndex='key', key='key', ),
+        dict(title='Name', dataIndex='name', key='name', editable=True),
+        dict(title='Age', dataIndex='age', key='age', editable=True),
+        dict(title='Address', dataIndex='address', key='address', editable=True),
+        dict(title='operation', dataIndex='operation', key='operation'),
     ]
 
     page_current: int = 1
@@ -205,6 +214,9 @@ class TableState(MyBaseState):
     def on_page_change(self, page, size):
         print("on_page_change:", page, size)
 
+    def on_edit_save(self, values):
+        print("on_edit_save:", values)
+
 
 @page('/display/table1', 'display', state=TableState)
 def table1_page() -> rx.Component:
@@ -213,6 +225,31 @@ def table1_page() -> rx.Component:
             data_source=TableState.data_source,
             columns=TableState.columns,
         ),
+    )
+
+
+def _table_row_selection() -> helper.ContainVar:
+    return helper.contain(
+        type=TableState.row_select_type,
+        check_strictly=False,
+        selected_row_keys=TableState.selected_row_keys,
+        on_change=TableState.on_row_select_change,
+        on_select=helper.js_event(
+            TableState.on_row_select,
+            js="""(record, selected, selected_rows) => {
+                if (selected_rows.length > 0) {
+                    var selected_rows = selected_rows.map(item => { return item.key });
+                } else if (record.children) {
+                    var selected_rows = record.children.map(item => { return item.key });
+                }
+                %(name)s(record.key, selected, selected_rows);
+            }""",
+            fmt=True),
+        on_select_all=helper.js_event(
+            TableState.on_row_select_all,
+            js="""var selected_rows = selected_rows.map(item => { return item.key });
+                var change_rows = change_rows.map(item => { return item.key });
+            """),
     )
 
 
@@ -230,25 +267,7 @@ def table2_page() -> rx.Component:
                 # on_header_row=helper.js_value(
                 #     lambda columns, index: 'console.log(columns, index);'
                 # ),
-                row_selection=helper.contain(
-                    type=TableState.row_select_type,
-                    check_strictly=False,
-                    selected_row_keys=TableState.selected_row_keys,
-                    on_change=TableState.on_row_select_change,
-                    on_select=helper.js_event(TableState.on_row_select, js="""(record, selected, selected_rows) => {
-                        if (selected_rows.length > 0) {
-                            var selected_rows = selected_rows.map(item => { return item.key });
-                        } else if (record.children) {
-                            var selected_rows = record.children.map(item => { return item.key });
-                        }
-                        %(name)s(record.key, selected, selected_rows);
-                    }
-                    """, fmt=True),
-                    on_select_all=helper.js_event(TableState.on_row_select_all, js="""
-                    var selected_rows = selected_rows.map(item => { return item.key });
-                    var change_rows = change_rows.map(item => { return item.key });
-                    """),
-                ),
+                row_selection=_table_row_selection(),
                 expandable=helper.contain(
                     children_column_name='children',
                     #    expandedRowRender=helper.js_value(
@@ -277,4 +296,174 @@ def table2_page() -> rx.Component:
             ),
         ),
         width='100%',
+    )
+
+
+def _editable_cols(col: dict) -> rx.Component:
+    _js = """{
+        record,
+        inputType: col.dataIndex === 'age' ? 'number' : 'text',
+        dataIndex: col.dataIndex,
+        title: col.title,
+        editing: isEditing(record),
+    }
+"""
+    return helper.container(
+        dict(
+            title=col['title'], data_index=col['dataIndex'], key=col['key'],
+            editable=col['editable']._replace(_var_type=bool),
+            on_cell=helper.js_value(lambda record: _js, to_js=True),
+        )
+    )
+
+
+def _table_columns(col: dict) -> rx.Component:
+    return helper.container(
+        dict(
+            title=col['title'], data_index=col['dataIndex'], key=col['key'],
+            render=helper.js_value(
+                lambda text, record:
+                rx.match(
+                    col['key'],
+                    ('operation', rx.cond(
+                        helper.casual_var('isEditing(record)').to_js(),
+                        rx.fragment(
+                            rx.link(
+                                'Save',
+                                on_click=helper.CasualVar('() => save(record.key)').to_js()._replace(
+                                    _var_type=rx.EventChain),
+                                margin_right=8,
+                            ),
+                            feedback.popconfirm(
+                                rx.el.a('Cancel'),
+                                title="Sure to cancel?",
+                                on_confirm=helper.js_value('cancel'),
+                            ),
+                        ),
+                        rx.fragment(
+                            rx.link(
+                                'Edit',
+                                on_click=helper.CasualVar('() => edit(record)').to_event()),
+                        ),
+                    )),
+                    rx.text(helper.casual_var('text ? String(text): ""').to_react()),
+                )
+            )
+        ),
+    )
+
+
+# def _editable_cell()
+
+
+@page('/display/table_editable', 'display', state=TableState)
+def table_editable_page() -> rx.Component:
+    """ editable table """
+    _others_js = """
+    const originData = [];
+    const isEditing = (record) => record.key === editingkey;
+    const edit = (record) => {
+        form.setFieldsValue({
+          name: '',
+          age: '',
+          address: '',
+          id: 0,
+          ...record,
+        });
+        setEditingkey(record.key);
+      };
+    const cancel = () => {
+        setEditingkey('');
+    };
+    const _column_op = (col) => {
+      if (!col.editable) {
+        return _custom_col(col);
+      }
+      return _custom_cell(col)
+    }
+    
+    const save = async (key) => {
+    try {
+      const row = await form.validateFields();
+      _on_save(row);
+      setEditingkey('');
+    } catch (errInfo) {
+      console.log('Validate Failed:', errInfo);
+    }
+  };
+    
+    const EditableCell = ({
+  editing,
+  dataIndex,
+  title,
+  inputType,
+  record,
+  index,
+  children,
+  ...restProps
+}) => {
+  const inputNode = inputType === 'number' ? <InputNumber /> : <Input />;
+  return (
+    <td {...restProps}>
+      {editing ? (
+        <Form.Item
+          name={dataIndex}
+          style={{
+            margin: 0,
+          }}
+          rules={[
+            {
+              required: true,
+              message: `Please Input ${title}!`,
+            },
+          ]}
+        >
+          {inputNode}
+        </Form.Item>
+      ) : (
+        children
+      )}
+    </td>
+  );
+};
+    """
+
+    return rx.center(
+        entry.form(
+            display.table(
+                data_source=TableState.data_source,
+                columns=helper.js_value(rx.foreach(
+                    TableState.editable_columns, lambda col: helper.container(helper.js_value('_column_op(col)')))),
+                bordered=True,
+                row_class_name='editable-row',
+                components=helper.contain(dict(
+                    body={
+                        "cell": helper.casual_var("EditableCell"),
+                    }
+                )),
+                ex_hooks=[
+                    hooks.useState('editingkey', ''),
+                    hooks.useState('data', "'originData'"),
+                    dict(
+                        on_save=helper.js_event(TableState.on_edit_save, event_trigger=lambda values: [values]),
+                        others=helper.js_value(_others_js),
+                        custom_cell=helper.js_value(_editable_cols),
+                        custom_col=helper.js_value(_table_columns),
+                    ),
+                ]
+            ),
+            form='form',
+            component=False,
+        ),
+        # below for hack import components, don't showed
+        rx.el.table(
+            rx.el.tbody(
+                rx.el.tr(
+                    rx.el.td(
+                        entry.input(), entry.input_number(),
+                    ),
+                ),
+            ),
+            hidden=True,
+        ),
     )

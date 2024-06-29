@@ -307,7 +307,6 @@ def _modal_form1() -> rx.Component:
     )
 
 
-@helper.stateful
 def _modal_form2() -> rx.Component:
     from .entry import entry as antd_entry
     return rx.flex(

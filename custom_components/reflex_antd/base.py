@@ -69,22 +69,15 @@ def pretty_dumps(value: Any, indent=2) -> str:
 
 
 def get_component_all_imports(com: Component) -> imports.ImportDict:
-    if version <= '000.004.006':
-        return {} if isinstance(com, str) else com.get_imports()
-    else:
-        return {} if isinstance(com, str) else com._get_all_imports()
+    return {} if isinstance(com, str) else com._get_all_imports()
 
 
-def get_component_hooks(com) -> Set[str] | Dict[str, None]:
-    if version <= '000.004.006':
-        return set() if isinstance(com, str) else com.get_hooks()
+def get_component_hooks(com) -> Dict[str, None]:
     return {} if isinstance(com, str) \
         else com._get_all_hooks_internal() | com._get_all_hooks()
 
 
 def get_component_custom_code(com: Component) -> Set[str]:
-    if version <= '000.004.006':
-        return com.get_custom_code() if isinstance(com, BaseComponent) else set()
     return com._get_all_custom_code() if isinstance(com, BaseComponent) else set()
 
 
@@ -108,9 +101,7 @@ class ExItem(ABC):
     def get_state(self) -> str:
         return ''
 
-    def get_hooks(self) -> Set[str] | Dict[str, None]:
-        if version <= '000.004.006':
-            return set()
+    def get_hooks(self) -> Dict[str, None]:
         return {}
 
     def get_interpolations(self) -> List[Tuple[int, int]]:
@@ -286,19 +277,12 @@ class ExLambdaHandlerItem(ExItem):
     def get_imports(self) -> imports.ImportDict:
         return {"react": [imports.ImportVar(tag="useCallback")]}
 
-    def get_hooks(self) -> Set[str] | Dict[str, None]:
-        if version <= '000.004.005':
-            key = self._get_event_trigger_key()
-            chain = self.parent._create_event_chain(key, self.item)
-        else:
-            key = self._get_event_trigger()
-            chain = self.parent._create_event_chain(key, self.item)
+    def get_hooks(self) -> Dict[str, None]:
+        key = self._get_event_trigger()
+        chain = self.parent._create_event_chain(key, self.item)
         rendered_chain = format.format_prop(chain).strip("{}")
         _hook = f"""const {self._get_fn_name()} = useCallback({rendered_chain}, [addEvents, Event]);"""
-
-        if version <= '000.004.006':
-            return {_hook}
-        return {_hook: None}
+        return {Hooks.EVENTS:None, _hook: None}
 
 
 class ExCallableItem(ExItem):
@@ -367,6 +351,11 @@ class JsValue:
       />
     """
     value: Callable | str | Component
+    to_js: bool = False
+
+    @property
+    def to_react(self) -> bool:
+        return not self.to_js
 
     def __init__(self, value: Union[str, Callable, Component] = None, **kwargs):
         self.value = value
@@ -381,7 +370,8 @@ class JsValue:
         return item
 
     def serialize(self) -> str:
-        return f"({self.value if isinstance(self.value, str) else str(self.value).strip('{}')})"
+        code = f"{self.value if isinstance(self.value, str) else str(self.value).strip('{}')}"
+        return f"({code})" if self.to_js else code
 
     def get_imports(self) -> imports.ImportDict:
         return get_component_all_imports(self.value)
@@ -403,18 +393,21 @@ class JsValue:
         return get_component_custom_code(self.value)
 
     def to_hook_code(self, name: str) -> str:
-        code = self.serialize()
-        return code.strip('()')
+        return self.serialize()
 
 
 class JsFunctionValue(JsValue):
     _value: Union[str, Component]
 
+    @property
+    def args(self):
+        args = [CasualVar.create_safe(arg, _var_is_string=False) for arg in self._args.args]
+        return args
+
     def _init(self, **kwargs) -> None:
         super()._init(**kwargs)
         self._args = inspect.getfullargspec(self.value)
-        args = self._args.args
-        self._value = self.value(*[CasualVar.create_safe(arg, _var_is_string=False) for arg in args])
+        self._value = self.value(*self.args)
 
     def serialize(self) -> str:
         is_component = False
@@ -425,7 +418,7 @@ class JsFunctionValue(JsValue):
             v = str(self._value)
         else:
             raise TypeError(self._value)
-        sep_1, sep_2 = ('{{', '}}') if not is_component else ('(', ')')
+        sep_1, sep_2 = (('{{', '}}') if self.to_react else ('(', ')')) if not is_component else ('(', ')')
         return f"""(({','.join(self._args.args)}) => 
         {sep_1} {v} {sep_2} )"""
 
@@ -439,8 +432,11 @@ class JsFunctionValue(JsValue):
         return set() if not isinstance(self._value, CustomComponent) else {self._value}
 
     def to_hook_code(self, name: str) -> str:
-        code = self.serialize().strip('()')
-        code = f"{name}{code.replace('=>', ' ', 1)}"
+        """
+        """
+        code = self.serialize()  # .strip('()')
+        code = f"const {name} = {code}"
+        # code = f"const {name} = {code.replace('=>', ' ', 1)}"
         return code
 
 
@@ -577,11 +573,8 @@ class ExFormatter:
                 return _state
         return ''
 
-    def get_hooks(self) -> Set[str] | Dict[str, None]:
-        if version <= '000.004.006':
-            hooks = set()
-        else:
-            hooks = {}
+    def get_hooks(self) -> Dict[str, None]:
+        hooks = {}
         for _, ex in self._coms.items():
             _hooks = ex.get_hooks()
             hooks.update(_hooks)
@@ -676,6 +669,12 @@ class CasualVar(ExVar):
             _var_name=f'{{{self._var_name}}}'
         )
 
+    def to_event(self) -> Self:
+        return self._replace(
+            _var_type=EventChain,
+            _var_name=f'({self._var_name})'
+        )
+
 
 casual_var = CasualVar.create
 
@@ -737,11 +736,13 @@ class ContainVar(ExVar):
     def get_imports(self) -> imports.ImportDict:
         return self._var_data.imports
 
-    def to_hook_code(self) -> Dict[str, None]:
+    def to_hook_code(self) -> Dict[str | Var, None]:
         """ ContainVar used at hook code
         . only support list or dict
         . list item only support: JsValue, JsFunctionValue
         """
+        if isinstance(self._var_value, rx.Var):
+            return {self._var_value: None}
         assert isinstance(self._var_value, (list, dict)), 'ContainVar.to_hook_code only supports list'
         items = self._var_value if isinstance(self._var_value, list) else self._var_value.values()
         for item in items:
@@ -899,7 +900,7 @@ class AntdBaseComponent(Component):
         rs = dict((k, None) for k in rs.keys())
         return rs
 
-    def add_hooks(self) -> list[str]:
+    def add_hooks(self) -> list[str | Var]:
         hooks = []
         if self._ex_hooks:
             for ex in self._ex_hooks:
@@ -916,10 +917,7 @@ class AntdBaseComponent(Component):
             v for k, v in self.event_triggers.items()
             if isinstance(v, BaseVar) and v._var_data is not None and v._var_data.hooks]
 
-        if version <= '000.004.006':
-            rs = OrderedSet(_hooks)
-        else:
-            rs = _hooks
+        rs = _hooks
 
         if js_events:
             for ev in js_events:
@@ -936,33 +934,18 @@ class AntdBaseComponent(Component):
             Set of internally managed hooks.
         """
         # need order hooks, useContext code need first
-        if version <= '000.004.006':
-            s = OrderedSet(
-                hook
-                for hook in [self._get_mount_lifecycle_hook(), self._get_ref_hook()]
-                if hook
-            )
-
-            s |= self._get_events_hooks()
-            var_hooks = self._get_vars_hooks()
-            if [h for h in var_hooks if 'addEvents' in h]:
-                s.add(Hooks.EVENTS)
-            s |= var_hooks
-            s |= self._get_special_hooks()
-            return s
-        else:
-            s = {
-                hook: None
-                for hook in [self._get_ref_hook(), self._get_mount_lifecycle_hook()]
-                if hook is not None
-            }
-            var_hooks = self._get_vars_hooks()
-            if [h for h in var_hooks if 'addEvents' in h]:
-                s[Hooks.EVENTS] = None
-            s |= var_hooks
-            s |= self._get_events_hooks()
-            s |= self._get_special_hooks()
-            return s
+        s = {
+            hook: None
+            for hook in [self._get_ref_hook(), self._get_mount_lifecycle_hook()]
+            if hook is not None
+        }
+        var_hooks = self._get_vars_hooks()
+        if [h for h in var_hooks if 'addEvents' in h]:
+            s[Hooks.EVENTS] = None
+        s |= var_hooks
+        s |= self._get_events_hooks()
+        s |= self._get_special_hooks()
+        return s
 
     def _iter_contains(self) -> Iterable[Tuple[str, ContainVar]]:
         for k in self.get_fields().keys():

@@ -72,8 +72,8 @@ route_groups: Dict[str, RouteGroup] = dict(
 )
 
 
-@rx.memo
-def layout1(children: rx.Component, min_height: str = '50vh', **kwargs) -> rx.Component:
+# @rx.memo
+def layout1(*children: rx.Component, min_height: str = '50vh', **kwargs) -> rx.Component:
     from antd_demo.components import footer, navbar, header, subnav, content
     # color_bg_contain = 'white'
     return layout.layout(
@@ -83,7 +83,7 @@ def layout1(children: rx.Component, min_height: str = '50vh', **kwargs) -> rx.Co
             layout.layout(
                 subnav(),
                 content(
-                    children,
+                    *children,
                     # background=color_bg_contain,
                     min_height=280,
                     background=color_mode_cond('#f5f5f5', '#000'),

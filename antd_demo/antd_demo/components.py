@@ -106,9 +106,9 @@ def subnav() -> rx.Component:
     )
 
 
-def content(children, **kwargs) -> rx.Component:
+def content(*children: rx.Component, **kwargs) -> rx.Component:
     return layout.content(
-        children,
+        *children,
         general.float_group(
             general.float_button(
                 icon=general.icon('CommentOutlined'),

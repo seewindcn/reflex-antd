@@ -11,6 +11,7 @@ class Form(AntdComponent):
     tag = 'Form'
 
     colon: Optional[Var[bool]]
+    component: Optional[Var[Union[bool, ReactNode]]]
     disabled: Optional[Var[bool]]
     fields: Optional[Var[ContainVar]]
     form: Optional[Var[str]]
