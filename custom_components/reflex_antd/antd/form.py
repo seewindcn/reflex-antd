@@ -151,7 +151,7 @@ def _modal_form(modal_type: str, *children, modal_config=None, form_id: str = No
         modal_config['content'] = f
         return op(config=modal_config)
     else:
-        modal_config['after_open_change'] = js_value(f"""(open) => {{{form_id}.resetFields()}}""")
+        modal_config['after_open_change'] = js_value(f"""(open) => {{{form_id}.resetFields()}}""", to_js=True)
         modal = op(
             f,
             # on_open=JsValue(f'{form_id}.resetFields()'),
