@@ -280,7 +280,7 @@ class ExLambdaHandlerItem(ExItem):
         chain = self.parent._create_event_chain(key, self.item)
         rendered_chain = format.format_prop(chain).strip("{}")
         _hook = f"""const {self._get_fn_name()} = useCallback({rendered_chain}, [addEvents, Event]);"""
-        return {Hooks.EVENTS:None, _hook: None}
+        return {Hooks.EVENTS: None, _hook: None}
 
 
 class ExCallableItem(ExItem):
@@ -673,6 +673,11 @@ class CasualVar(ExVar):
             _var_name=f'({self._var_name})'
         )
 
+    def to_type(self, _type: Type) -> Self:
+        return self._replace(
+            _var_type=_type,
+        )
+
 
 casual_var = CasualVar.create
 
@@ -739,12 +744,18 @@ class ContainVar(ExVar):
         . only support list or dict
         . list item only support: JsValue, JsFunctionValue
         """
+        support_clses = (JsValue, JsEvent, JsFunctionValue)
         if isinstance(self._var_value, rx.Var):
             return {self._var_value: None}
-        assert isinstance(self._var_value, (list, dict)), 'ContainVar.to_hook_code only supports list'
-        items = self._var_value if isinstance(self._var_value, list) else self._var_value.values()
+        if isinstance(self._var_value, support_clses):
+            items = [self._var_value]
+        elif isinstance(self._var_value, (list, dict)):
+            items = self._var_value if isinstance(self._var_value, list) else self._var_value.values()
+        else:
+            raise ValueError(f"to_hook_code Unsupported type {type(self._var_value)}")
+
         for item in items:
-            assert isinstance(item, (JsValue, JsFunctionValue, JsEvent)), \
+            assert isinstance(item, support_clses), \
                 'ContainVar.to_hook_code list item only support: JsValue, JsFunctionValue'
 
         def _iter_items():
@@ -893,9 +904,13 @@ class AntdBaseComponent(Component):
         return _imports
 
     def _get_all_hooks(self) -> dict[str, None]:
-        """ fix 0.5.1 bug #3365 """
+        """  """
         rs = super()._get_all_hooks()
+        # fix 0.5.1 bug #3365
         rs = dict((k, None) for k in rs.keys())
+        # remove double Hooks.EVENTS, component._get_all_hooks_internal and _get_all_hooks is not merge
+        if bool(self.event_triggers):
+            rs.pop(Hooks.EVENTS, None)
         return rs
 
     def add_hooks(self) -> list[str | Var]:
