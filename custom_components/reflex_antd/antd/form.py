@@ -118,7 +118,10 @@ form_list = FormList.create
 form_provider = FormProvider.create
 
 
-def _modal_form(modal_type: str, *children, modal_config=None, form_id: str = None, **props) -> JsValue | Component:
+def _modal_form(
+        modal_type: str, *children: Component,
+        others: list[Component] = None,
+        modal_config=None, form_id: str = None, **props) -> JsValue | Component:
     from . import modal
     if form_id is None:
         form_id = f'form_{uuid.uuid4().hex}'
@@ -146,24 +149,33 @@ def _modal_form(modal_type: str, *children, modal_config=None, form_id: str = No
       }});//if catch, modal will close the form //.catch(() => console.log('Oops errors!'));
       }}
     """)
+    if others is None:
+        others = []
     op = getattr(modal, modal_type)
     if modal_type == 'confirm':
-        modal_config['content'] = f
-        return op(config=modal_config)
+        modal_config['content'] = [f, *others]
+        before_open = modal_config.pop('before_open', None)
+        return op(config=modal_config, before_open=before_open)
     else:
         modal_config['after_open_change'] = js_value(f"""(open) => {{{form_id}.resetFields()}}""", to_js=True)
         modal = op(
             f,
+            *others,
             # on_open=JsValue(f'{form_id}.resetFields()'),
             **modal_config)
         return modal
 
 
-def modal_form(*children, modal_config=None, form_id: str = None, **props) -> Component:
-    return _modal_form('modal',
-                       *children, modal_config=modal_config, form_id=form_id, **props)
+def modal_form(
+        *children, others: list[Component] = None,
+        modal_config=None, form_id: str = None, **props) -> Component:
+    return _modal_form('modal', *children,
+                       others=others, modal_config=modal_config, form_id=form_id, **props)
 
 
-def confirm_form(*children, confirm_config=None, form_id: str = None, **props) -> JsValue:
-    return _modal_form('confirm',
-                       *children, modal_config=confirm_config, form_id=form_id, **props)
+def confirm_form(
+        *children, others: list[Component] = None,
+        confirm_config=None, form_id: str = None, **props) -> JsValue:
+    return _modal_form('confirm', *children,
+                       others=others,
+                       modal_config=confirm_config, form_id=form_id, **props)

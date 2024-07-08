@@ -661,6 +661,9 @@ class CasualVar(ExVar):
             _var_name=f'({self._var_name})'
         )
 
+    def to_raw(self) -> str:
+        return self._var_name
+
     def to_react(self) -> Self:
         return self._replace(
             _var_type=str,
@@ -750,21 +753,23 @@ class ContainVar(ExVar):
         if isinstance(self._var_value, support_clses):
             items = [self._var_value]
         elif isinstance(self._var_value, (list, dict)):
-            items = self._var_value if isinstance(self._var_value, list) else self._var_value.values()
+            items = self._var_value
         else:
             raise ValueError(f"to_hook_code Unsupported type {type(self._var_value)}")
 
-        for item in items:
-            assert isinstance(item, support_clses), \
+        def _check(i):
+            assert isinstance(i, support_clses), \
                 'ContainVar.to_hook_code list item only support: JsValue, JsFunctionValue'
 
         def _iter_items():
             _prefix = f'{self._var_fmt.name}_' if self._var_fmt.name else '_'
-            if isinstance(self._var_value, list):
-                for idx, item in enumerate(self._var_value):
+            if isinstance(items, list):
+                for idx, item in enumerate(items):
+                    _check(item)
                     yield f'{_prefix}{idx}', item
-            elif isinstance(self._var_value, dict):
-                for k, v in self._var_value.items():
+            elif isinstance(items, dict):
+                for k, v in items.items():
+                    _check(v)
                     yield f'{_prefix}{k}', v
 
         hooks: Dict[str, None] = {}

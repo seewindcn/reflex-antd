@@ -60,6 +60,8 @@ class Modal(AntdComponent):
 
 class Confirm(FakeComponentMixin, JsValue):
     config: Optional[Var[dict]]
+    # sample: before_open=helper.js_value(f""" {form_id}.setFieldsValue({str(ws.form_params).strip('{}')}) """)
+    before_open: JsValue = None
 
     @property
     def config_item(self) -> Optional[ExStateItem]:
@@ -95,17 +97,17 @@ class Confirm(FakeComponentMixin, JsValue):
         )
 
     def get_hooks(self) -> Set[str] | Dict[str, None]:
-        before_open = None
-        if isinstance(self.config_item, ContainVar):
-            before_open = self.config_item._var_fmt.get_ex_item('config.before_open')
-        call_before_open = f'({before_open.serialize()})();' \
+        before_open = self.before_open
+        # if isinstance(self.config_item, ContainVar):
+        #     before_open = self.config_item._var_fmt.get_ex_item('config.before_open')
+        s_before_open = before_open.serialize() \
             if before_open is not None else ''
         confirm_func = """const %(name)s = () => {
-                                %(call_before_open)s
+                                %(s_before_open)s
                                Modal.confirm(%(cfg)s);
                                };""" % dict(
             name=self.get_name(),
-            call_before_open=call_before_open,
+            s_before_open=s_before_open,
             cfg=self.config_item.serialize() if hasattr(self.config_item, 'serialize') else str(self.config_item),
         )
         return {

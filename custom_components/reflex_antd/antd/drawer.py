@@ -36,7 +36,7 @@ class Drawer(AntdComponent):
         _triggers = super().get_event_triggers()
         _triggers.update({
             "after_open_change": lambda open: [open],
-            "on_close": lambda e: [e],
+            "on_close": lambda: [],
         })
         return _triggers
 
