@@ -387,8 +387,12 @@ class JsValue:
             hooks=self.get_hooks(),
         )
 
+    def get_custom_code(self) -> set[str]:
+        rs = get_component_custom_code(self.value)
+        return rs
+
     def get_custom_components(self) -> set[CustomComponent]:
-        return get_component_custom_code(self.value)
+        return self.value.get_custom_components() if hasattr(self.value, 'get_custom_components') else set()
 
     def to_hook_code(self, name: str) -> str:
         return self.serialize()
@@ -425,6 +429,9 @@ class JsFunctionValue(JsValue):
 
     def get_hooks(self) -> Set[str] | Dict[str, None]:
         return get_component_hooks(self._value)
+
+    def get_custom_code(self) -> set[str]:
+        return get_component_custom_code(self._value)
 
     def get_custom_components(self) -> set[CustomComponent]:
         return set() if not isinstance(self._value, CustomComponent) else {self._value}
@@ -465,6 +472,9 @@ class ExJsItem(ExItem):
 
     def get_custom_components(self) -> set[CustomComponent]:
         return self.item.get_custom_components()
+
+    def get_custom_code(self) -> set[str]:
+        return self.item.get_custom_code()
 
 
 class ExVarItem(ExItem):
@@ -785,7 +795,27 @@ class ContainVar(ExVar):
 contain = ContainVar.create
 
 
-def container(data: Union[list, dict, JsValue], name: str = '') -> rx.Component:
+class Container(Bare):
+    @classmethod
+    def create(cls, contents: ContainVar, name: str = None) -> Component:
+        assert isinstance(contents, ContainVar), f'contents({type(contents)}) must be a ContainVar'
+        rs = super().create(None)
+        rs.contents = contents.init(rs, name)
+        return rs
+
+    def _get_all_custom_code(self) -> set[str]:
+        codes = self.contents.get_custom_code()
+        return codes
+
+    def _get_all_custom_components(
+        self, seen: set[str] | None = None
+    ) -> Set[CustomComponent]:
+        return self.contents.get_custom_components()
+
+
+def container(
+        data: Union[list, dict, JsValue, JsEvent, JsFunctionValue, ContainVar],
+        name: str = '') -> rx.Component:
     """ wrap contain to Component, use for:
         .foreach:  rx.foreach(GlobalState.subnav_items, _sub_item)
             GlobalState.subnav_items = [{"title": "home", "href": "/home"}, ]
@@ -795,10 +825,8 @@ def container(data: Union[list, dict, JsValue], name: str = '') -> rx.Component:
                 )
                 return b
     """
-    d = contain(data)
-    b = Bare()
-    d.init(b, name)
-    b.contents = d
+    d = contain(data) if not isinstance(data, ContainVar) else data
+    b = Container.create(d, name=name)
     return b
 
 
@@ -1016,6 +1044,11 @@ class AntdComponent(AntdBaseComponent):
         }
 
 
+class AntdFragment(AntdBaseComponent):
+    library = "react"
+    tag = "Fragment"
+
+
 class AntdSubComponent(AntdBaseComponent, Component):
     base_tag: str = None
 
@@ -1069,3 +1102,5 @@ def patch_all():
 
 ReactNode = Union[str, Component]
 JsNode = Union[JsValue, JsEvent]
+
+fragment = AntdFragment.create
