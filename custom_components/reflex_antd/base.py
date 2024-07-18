@@ -194,6 +194,11 @@ class JsEvent:
         self._item = ExEventHandlerItem(self, parent, key=key)
         return self._item
 
+    # def serialize(self) -> str:
+    #     self.get_ex_item()
+    #     code = f"{self.value if isinstance(self.value, str) else str(self.value).strip('{}')}"
+    #     return f"({code})" if self.to_js else code
+
     def to_hook_code(self, name: str) -> str:
         assert self._item is not None, 'JsEvent to_hook_code depend get_ex_item'
         code = self._item.serialize()

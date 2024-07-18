@@ -17,7 +17,7 @@ class FeedbackBaseState(State):
 class FeedbackDrawerState(State):
     open: bool = False
 
-    def on_close(self, e):
+    def on_close(self):
         self.open = False
 
     def change_open(self):
@@ -163,13 +163,12 @@ def antd_feedback_drawer() -> rx.Component:
                 mask_closable=True,
                 keyboard=False,
                 size="large",
-                on_close=helper.js_event(
-                    FeedbackDrawerState.on_close,
-                    js="""
-                        e.preventDefault();
-                        var e = '';
-                        """
-                ),
+                on_close=FeedbackDrawerState.on_close,
+                # helper.js_event(
+                #     FeedbackDrawerState.on_close,
+                #     js=""" e.preventDefault(); var e = ''; """,
+                #     event_trigger=lambda: [],
+                # ),
                 extra=rx.spacer(
                     general.button(
                         "Cancel",
@@ -289,15 +288,15 @@ def _modal_form1() -> rx.Component:
                 confirm_config=dict(
                     title='modal + form',
                     icon=general.icon('ExclamationCircleFilled'),
-                    before_open=helper.js_event(
-                        FeedbackModalState.before_open,
-                        js="""(e) => {
-                        let key= 1;
-                        %(name)s(key);
-                        }""",
-                        fmt=True,
-                        event_trigger=lambda v: [v],
-                    ),
+                    # before_open=helper.js_event(
+                    #     FeedbackModalState.before_open,
+                    #     js="""(e) => {
+                    #     let key= 1;
+                    #     %(name)s(key);
+                    #     }""",
+                    #     fmt=True,
+                    #     event_trigger=lambda v: [v],
+                    # ),
                 ),
                 form_id='myForm',
                 on_finish=helper.js_event(FeedbackModalState.on_finish),
