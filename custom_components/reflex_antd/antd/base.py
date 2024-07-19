@@ -87,9 +87,9 @@ class ConfigProvider(AntdComponent):
         Returns:
             A new ConfigProvider component.
         """
-        if 'theme' not in props:
-            theme = Var.create('theme.styles.global.body.antd', _var_is_local=False)
-            props['theme'] = theme
+        # if 'theme' not in props:
+        #     theme = Var.create('theme.styles.global.body.antd', _var_is_local=False)
+        #     props['theme'] = theme
 
         return super().create(
             *children,
