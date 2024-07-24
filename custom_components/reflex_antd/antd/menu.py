@@ -24,6 +24,14 @@ class OnSelectEvent(Base):
     selectedKeys: List[str]
 
 
+def on_menu_select(ev: OnSelectEvent):
+    return [ev.selectedKeys]
+
+
+def on_menu_click(ev: OnSelectEvent):
+    return [ev.key, ev.keyPath]
+
+
 class Menu(AntdComponent):
     tag = 'Menu'
 
@@ -47,21 +55,18 @@ class Menu(AntdComponent):
     theme: Optional[Var[ThemeType]]
     trigger_sub_menu_action: Optional[Var[TriggerType]]
 
+    @classmethod
+    def get_menu_triggers(cls, triggers: dict, prepare: str = ''):
+        triggers.update({
+            f'{prepare}{EventTriggers.ON_OPEN_CHANGE}': lambda open_keys: [open_keys],
+            f'{prepare}{EventTriggers.ON_SELECT}': on_menu_select,
+            f'{prepare}{EventTriggers.ON_CLICK}': on_menu_click,
+            f'{prepare}on_deselect': on_menu_click,
+        })
+
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
-
-        def _on_select(ev: OnSelectEvent):
-            return [ev.selectedKeys]
-
-        def _on_click(ev: OnSelectEvent):
-            return [ev.key, ev.keyPath]
-
-        _triggers.update({
-            EventTriggers.ON_OPEN_CHANGE: lambda open_keys: [open_keys],
-            EventTriggers.ON_SELECT: _on_select,
-            EventTriggers.ON_CLICK: _on_click,
-            'on_deselect': _on_click,
-        })
+        self.get_menu_triggers(_triggers)
         return _triggers
 
 
