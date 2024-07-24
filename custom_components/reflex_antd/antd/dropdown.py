@@ -42,8 +42,10 @@ class DropdownButton(Dropdown):
     type: Optional[Var[str]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
+        from . import menu
         _triggers = super().get_event_triggers()
-
+        # add menu events
+        menu.Menu.get_menu_triggers(_triggers, prepare='menu.')
         _triggers.update({
             EventTriggers.ON_CLICK: lambda: [],
         })

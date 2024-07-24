@@ -13,6 +13,12 @@ from antd_demo.layout import page
 class AntdNavigationPage(State):
     active_key: str = "anchor"
 
+    def menu_click(self, key, path):
+        return rx.console_log(f'menu_click: {key}, {path}')
+
+    def dropdown_click(self):
+        return rx.console_log('Button clicked')
+
 
 @helper.stateful
 def antd_navigation_anchor() -> rx.Component:
@@ -95,13 +101,15 @@ def antd_navigation_dropdown() -> rx.Component:
                 ),
                 placement="bottom",
                 # icon=general.icon("UserOutlined"),
-                menu=helper.contain({
-                    "items": [
+                menu=helper.contain(
+                    items=[
                         dict(key='1', label="1st menu item"),
                         dict(key='2', label="2st menu item"),
-                    ]})
-            )
-
+                    ],
+                    on_click=AntdNavigationPage.menu_click,
+                ),
+            ),
+            layout.divider(),
         ),
         width="100%",
     )
