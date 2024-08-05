@@ -114,9 +114,13 @@ class FeedbackMessageState(State):
 
 
 class FeedbackNotificationState(State):
-    def on_click(self):
-        print(1111)
-        pass
+    def on_notify(self, playment: str):
+        return feedback.notifications.info(
+            'title',
+            "Notification Title",
+            placement=playment,
+            duration=2,
+        )
 
 
 @rx.memo
@@ -233,39 +237,19 @@ def antd_feedback_notification() -> rx.Component:
             rx.text("使用 placement 可以配置通知从上面、下面、左上角、右上角、左下角、右下角弹出。"),
             general.button(
                 "top",
-                on_click=feedback.notification(
-                    message="Notification Title",
-                    description="test",
-                    placement="top",
-                    duration=2,
-                )
+                on_click=lambda: FeedbackNotificationState.on_notify('top'),
             ),
             general.button(
                 "topLeft",
-                on_click=feedback.notification(
-                    message="Notification Title",
-                    description="test",
-                    placement="topLeft",
-                    duration=2,
-                )
+                on_click=lambda: FeedbackNotificationState.on_notify('topLeft'),
             ),
             general.button(
                 "topRight",
-                on_click=feedback.notification(
-                    message="Notification Title",
-                    description="test",
-                    placement="topRight",
-                    duration=2,
-                )
+                on_click=lambda: FeedbackNotificationState.on_notify('topRight'),
             ),
             general.button(
                 "bottomLeft",
-                on_click=feedback.notification(
-                    message="Notification Title",
-                    description="test",
-                    placement="bottomLeft",
-                    duration=2,
-                )
+                on_click=lambda: FeedbackNotificationState.on_notify('bottomLeft'),
             ),
 
         ),

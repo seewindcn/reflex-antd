@@ -3,7 +3,10 @@ from .base import (  # noqa
     CasualVar, ReactNode, ContainVar, JsValue, JsEvent,
     fragment,
 )
-from .antd.base import theme, config_provider, Locale  # noqa
+from .antd.base import (  # noqa
+    theme, light_theme_var, dark_theme_var,
+    config_provider, antd_app, Locale,
+)
 from .util import switch  # noqa
 
 

@@ -5,7 +5,7 @@ from reflex import constants
 from reflex.utils import processes, exec
 
 environ['FRONTEND_PORT'] = '3001'
-environ['BACKEND_PORT'] = '8001'
+environ['BACKEND_PORT'] = '8101'
 
 
 def dev_run_backend(

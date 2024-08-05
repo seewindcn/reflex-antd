@@ -194,11 +194,6 @@ class JsEvent:
         self._item = ExEventHandlerItem(self, parent, key=key)
         return self._item
 
-    # def serialize(self) -> str:
-    #     self.get_ex_item()
-    #     code = f"{self.value if isinstance(self.value, str) else str(self.value).strip('{}')}"
-    #     return f"({code})" if self.to_js else code
-
     def to_hook_code(self, name: str) -> str:
         assert self._item is not None, 'JsEvent to_hook_code depend get_ex_item'
         code = self._item.serialize()
@@ -1043,9 +1038,10 @@ class AntdComponent(AntdBaseComponent):
     @staticmethod
     @lru_cache(maxsize=None)
     def _get_app_wrap_components() -> dict[tuple[int, str], Component]:
-        from .antd.base import config_provider
+        from .antd.base import config_provider, antd_app
         return {
-            (40, "AntdProvider"): _config_provider if _config_provider is not None else config_provider(),
+            (50, "AntdApp"): _config_app if _config_app is not None else antd_app(),
+            (51, "AntdProvider"): _config_provider if _config_provider is not None else config_provider(),
         }
 
 
@@ -1063,13 +1059,18 @@ class AntdSubComponent(AntdBaseComponent, Component):
 
 
 _config_provider: Optional[Component] = None
+_config_app: Optional[Component] = None
 
 
-def default_config(provider: Component):
-    global _config_provider
-    from .antd.base import ConfigProvider
-    assert isinstance(provider, ConfigProvider)
-    _config_provider = provider
+def default_config(provider: Component = None, antd_app: Component = None):
+    global _config_provider, _config_app
+    from .antd.base import ConfigProvider, AntdApp
+    if provider is not None:
+        assert isinstance(provider, ConfigProvider)
+        _config_provider = provider
+    if antd_app is not None:
+        assert isinstance(antd_app, AntdApp)
+        _config_app = antd_app
 
 
 def patch_all():

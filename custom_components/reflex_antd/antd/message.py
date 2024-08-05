@@ -55,17 +55,19 @@ class Message(JsValue):
 
     def get_imports(self) -> imports.ImportDict:
         _imports = {
-            "antd": [imports.ImportVar(tag='message')],
+            "antd": [imports.ImportVar(tag='App'), imports.ImportVar(tag='message', alias='message_md')],
             "react": [imports.ImportVar(tag="useEffect")],
             "/utils/state": [imports.ImportVar(tag="refs")],
         }
         return _imports
 
     def get_hooks(self) -> Set[str] | Dict[str, None]:
+
         if self.config_item is not None:
-            open_func = """const %(name)s = () => {
-                           %(mn)s.open(%(cfg)s);
-                       };""" % dict(
+            open_func = """
+            const %(name)s = () => {
+                %(mn)s.open(%(cfg)s);
+            };""" % dict(
                 name=self.get_open_message(),
                 mn='messageApi' if not self.is_global else 'message',
                 cfg=self.config_item.serialize(),
@@ -104,6 +106,7 @@ class Message(JsValue):
             ])
 
         _hooks = [
+            'const { message } = App.useApp();',
             str(f"{_ref} = message"),
         ]
         if self.is_global:
@@ -112,7 +115,7 @@ class Message(JsValue):
             ])
         else:
             _hooks.extend([
-                """const [messageApi, contextHolder] = message.useMessage();""",
+                """const [messageApi, contextHolder] = message_md.useMessage();""",
                 open_func,
                 *others,
             ])
@@ -176,23 +179,23 @@ class Messages(ComponentNamespace):
 
     @staticmethod
     def info(content: ReactNode, **kwargs):
-        return MessageHolder.send(message, type="info", **kwargs)
+        return Messages.send(content, type="info", **kwargs)
 
     @staticmethod
     def warning(content: ReactNode, **kwargs):
-        return MessageHolder.send(message, type="warning", **kwargs)
+        return Messages.send(content, type="warning", **kwargs)
 
     @staticmethod
     def error(content: ReactNode, **kwargs):
-        return MessageHolder.send(message, type="error", **kwargs)
+        return Messages.send(content, type="error", **kwargs)
 
     @staticmethod
     def success(content: ReactNode, **kwargs):
-        return MessageHolder.send(message, type="success", **kwargs)
+        return Messages.send(content, type="success", **kwargs)
 
     @staticmethod
     def loading(content: ReactNode, **kwargs):
-        return MessageHolder.send(message, type="success", **kwargs)
+        return Messages.send(content, type="loading", **kwargs)
 
 
 message = Message

@@ -89,7 +89,7 @@ class Confirm(FakeComponentMixin, JsValue):
 
     def get_imports(self) -> imports.ImportDict:
         _imports = {
-            "antd": [imports.ImportVar(tag='Modal')],
+            "antd": [imports.ImportVar(tag='App')],
         }
         return imports.merge_imports(
             _imports,
@@ -102,16 +102,18 @@ class Confirm(FakeComponentMixin, JsValue):
         #     before_open = self.config_item._var_fmt.get_ex_item('config.before_open')
         s_before_open = before_open.serialize() \
             if before_open is not None else ''
-        confirm_func = """const %(name)s = () => {
-                                %(s_before_open)s
-                               Modal.confirm(%(cfg)s);
-                               };""" % dict(
+        confirm_func = """
+        const %(name)s = () => {
+            %(s_before_open)s
+            modal.confirm(%(cfg)s);
+        };""" % dict(
             name=self.get_name(),
             s_before_open=s_before_open,
             cfg=self.config_item.serialize() if hasattr(self.config_item, 'serialize') else str(self.config_item),
         )
         return {
             **self.config_item.get_hooks(),
+            'const { modal } = App.useApp();': None,
             confirm_func: None,
         }
 

@@ -1,7 +1,7 @@
 import reflex as rx
 from reflex.constants import MemoizationDisposition
 from reflex.components.core.cond import color_mode_cond
-from reflex_antd import navigation, layout, general, display, helper
+from reflex_antd import navigation, layout, general, display, helper, feedback
 
 from .state import GlobalState
 
@@ -124,5 +124,8 @@ def content(*children: rx.Component, **kwargs) -> rx.Component:
             icon=general.icon('CustomerServiceOutlined'),
             close_icon=general.icon('CloseCircleOutlined'),
         ),
+        ex_hooks=[
+            feedback.notification(is_global=True),
+        ],
         **kwargs
     )

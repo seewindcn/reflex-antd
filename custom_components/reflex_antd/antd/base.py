@@ -9,7 +9,7 @@ from reflex.utils import imports
 
 
 from .. import base
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, AntdBaseComponent, ContainVar, JsValue
 from ..constant import SizeType
 
 
@@ -57,9 +57,9 @@ class Locale(JsValue):
         }
 
 
-class ConfigProvider(AntdComponent):
+class ConfigProvider(AntdBaseComponent):
     """Top level antd provider must be included in any app using antd components."""
-
+    library = "antd"
     tag = "ConfigProvider"
     alias = "AntdConfigProvider"
 
@@ -102,7 +102,7 @@ class ConfigProvider(AntdComponent):
             imports.ImportVar(tag="theme", is_default=True),
         )
         _imports.setdefault("@ant-design/cssinjs", []).append(
-            imports.ImportVar(tag="Theme", alias='antdTheme'),
+            imports.ImportVar(tag="Theme", alias='AntdTheme'),
         )
         return _imports
 
@@ -123,6 +123,17 @@ class AntdRegistryProvider(Component):
     tag = "AntdRegistry"
 
 
+class AntdApp(AntdBaseComponent):
+    library = "antd"
+    tag = "App"
+    alias = "AntdApp"
+
+    component: Optional[Var[Union[bool, str]]]
+    message: Optional[Var[Union[dict, ContainVar]]]
+    notification: Optional[Var[Union[dict, ContainVar]]]
+
+
 config_provider = ConfigProvider.create
 antd_registry_provider = AntdRegistryProvider.create
+antd_app = AntdApp.create
 

@@ -121,7 +121,9 @@ form_provider = FormProvider.create
 def _modal_form(
         modal_type: str, *children: Component,
         others: list[Component] = None,
-        modal_config=None, form_id: str = None, **props) -> JsValue | Component:
+        modal_config=None, form_id: str = None,
+        # form_params: dict[str, Any] = None,
+        **props) -> JsValue | Component:
     from . import modal
     if form_id is None:
         form_id = f'form_{uuid.uuid4().hex}'
@@ -144,26 +146,36 @@ def _modal_form(
         {form_id}.submit();
       resolve()}})
       .catch((err) => {{
-      console.log('{form_id}.validateFields error:', err)
-      reject()}});
+      console.log('{form_id}.validateFields error:', err);
+      err.stack = '{form_id}.validateFields error';
+      reject(err)}});
       }});//if catch, modal will close the form //.catch(() => console.log('Oops errors!'));
       }}
     """)
     if others is None:
         others = []
     op = getattr(modal, modal_type)
-    if modal_type == 'confirm':
-        modal_config['content'] = [f, *others]
-        before_open = modal_config.pop('before_open', None)
-        return op(config=modal_config, before_open=before_open)
-    else:
-        modal_config['after_open_change'] = js_value(f"""(open) => {{{form_id}.resetFields()}}""", to_js=True)
+    if modal_type == 'modal':
+        modal_config.update(
+            after_open_change=js_value(f"""(open) => {{{form_id}.resetFields()}}""", to_js=True),
+        )
         modal = op(
             f,
             *others,
             # on_open=JsValue(f'{form_id}.resetFields()'),
             **modal_config)
         return modal
+    else:
+        # confirm
+        modal_config['content'] = [f, *others]
+        form_params = props.get('initial_values', None)
+        if form_params is not None:
+            # 初始化form表单字段值
+            modal_config.update(
+                before_open=js_value(f""" {form_id}.setFieldsValue({str(form_params).strip('{}')}) """),
+            )
+        before_open = modal_config.pop('before_open', None)
+        return op(config=modal_config, before_open=before_open)
 
 
 def modal_form(
