@@ -1,6 +1,7 @@
 from .base import (  # noqa
     stateful, patch_all, default_config, contain, js_value, js_event, container, casual_var,
-    CasualVar, ReactNode, ContainVar, JsValue, JsEvent,
+    CasualVar, ReactNode, ContainVar,
+    JsValue, JsEvent, JsLocalDictVar,
     fragment,
 )
 from .antd.base import (  # noqa

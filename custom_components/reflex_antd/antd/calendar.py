@@ -1,16 +1,12 @@
 from typing import Optional, Union, Dict, Any
 
 from reflex import Component, Var
+from reflex.utils import imports
+from reflex.constants import EventTriggers
 
 from ..base import AntdComponent, ContainVar, JsValue
-from reflex.constants import EventTriggers
 from .base import Locale
-from reflex.utils import imports
-
-
-class DayJS(JsValue):
-    def serialize(self) -> str:
-        return f"dayjs('{self.value}')"
+from .date_picker import DayJS
 
 
 class Calendar(AntdComponent):

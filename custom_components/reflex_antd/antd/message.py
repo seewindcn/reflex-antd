@@ -9,7 +9,7 @@ from reflex.vars import BaseVar
 from reflex.event import EventSpec, call_script
 from reflex.utils.serializers import serialize
 
-from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, version
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, version, compose_react_imports
 from ..constant import MessageType
 from . import helper
 
@@ -56,7 +56,7 @@ class Message(JsValue):
     def get_imports(self) -> imports.ImportDict:
         _imports = {
             "antd": [imports.ImportVar(tag='App'), imports.ImportVar(tag='message', alias='message_md')],
-            "react": [imports.ImportVar(tag="useEffect")],
+            "react": compose_react_imports(['useEffect']),
             "/utils/state": [imports.ImportVar(tag="refs")],
         }
         return _imports

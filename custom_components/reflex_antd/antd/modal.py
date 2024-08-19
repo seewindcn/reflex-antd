@@ -96,7 +96,7 @@ class Confirm(FakeComponentMixin, JsValue):
             self.config_item.get_imports(),
         )
 
-    def get_hooks(self) -> Set[str] | Dict[str, None]:
+    def get_hooks(self) -> Dict[str, None]:
         before_open = self.before_open
         # if isinstance(self.config_item, ContainVar):
         #     before_open = self.config_item._var_fmt.get_ex_item('config.before_open')

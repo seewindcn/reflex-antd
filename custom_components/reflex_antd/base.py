@@ -20,6 +20,7 @@ from reflex.constants import Hooks, Reflex, MemoizationDisposition, MemoizationM
 from reflex.utils import imports, format, serializers, exceptions
 from reflex.vars import BaseVar, VarData
 from reflex.event import EventHandler, EventSpec, EventChain
+from reflex.experimental import hooks
 
 from .constant import SizeType
 from .util import OrderedSet
@@ -64,6 +65,10 @@ def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:
 
 def pretty_dumps(value: Any, indent=2) -> str:
     return format.json.dumps(value, ensure_ascii=False, default=serializers.serialize, indent=indent)
+
+
+def compose_react_imports(tags: list[str]):
+    return {"react": [ImportVar(tag=tag, install=tag in ['useEffect', 'useState']) for tag in tags]}
 
 
 def get_component_all_imports(com: Component) -> imports.ImportDict:
@@ -133,7 +138,7 @@ class ExComponentItemBase(ExItem):
     def get_imports(self) -> imports.ImportDict:
         return get_component_all_imports(self.item)
 
-    def get_hooks(self) -> Set[str] | Dict[str, None]:
+    def get_hooks(self) -> Dict[str, None]:
         return get_component_hooks(self.item)
 
     def get_custom_components(self) -> set[CustomComponent]:
@@ -238,7 +243,7 @@ class ExEventHandlerItem(ExItem):
         else:
             return self.item.js % dict(name=hd_name)
 
-    def get_hooks(self) -> Set[str] | Dict[str, None]:
+    def get_hooks(self) -> Dict[str, None]:
         return self.hd_item.get_hooks()
 
     def get_imports(self) -> imports.ImportDict:
@@ -296,7 +301,7 @@ class ExCallableItem(ExItem):
     def get_imports(self) -> imports.ImportDict:
         return get_component_all_imports(self.item())
 
-    def get_hooks(self) -> Set[str] | Dict[str, None]:
+    def get_hooks(self) -> Dict[str, None]:
         return get_component_hooks(self.item())
 
 
@@ -313,7 +318,7 @@ class ExStateItem(ExItem):
     def get_imports(self) -> imports.ImportDict:
         return self.item._var_data.imports
 
-    def get_hooks(self) -> Set[str] | Dict[str, None]:
+    def get_hooks(self) -> Dict[str, None]:
         return self.item._var_data.hooks
 
     def get_state(self) -> str:
@@ -327,7 +332,7 @@ class FakeComponentMixin:
     def get_event_triggers(self) -> Dict[str, Any]:
         return {}
 
-    def get_hooks(self) -> Set[str] | Dict[str, None]:
+    def get_hooks(self) -> Dict[str, None]:
         return {}
 
     def get_imports(self) -> imports.ImportDict:
@@ -377,7 +382,7 @@ class JsValue:
     def get_state(self) -> str:
         return ''
 
-    def get_hooks(self) -> Set[str] | Dict[str, None]:
+    def get_hooks(self) -> Dict[str, None]:
         return get_component_hooks(self.value)
 
     def get_var_data(self) -> VarData:
@@ -427,7 +432,7 @@ class JsFunctionValue(JsValue):
     def get_imports(self) -> imports.ImportDict:
         return get_component_all_imports(self._value)
 
-    def get_hooks(self) -> Set[str] | Dict[str, None]:
+    def get_hooks(self) -> Dict[str, None]:
         return get_component_hooks(self._value)
 
     def get_custom_code(self) -> set[str]:
@@ -454,6 +459,57 @@ def js_value(value: Union[str, Callable, Foreach, Match], **kwargs) -> JsValue:
     raise NotImplemented("Not implemented: %s(%s)" % (type(value), value))
 
 
+class JsLocalDictVar(JsValue):
+    """ custom local state's var by reflex state
+    """
+    name: str
+    value: rx.Var[dict]
+    js: str
+
+    @property
+    def state_name(self) -> str:
+        return format.format_state_name(self.value._var_data.state)
+
+    def __init__(
+            self, name: str, value: dict | rx.Var,
+            js: str,
+            **kwargs):
+        """
+        :param js:str, sample:
+            values['test_date'] = dayjs(values['test_date'])
+         """
+        super().__init__(value, **kwargs)
+        self.js = js
+        self.name = name
+
+    def serialize(self) -> str:
+        return self.name
+
+    def get_hooks(self) -> Dict[str, None]:
+        kw = dict(
+            value=self.value._var_full_name,
+            state=self.state_name,
+            name=self.name,
+            js=self.js,
+        )
+        return {
+            "const[%(name)s, set%(name)s] = useState({})" % kw: None,
+            """
+useEffect(() => {
+  if (! %(value)s) {
+    return
+  }
+  var values = { ...%(value)s}
+  %(js)s
+  set%(name)s(values)
+}, [%(state)s]);
+            """ % kw: None,
+        }
+
+    def get_imports(self) -> imports.ImportDict:
+        return compose_react_imports(['useState', 'useEffect'])
+
+
 class ExJsItem(ExItem):
     item: JsValue
 
@@ -467,7 +523,7 @@ class ExJsItem(ExItem):
     def get_imports(self) -> imports.ImportDict:
         return self.item.get_imports()
 
-    def get_hooks(self) -> Set[str] | Dict[str, None]:
+    def get_hooks(self) -> Dict[str, None]:
         return self.item.get_hooks()
 
     def get_custom_components(self) -> set[CustomComponent]:
@@ -490,7 +546,7 @@ class ExVarItem(ExItem):
     def get_imports(self) -> imports.ImportDict:
         return self.item._var_data.imports if self.item._var_data else {}
 
-    def get_hooks(self) -> Set[str] | Dict[str, None]:
+    def get_hooks(self) -> Dict[str, None]:
         return self.item._var_data.hooks if self.item._var_data else {}
 
     def get_state(self) -> str:
@@ -686,10 +742,7 @@ class CasualVar(ExVar):
             _var_name=f'({self._var_name})'
         )
 
-    def to_type(self, _type: Type) -> Self:
-        return self._replace(
-            _var_type=_type,
-        )
+    to_type = Var.to
 
 
 casual_var = CasualVar.create
@@ -746,7 +799,7 @@ class ContainVar(ExVar):
             rs |= ex.get_custom_code()
         return rs
 
-    def get_hooks(self) -> Set[str] | Dict[str, None]:
+    def get_hooks(self) -> Dict[str, None]:
         return self._var_data.hooks
 
     def get_imports(self) -> imports.ImportDict:
