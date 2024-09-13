@@ -188,6 +188,7 @@ def modal_form(
 def confirm_form(
         *children, others: list[Component] = None,
         confirm_config=None, form_id: str = None, **props) -> JsValue:
+    """ confirm模式, 使用 useContext(EventLoopContext); 会报错, """
     return _modal_form('confirm', *children,
                        others=others,
                        modal_config=confirm_config, form_id=form_id, **props)

@@ -6,7 +6,7 @@ from reflex.utils import imports
 from reflex.constants import EventTriggers
 
 from ..base import AntdComponent, ContainVar, JsValue, ReactNode, DataClassMixin
-from ..constant import SizeType, PlacementType, TabsType
+from ..constant import SizeType, OrientationType, TabsType
 
 
 @dataclass(frozen=True)
@@ -17,7 +17,7 @@ class TabItem(DataClassMixin):
     force_render: Optional[Var[bool]] = None
     key: Optional[Union[str, Var[str]]] = None
     label: Optional[Union[ReactNode, Var[ReactNode]]] = None
-    icon: Optional[Var[ReactNode]] = None
+    icon: Optional[Union[ReactNode, Var[ReactNode]]] = None
     children: Optional[Union[ReactNode, Var[ReactNode]]] = None
     closable: Optional[Var[bool]] = None
 
@@ -25,11 +25,11 @@ class TabItem(DataClassMixin):
 class Tabs(AntdComponent):
     tag = 'Tabs'
 
-    active_key: Optional[Var[str]]
+    active_key: Optional[Var[Union[str, int]]]
     add_icon: Optional[Var[ReactNode]]
     animated: Optional[Var[Union[bool, Dict]]]
     centered: Optional[Var[bool]]
-    default_active_key: Optional[Var[str]]
+    default_active_key: Optional[Var[Union[str, int]]]
     hide_add: Optional[Var[bool]]
     indicator: Optional[Var[Union[Dict, ContainVar]]]
     items: Optional[Var[Union[ContainVar, List]]]
@@ -41,7 +41,7 @@ class Tabs(AntdComponent):
     tab_bar_extra_content: Optional[Var[Union[ReactNode, ContainVar]]]
     tab_bar_gutter: Optional[Var[int]]
     tab_bar_style: Optional[Var[Dict]]
-    tab_position: Optional[Var[PlacementType]]
+    tab_position: Optional[Var[OrientationType]]
     destroy_inactive_tab_pane: Optional[Var[bool]]
     type: Optional[Var[TabsType]]
 

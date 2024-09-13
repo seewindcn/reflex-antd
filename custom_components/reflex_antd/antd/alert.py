@@ -12,9 +12,9 @@ class Alert(AntdComponent):
     action: Optional[Var[ReactNode]]
     banner: Optional[Var[bool]]
     closable: Optional[Var[Union[bool, dict]]]
-    description: Optional[ReactNode]
-    icon: Optional[ReactNode]
-    message: Optional[ReactNode]
+    description: Optional[Var[ReactNode]]
+    icon: Optional[Var[ReactNode]]
+    message: Optional[Var[ReactNode]]
     show_icon: Optional[bool]
     type: Optional[StatusType]
 

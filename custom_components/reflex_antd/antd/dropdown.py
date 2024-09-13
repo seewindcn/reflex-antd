@@ -4,7 +4,7 @@ from reflex import Component, Var
 from reflex.utils import imports
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue, ReactNode
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode, memo_never_no_recursive
 from ..constant import PlacementType, DirectionType
 
 
@@ -22,9 +22,13 @@ class Dropdown(AntdComponent):
     trigger: Optional[Var[ContainVar]]
     open: Optional[Var[bool]]
 
+    _memoization_mode = memo_never_no_recursive
+
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
-
+        # add menu events
+        from . import menu
+        menu.Menu.get_menu_triggers(_triggers, prepare='menu.')
         _triggers.update({
             EventTriggers.ON_OPEN_CHANGE: lambda open, info: [open, info],
         })
@@ -42,10 +46,7 @@ class DropdownButton(Dropdown):
     type: Optional[Var[str]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
-        from . import menu
         _triggers = super().get_event_triggers()
-        # add menu events
-        menu.Menu.get_menu_triggers(_triggers, prepare='menu.')
         _triggers.update({
             EventTriggers.ON_CLICK: lambda: [],
         })

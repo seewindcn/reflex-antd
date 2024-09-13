@@ -41,7 +41,22 @@ memo_always = MemoizationMode().set(disposition=MemoizationDisposition.ALWAYS)
 memo_always_no_recursive = MemoizationMode().set(disposition=MemoizationDisposition.ALWAYS, recursive=False)
 
 
-def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:
+def stateless(hd: Callable[..., Component] = None, memo=memo_never_no_recursive) -> Callable:
+    def _my(_hd: Callable[..., Component]) -> Callable:
+        @wraps(_hd)
+        def _wrap(*args, **kwargs):
+            _com = _hd(*args, **kwargs)
+            _com._memoization_mode = memo
+            return _com
+        return _wrap
+
+    if hd is None:
+        return _my
+    else:
+        return _my(hd)
+
+
+def stateful(hd: Callable[..., Component] = None, forced=True, memo=memo_always) -> Callable:
     """ render a component into a function """
 
     def _my(_hd: Callable[..., Component]) -> Callable:
@@ -49,7 +64,7 @@ def stateful(hd: Callable[..., Component] = None, forced=True) -> Callable:
         def _wrap(*args, **kwargs):
             _com = _hd(*args, **kwargs)
             if forced:
-                _com._memoization_mode = memo_always
+                _com._memoization_mode = memo
                 # _com._memoization_mode.recursive = False
             _sc = StatefulComponent.create(_com)
             return _sc if _sc is not None else _com
@@ -82,6 +97,16 @@ def get_component_hooks(com) -> Dict[str, None]:
 
 def get_component_custom_code(com: Component) -> Set[str]:
     return com._get_all_custom_code() if isinstance(com, BaseComponent) else set()
+
+
+def get_custom_components(com: Any) -> set[CustomComponent]:
+    if isinstance(com, CustomComponent):
+        return {com}
+    if hasattr(com, 'get_custom_components'):
+        return com.get_custom_components()
+    if hasattr(com, '_get_all_custom_components'):
+        return com._get_all_custom_components()
+    return set()
 
 
 class ExItem(ABC):
@@ -142,7 +167,7 @@ class ExComponentItemBase(ExItem):
         return get_component_hooks(self.item)
 
     def get_custom_components(self) -> set[CustomComponent]:
-        return {self.item} if isinstance(self.item, CustomComponent) else set()
+        return get_custom_components(self.item)
 
     def get_custom_code(self) -> set[str]:
         rs = get_component_custom_code(self.item)
@@ -397,7 +422,7 @@ class JsValue:
         return rs
 
     def get_custom_components(self) -> set[CustomComponent]:
-        return self.value.get_custom_components() if hasattr(self.value, 'get_custom_components') else set()
+        return get_custom_components(self.value)
 
     def to_hook_code(self, name: str) -> str:
         return self.serialize()
@@ -439,7 +464,7 @@ class JsFunctionValue(JsValue):
         return get_component_custom_code(self._value)
 
     def get_custom_components(self) -> set[CustomComponent]:
-        return set() if not isinstance(self._value, CustomComponent) else {self._value}
+        return get_custom_components(self._value)
 
     def to_hook_code(self, name: str) -> str:
         """
@@ -746,6 +771,11 @@ class CasualVar(ExVar):
 
 
 casual_var = CasualVar.create
+
+
+class CasualDict(dict):
+    def __missing__(self, key):
+        return None
 
 
 class NodeVar(ExVar):

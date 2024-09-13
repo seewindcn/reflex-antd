@@ -36,7 +36,7 @@ class Modal(AntdComponent):
     open: Optional[Var[bool]]
     width: Optional[Var[Union[str, int]]]
     wrapClassName: Optional[Var[str]]
-    zIndex: Optional[Var[int]]
+    z_index: Optional[Var[int]]
 
     def _get_hooks(self) -> str | None:
         _hooks = []
@@ -59,6 +59,7 @@ class Modal(AntdComponent):
 
 
 class Confirm(FakeComponentMixin, JsValue):
+    """ confirm模式, 使用 useContext(EventLoopContext); 会报错, """
     config: Optional[Var[dict]]
     # sample: before_open=helper.js_value(f""" {form_id}.setFieldsValue({str(ws.form_params).strip('{}')}) """)
     before_open: JsValue = None
