@@ -39,7 +39,7 @@ class Input(AntdComponent):
 class TextArea(Input):
     tag = "Input.TextArea"
 
-    auto_size: Optional[Var[Union[bool, Dict]]]
+    auto_size: Optional[Var[Union[bool, Dict, ContainVar]]]
 
 
 class Search(Input):

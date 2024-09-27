@@ -56,10 +56,17 @@ if environ.get("DEV_NO_RELOAD", False):
 
 config = rx.Config(
     app_name="antd_demo",
-    tailwind=dict(
-        corePlugins=dict(
-            preflight=False,
-        ),
-    ),
+    tailwind={
+        "theme": {
+            "extend": {},
+        },
+        "plugins": ["@tailwindcss/typography"],
+        "corePlugins": {
+            "preflight": False,
+        },
+        # "important": True,
+        # "prefix": "tw-",
+        # "separator": "_",
+    }
 )
 

@@ -223,7 +223,8 @@ def cards() -> rx.Component:
                     "More",
                     href="/demo/badge",
                 ),
-                width=300
+                width=300,
+                class_name='bg-violet-500 hover:bg-violet-600',
             ),
         ),
         rx.text(
