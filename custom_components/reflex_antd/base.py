@@ -90,6 +90,12 @@ def get_component_all_imports(com: Component) -> imports.ImportDict:
     return {} if isinstance(com, str) else com._get_all_imports()
 
 
+def get_component_all_dynamic_imports(com: Component) -> Set[str]:
+    if not com or isinstance(com, str):
+        return set()
+    return com._get_all_dynamic_imports()
+
+
 def get_component_hooks(com) -> Dict[str, None]:
     return {} if isinstance(com, str) \
         else com._get_all_hooks_internal() | com._get_all_hooks()
@@ -125,6 +131,9 @@ class ExItem(ABC):
 
     def get_imports(self) -> imports.ImportDict:
         return {}
+
+    def get_dynamic_imports(self) -> Set[str]:
+        return set()
 
     def get_state(self) -> str:
         return ''
@@ -162,6 +171,9 @@ class ExComponentItemBase(ExItem):
 
     def get_imports(self) -> imports.ImportDict:
         return get_component_all_imports(self.item)
+
+    def get_dynamic_imports(self) -> Set[str]:
+        return get_component_all_dynamic_imports(self.item)
 
     def get_hooks(self) -> Dict[str, None]:
         return get_component_hooks(self.item)
@@ -326,6 +338,9 @@ class ExCallableItem(ExItem):
     def get_imports(self) -> imports.ImportDict:
         return get_component_all_imports(self.item())
 
+    def get_dynamic_imports(self) -> Set[str]:
+        return get_component_all_dynamic_imports(self.item())
+
     def get_hooks(self) -> Dict[str, None]:
         return get_component_hooks(self.item())
 
@@ -404,6 +419,9 @@ class JsValue:
     def get_imports(self) -> imports.ImportDict:
         return get_component_all_imports(self.value)
 
+    def get_dynamic_imports(self) -> Set[str]:
+        return get_component_all_dynamic_imports(self.value)
+
     def get_state(self) -> str:
         return ''
 
@@ -456,6 +474,9 @@ class JsFunctionValue(JsValue):
 
     def get_imports(self) -> imports.ImportDict:
         return get_component_all_imports(self._value)
+
+    def get_dynamic_imports(self) -> Set[str]:
+        return get_component_all_dynamic_imports(self._value)
 
     def get_hooks(self) -> Dict[str, None]:
         return get_component_hooks(self._value)
@@ -548,6 +569,9 @@ class ExJsItem(ExItem):
     def get_imports(self) -> imports.ImportDict:
         return self.item.get_imports()
 
+    def get_dynamic_imports(self) -> Set[str]:
+        return self.item.get_dynamic_imports()
+
     def get_hooks(self) -> Dict[str, None]:
         return self.item.get_hooks()
 
@@ -638,25 +662,29 @@ class ExFormatter:
         rs = _op(value, key=self.name)
         self._value = rs
 
+    def iter_items(self) -> Iterable[Tuple[str, ExItem]]:
+        for k, v in self._coms.items():
+            yield k, v
+
     def get_ex_item(self, key: str) -> ExItem | None:
-        for i in self._coms.values():
+        for _, i in self.iter_items():
             if i.key == key:
                 return i
 
     def get_value(self) -> str:
         v = pretty_dumps(self._value)
-        for k, ex in self._coms.items():
+        for k, ex in self.iter_items():
             v = v.replace(f'"{k}"', ex.serialize())
         return v
 
     def get_imports(self) -> imports.ImportDict:
         _imports = imports.merge_imports(
-            *(c.get_imports() for c in self._coms.values()),
+            *(c.get_imports() for _, c in self.iter_items()),
         )
         return _imports
 
     def get_state(self) -> str:
-        for _, ex in self._coms.items():
+        for _, ex in self.iter_items():
             _state = ex.get_state()
             if _state != '':
                 return _state
@@ -664,7 +692,7 @@ class ExFormatter:
 
     def get_hooks(self) -> Dict[str, None]:
         hooks = {}
-        for _, ex in self._coms.items():
+        for _, ex in self.iter_items():
             _hooks = ex.get_hooks()
             hooks.update(_hooks)
         return hooks
@@ -835,6 +863,12 @@ class ContainVar(ExVar):
     def get_imports(self) -> imports.ImportDict:
         return self._var_data.imports
 
+    def get_dynamic_imports(self) -> Set[str]:
+        rs = set()
+        for _, i in self._var_fmt.iter_items():
+            rs |= i.get_dynamic_imports()
+        return rs
+
     def to_hook_code(self) -> Dict[str | Var, None]:
         """ ContainVar used at hook code
         . only support list or dict
@@ -894,6 +928,10 @@ class Container(Bare):
         self, seen: set[str] | None = None
     ) -> Set[CustomComponent]:
         return self.contents.get_custom_components()
+
+    def _get_dynamic_imports(self) -> str | None:
+        rs = self.contents.get_dynamic_imports()
+        return '\n'.join(rs) if rs else None
 
 
 def container(
@@ -972,9 +1010,15 @@ class AntdBaseComponent(Component):
 
     def _get_all_custom_code(self) -> Set[str]:
         code = super()._get_all_custom_code()
-        for k, v in self._iter_contains():
+        for v in self._iter_all_contains():
             code.update(v.get_custom_code())
         return code
+
+    def _get_all_dynamic_imports(self) -> Set[str]:
+        rs = super()._get_all_dynamic_imports()
+        for v in self._iter_all_contains():
+            rs |= v.get_dynamic_imports()
+        return rs
 
     def _get_style(self) -> dict:
         """Get the style for the component.
@@ -1011,12 +1055,11 @@ class AntdBaseComponent(Component):
 
     def add_imports(self) -> dict[str, str | ImportVar | list[str | ImportVar]]:
         _imports = {}
-        if self._ex_hooks:
-            for ex in self._ex_hooks:
-                _imports = imports.merge_imports(
-                    ex.get_imports(),
-                    _imports,
-                )
+        for ex in self._iter_all_contains():
+            _imports = imports.merge_imports(
+                ex.get_imports(),
+                _imports,
+            )
         return _imports
 
     def _get_all_hooks(self) -> dict[str, None]:
@@ -1031,12 +1074,11 @@ class AntdBaseComponent(Component):
 
     def add_hooks(self) -> list[str | Var]:
         hooks = []
-        if self._ex_hooks:
-            for ex in self._ex_hooks:
-                hooks.extend(ex.get_hooks().keys())
-                codes = ex.to_hook_code()
-                if codes:
-                    hooks.extend(codes)
+        for ex in self._ex_hooks:
+            hooks.extend(ex.get_hooks().keys())
+            codes = ex.to_hook_code()
+            if codes:
+                hooks.extend(codes)
 
         return hooks
 
@@ -1077,10 +1119,21 @@ class AntdBaseComponent(Component):
         return s
 
     def _iter_contains(self) -> Iterable[Tuple[str, ContainVar]]:
+        """ iter component's property which is ContainVar """
         for k in self.get_fields().keys():
             v = getattr(self, k, None)
             if isinstance(v, ContainVar):
                 yield k, v
+
+    def _iter_ex_hooks(self) -> Iterable[ContainVar]:
+        for ex in self._ex_hooks:
+            yield ex
+
+    def _iter_all_contains(self) -> Iterable[ContainVar]:
+        for k, v in self._iter_contains():
+            yield v
+        for ex in self._iter_ex_hooks():
+            yield ex
 
     def _init_contains(self, contains: Dict[str, ContainVar], exs: Dict[str, Any], ex_hooks: List[ContainVar]) -> None:
         self._ex_hooks = []
