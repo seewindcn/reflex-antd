@@ -1,3 +1,4 @@
+import types
 from typing import Type, Any, Tuple, Dict, List, Iterable, Callable, Set, Union, Optional, Self
 import sys
 from os import path
@@ -10,12 +11,13 @@ import inspect
 import re
 
 import reflex as rx
-from reflex import Component, Var, State, Base, ImportVar
+from reflex import Component, Var, State, Base, ImportVar, NoSSRComponent
 from reflex.base import pydantic_main as pydantic_md
 
 from reflex.components.component import BaseComponent, CustomComponent, StatefulComponent, ComponentStyle
 from reflex.components.base.bare import Bare
 from reflex.components.core import Foreach, Match
+from reflex.components.tags import Tag
 from reflex.constants import Hooks, Reflex, MemoizationDisposition, MemoizationMode
 from reflex.utils import imports, format, serializers, exceptions
 from reflex.vars import BaseVar, VarData
@@ -210,6 +212,14 @@ class JsEvent:
     _item: "ExEventHandlerItem" = None
 
     def __init__(self, hd: Any, js: str = '', fmt: bool = False, event_trigger: Callable = None):
+        """
+        js样例:
+            js='''(e) => {
+                    let key= 1;
+                    %(name)s(key);
+            }''',
+            fmt=True,
+        """
         assert isinstance(hd, EventHandler)
         self.hd = hd
         self.js = js
@@ -293,7 +303,11 @@ class ExLambdaHandlerItem(ExItem):
 
     @classmethod
     def isinstance(cls, item: Any) -> bool:
-        return isinstance(item, Callable)
+        # return isinstance(item, Callable)
+        return isinstance(item, Callable) and type(item) in (
+            types.LambdaType, types.MethodType,
+            EventHandler,
+        )
 
     def _get_fn_name(self) -> str:
         if 0:
@@ -648,7 +662,9 @@ class ExFormatter:
                 _d = dict(_v._iter(exclude_unset=True, exclude_none=True, to_dict=False))
                 return _dict(_d, pkey=key)
             elif dataclasses.is_dataclass(_v):
-                _d = dataclasses.asdict(_v)
+                _fields = dataclasses.fields(_v)
+                _d = dict((_f.name, getattr(_v, _f.name)) for _f in _fields)
+                # _d = dataclasses.asdict(_v)
                 return _dict(_d, pkey=key)
 
             return _v
@@ -969,17 +985,35 @@ class DataClassMixin:
             v = getattr(self, f.name)
             if v is None:
                 continue
-            elif isinstance(v, BaseVar):
-                ...  # v = v._var_full_name
+            # elif isinstance(v, ContainVar):
+            #     ...
+            # elif isinstance(v, BaseVar):
+            #     ...  # v = v._var_full_name
             result.append((f.name, v))
         d = dict(result)
         c = container(d)
         return c
 
 
+_custom_jss = {}
+
+
 class AntdBaseComponent(Component):
     _custom_components: Set[CustomComponent] = pydantic.PrivateAttr(default_factory=set)
     _ex_hooks: List[ContainVar] = pydantic.PrivateAttr(default_factory=list)
+    custom_js: str = None
+
+    def _render_custom_js(self):
+        if self.custom_js in _custom_jss:
+            return
+        _custom_jss[self.custom_js] = ''
+        import sys
+        from reflex.utils import prerequisites
+        from os.path import dirname, join
+        web_dir = '.web'  # prerequisites.get_web_dir()
+        cur_path = dirname(sys.modules[self.__module__].__file__)
+        js_path = join(cur_path, self.custom_js)
+        prerequisites.path_ops.cp(js_path, join(web_dir, f'{self.library[1:]}.js'))
 
     def __init__(self, *args, ex_hooks: List[ContainVar | list | dict] = None, **kwargs):
         contains = {}
@@ -999,6 +1033,12 @@ class AntdBaseComponent(Component):
             print(f"class<{self}>, args={args}, kw={kw}, error: {err}")
             raise
         self._init_contains(contains, exs, ex_hooks)
+
+    def _render(self, *args, **kwargs) -> Tag:
+        if getattr(self, 'custom_js', None):
+            self._render_custom_js()
+        rs = super()._render(*args, **kwargs)
+        return rs
 
     def _get_all_custom_components(
             self, seen: set[str] | None = None
@@ -1179,6 +1219,10 @@ class AntdComponent(AntdBaseComponent):
             (50, "AntdApp"): _config_app if _config_app is not None else antd_app(),
             (51, "AntdProvider"): _config_provider if _config_provider is not None else config_provider(),
         }
+
+
+class AntdNoSSRComponent(NoSSRComponent, AntdBaseComponent):
+    ...
 
 
 class AntdFragment(AntdBaseComponent):

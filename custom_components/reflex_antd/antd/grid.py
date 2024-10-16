@@ -11,7 +11,7 @@ class Row(AntdComponent):
     tag = 'Row'
 
     align: Optional[Var[str]]
-    gutter: Optional[Var[Union[int, ContainVar]]]
+    gutter: Optional[Var[Union[int, ContainVar, list]]]
     justify: Optional[Var[str]]
     wrap: Optional[Var[str]]
 

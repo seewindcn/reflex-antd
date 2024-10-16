@@ -4,6 +4,7 @@ from .base import (  # noqa
     CasualVar, ReactNode, ContainVar, CasualDict,
     JsValue, JsEvent, JsLocalDictVar,
     fragment,
+    AntdNoSSRComponent, AntdBaseComponent,
 )
 from .antd.base import (  # noqa
     theme, light_theme_var, dark_theme_var,

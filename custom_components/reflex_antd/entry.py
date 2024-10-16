@@ -15,5 +15,4 @@ from .antd.slider import slider  # noqa
 from .antd.switch import switch  # noqa
 from .antd.transfer import transfer  # noqa
 from .antd.upload import upload  # noqa
-
-
+from .antd.modal import modal, confirm  # noqa
