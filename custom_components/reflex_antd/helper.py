@@ -7,7 +7,7 @@ from .base import (  # noqa
     AntdNoSSRComponent, AntdBaseComponent,
 )
 from .antd.base import (  # noqa
-    theme, light_theme_var, dark_theme_var,
+    theme, next_theme_var, light_theme_var, dark_theme_var,
     config_provider, antd_app, Locale,
 )
 from .util import switch  # noqa

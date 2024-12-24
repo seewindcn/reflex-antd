@@ -23,7 +23,7 @@ class Collapse(AntdComponent):
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
         _triggers.update({
-            'on_change': lambda: [],
+            'on_change': lambda e: [e],
         })
         return _triggers
 

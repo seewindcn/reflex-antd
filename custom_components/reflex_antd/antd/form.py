@@ -63,7 +63,7 @@ class FormItem(AntdComponent):
     colon: Optional[Var[bool]]
     dependencies: Optional[Var[List[Union[str, int, List[Union[str, int]]]]]]
     extra: Optional[Var[ReactNode]]
-    getValue_from_event: Optional[Var[JsValue]]
+    get_value_from_event: Optional[Var[JsValue]]
     get_value_props: Optional[Var[JsValue]]
     has_feedback: Optional[Var[Union[bool, ContainVar]]]
     help: Optional[Var[ReactNode]]

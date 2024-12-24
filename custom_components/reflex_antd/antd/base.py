@@ -13,11 +13,12 @@ from ..base import AntdComponent, AntdBaseComponent, ContainVar, JsValue
 from ..constant import SizeType
 
 
+AntdNextTheme = 'AntdNextTheme'
 next_theme_var_data = VarData(  # type: ignore
     imports={
         f"next-themes": {imports.ImportVar(tag="useTheme")},
         "react": {imports.ImportVar(tag="useContext")},
-        "antd": {imports.ImportVar(tag="theme", alias="AntdTheme")}
+        "antd": {imports.ImportVar(tag="theme", alias=AntdNextTheme)}
     },
     hooks={
         f"const nextTheme = useTheme()": None,
@@ -29,16 +30,16 @@ next_theme_var = BaseVar(
     _var_data=next_theme_var_data,
 )
 light_theme_var = BaseVar(
-    _var_name='AntdTheme.defaultAlgorithm',
+    _var_name=f'{AntdNextTheme}.defaultAlgorithm',
+    _var_data=next_theme_var_data,
 )
 dark_theme_var = BaseVar(
-    _var_name='AntdTheme.darkAlgorithm',
+    _var_name=f'{AntdNextTheme}.darkAlgorithm',
+    _var_data=next_theme_var_data,
 )
 
 
 def theme(**kwargs):
-    if 'algorithm' not in kwargs:
-        kwargs['algorithm'] = rx.cond(next_theme_var == 'dark', dark_theme_var, light_theme_var)
     return ContainVar.create(**kwargs)
 
 
@@ -79,9 +80,10 @@ class ConfigProvider(AntdBaseComponent):
     theme: Optional[Var[Union[Dict, ContainVar]]]
     virtual: Optional[Var[bool]]
     warning: Optional[Var[Dict]]
+    _is_root: bool
 
     @classmethod
-    def create(cls, *children, **props) -> Component:
+    def create(cls, *children, is_root: bool = False, **props) -> Component:
         """Create a new ConfigProvider component.
 
         Returns:
@@ -90,11 +92,12 @@ class ConfigProvider(AntdBaseComponent):
         # if 'theme' not in props:
         #     theme = Var.create('theme.styles.global.body.antd', _var_is_local=False)
         #     props['theme'] = theme
-
-        return super().create(
+        rs = super().create(
             *children,
             **props
         )
+        rs._is_root = is_root
+        return rs
 
     def _get_imports(self) -> imports.ImportDict:
         _imports = super()._get_imports()
@@ -106,11 +109,11 @@ class ConfigProvider(AntdBaseComponent):
         )
         return _imports
 
-    @staticmethod
-    @lru_cache(maxsize=None)
-    def _get_app_wrap_components() -> dict[tuple[int, str], Component]:
+    # @staticmethod
+    # @lru_cache(maxsize=None)
+    def _get_app_wrap_components(self) -> dict[tuple[int, str], Component]:
         """ support app router """
-        if base.APP_ROUTER:
+        if self._is_root and base.APP_ROUTER:
             return {
                 (170, "AntdRegistryProvider"): antd_registry_provider(),
             }

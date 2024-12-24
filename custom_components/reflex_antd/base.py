@@ -1,3 +1,5 @@
+import logging
+import os
 import types
 from typing import Type, Any, Tuple, Dict, List, Iterable, Callable, Set, Union, Optional, Self
 import sys
@@ -16,7 +18,7 @@ from reflex.base import pydantic_main as pydantic_md
 
 from reflex.components.component import BaseComponent, CustomComponent, StatefulComponent, ComponentStyle
 from reflex.components.base.bare import Bare
-from reflex.components.core import Foreach, Match
+from reflex.components.core import Foreach, Match, Cond
 from reflex.components.tags import Tag
 from reflex.constants import Hooks, Reflex, MemoizationDisposition, MemoizationMode
 from reflex.utils import imports, format, serializers, exceptions
@@ -34,7 +36,7 @@ version = '.'.join(map(lambda x: x.zfill(3), Reflex.VERSION.split('.')))
 my_path = path.abspath(path.dirname(__file__))
 template_path = path.join(my_path, '.templates')
 
-APP_ROUTER = False
+APP_ROUTER = True
 RE_KEY_IDX = re.compile(r'\.\d+\.')
 
 memo_never = MemoizationMode().set(disposition=MemoizationDisposition.NEVER)
@@ -510,7 +512,7 @@ class JsFunctionValue(JsValue):
         return code
 
 
-def js_value(value: Union[str, Callable, Foreach, Match], **kwargs) -> JsValue:
+def js_value(value: Union[str, Callable, Foreach, Match, Cond], **kwargs) -> JsValue:
     """ """
     if isinstance(value, (str, Component)):
         return JsValue(value, **kwargs)
@@ -552,7 +554,8 @@ class JsLocalDictVar(JsValue):
             name=self.name,
             js=self.js,
         )
-        return {
+        _hooks = self.value._var_data.hooks.copy()
+        _hooks.update({
             "const[%(name)s, set%(name)s] = useState({})" % kw: None,
             """
 useEffect(() => {
@@ -564,7 +567,8 @@ useEffect(() => {
   set%(name)s(values)
 }, [%(state)s]);
             """ % kw: None,
-        }
+        })
+        return _hooks
 
     def get_imports(self) -> imports.ImportDict:
         return compose_react_imports(['useState', 'useEffect'])
@@ -1013,7 +1017,10 @@ class AntdBaseComponent(Component):
         web_dir = '.web'  # prerequisites.get_web_dir()
         cur_path = dirname(sys.modules[self.__module__].__file__)
         js_path = join(cur_path, self.custom_js)
-        prerequisites.path_ops.cp(js_path, join(web_dir, f'{self.library[1:]}.js'))
+        dst_path = join(web_dir, f'{self.library[1:]}.js')
+        if not path.exists(path.dirname(dst_path)):
+            os.makedirs(path.dirname(dst_path), exist_ok=True)
+        prerequisites.path_ops.cp(js_path, dst_path)
 
     def __init__(self, *args, ex_hooks: List[ContainVar | list | dict] = None, **kwargs):
         contains = {}
@@ -1030,7 +1037,7 @@ class AntdBaseComponent(Component):
         try:
             super().__init__(*args, **kw)
         except Exception as err:
-            print(f"class<{self}>, args={args}, kw={kw}, error: {err}")
+            logging.exception(f"class<{self}>, args={args}, kw={kw}, error: {err}")
             raise
         self._init_contains(contains, exs, ex_hooks)
 
@@ -1102,14 +1109,24 @@ class AntdBaseComponent(Component):
             )
         return _imports
 
+    def _get_all_hooks_internal(self) -> dict[str, None]:
+        try:
+            return self._cache_get_all_hooks_internal_
+        except AttributeError:
+            self._cache_get_all_hooks_internal_ = super()._get_all_hooks_internal()
+            return self._cache_get_all_hooks_internal_
+
     def _get_all_hooks(self) -> dict[str, None]:
         """  """
         rs = super()._get_all_hooks()
         # fix 0.5.1 bug #3365
-        rs = dict((k, None) for k in rs.keys())
+        # rs = dict((k, None) for k in rs.keys())
+
         # remove double Hooks.EVENTS, component._get_all_hooks_internal and _get_all_hooks is not merge
-        if bool(self.event_triggers):
-            rs.pop(Hooks.EVENTS, None)
+        # in stateful_component.js.jinja2,
+        _i_hooks = self._get_all_hooks_internal()
+        for _k in set(_i_hooks).intersection(rs):
+            rs.pop(_k, None)
         return rs
 
     def add_hooks(self) -> list[str | Var]:
@@ -1210,6 +1227,8 @@ class AntdBaseComponent(Component):
 class AntdComponent(AntdBaseComponent):
     """A component that wraps an Antd component."""
     library = "antd"
+
+    hidden: Optional[Var[bool]]
 
     @staticmethod
     @lru_cache(maxsize=None)

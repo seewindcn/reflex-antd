@@ -4,7 +4,9 @@ import uuid
 from reflex import Component, Var
 from reflex.utils import imports
 
-from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, FakeComponentMixin
+from ..base import (
+    AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, FakeComponentMixin, memo_never_no_recursive,
+)
 from ..constant import TypeType
 
 from . import helper
@@ -37,6 +39,8 @@ class Modal(AntdComponent):
     width: Optional[Var[Union[str, int]]]
     wrapClassName: Optional[Var[str]]
     z_index: Optional[Var[int]]
+
+    _memoization_mode = memo_never_no_recursive
 
     def _get_hooks(self) -> str | None:
         _hooks = []

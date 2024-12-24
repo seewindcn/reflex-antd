@@ -4,14 +4,14 @@ from reflex import Component, Var
 from reflex.utils import imports
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode
 from ..constant import StatusType, PlacementType, TriggerType
 
 
 class Tooltip(AntdComponent):
     tag = "Tooltip"
 
-    title: Optional[Var[Union[str, Component, JsValue]]]
+    title: Optional[Var[Union[ReactNode, JsValue]]]
     align: Optional[Var[str]]
     arrow: Optional[Var[Union[bool, Dict]]]
     auto_adjust_overflow: Optional[Var[bool]]

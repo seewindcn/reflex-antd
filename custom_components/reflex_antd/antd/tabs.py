@@ -52,10 +52,10 @@ class Tabs(AntdComponent):
             EventTriggers.ON_EDIT: lambda e0, e1: [e0, e1],
             "on_tab_click": lambda key, ev: [key, ev],
             "on_tab_scroll": lambda ev: [ev],
+            "on_edit": lambda key, ev: [key, ev],
         })
         return _triggers
 
 
 tabs = Tabs.create
 tab_item = TabItem
-

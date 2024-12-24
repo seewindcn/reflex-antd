@@ -55,6 +55,11 @@ class TypographyParagraph(TypographyBase):
     strong: Optional[Var[bool]]
 
 
+class Typography(AntdComponent):
+    tag = 'Typography'
+
+
+typography = Typography.create
 typography_text = TypographyText.create
 typography_title = TypographyTitle.create
 typography_paragraph = TypographyParagraph.create
