@@ -803,7 +803,7 @@ class CasualVar(StringVar):
     def to_react(self) -> Self:
         return self._replace(
             _var_type=str,
-            _js_expr=f'{{{self._js_expr}}}'
+            _js_expr=f'{self._js_expr}'
         )
 
     def to_event(self) -> Self:
@@ -1264,6 +1264,7 @@ def patch_all():
 
     old_update_next_config = prerequisites.update_next_config
 
+    # https://github.com/vercel/next.js/issues/58817 next.js 14.0.3 fail to use antd
     def my_update_next_config(export=False, transpile_packages: Optional[List[str]] = None):
         transpile_packages = transpile_packages or []
         transpile_packages.extend([
