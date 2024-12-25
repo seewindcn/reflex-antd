@@ -51,9 +51,9 @@ def footer() -> rx.Component:
 
 
 def nav_items() -> list:
-    from .layout import routes, route_groups
+    from .layout import routes, get_route_groups
     items = []
-    for _, g in route_groups.items():
+    for _, g in get_route_groups().items():
         group = dict(key=g.name,
                      label=g.name if not g.path else rx.link(g.name, href=g.path),
                      icon=g.icon, children=[])

@@ -5,7 +5,6 @@ from reflex import Component, Var
 from reflex.utils import imports
 from reflex.components.component import ComponentNamespace
 from reflex.components.base.bare import Bare
-from reflex.vars import BaseVar
 from reflex.event import EventSpec, call_script
 from reflex.utils.serializers import serialize
 
@@ -107,7 +106,7 @@ class Message(JsValue):
 
         _hooks = [
             'const { message } = App.useApp();',
-            str(f"{_ref} = message"),
+            str(f"{str(_ref)} = message"),
         ]
         if self.is_global:
             _hooks.extend([
@@ -154,8 +153,8 @@ class MessageHolder(Bare):
 
     def _get_vars(self, include_children: bool = False) -> Iterator[Var]:
         yield self.contents
-        yield BaseVar(
-            _var_name='',
+        yield Var(
+            _js_expr='',
             _var_is_local=True,
             _var_data=self.msg.get_var_data(),
         )
@@ -167,7 +166,7 @@ class Messages(ComponentNamespace):
         """Send a message. """
         if type is None:
             type = 'info'
-        cmd = f"{_ref}.{type}"
+        cmd = f"{str(_ref)}.{type}"
         config = dict(
             content=content,
             **props

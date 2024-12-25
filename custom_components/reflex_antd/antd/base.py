@@ -4,7 +4,7 @@ from functools import lru_cache
 
 import reflex as rx
 from reflex import Var, Component
-from reflex.vars import BaseVar, VarData
+from reflex.vars import VarData
 from reflex.utils import imports
 
 
@@ -24,17 +24,17 @@ next_theme_var_data = VarData(  # type: ignore
         f"const nextTheme = useTheme()": None,
     },
 )
-next_theme_var = BaseVar(
-    _var_name='nextTheme.theme',
+next_theme_var = Var(
+    _js_expr='nextTheme.theme',
     _var_type="str",
     _var_data=next_theme_var_data,
 )
-light_theme_var = BaseVar(
-    _var_name=f'{AntdNextTheme}.defaultAlgorithm',
+light_theme_var = Var(
+    _js_expr=f'{AntdNextTheme}.defaultAlgorithm',
     _var_data=next_theme_var_data,
 )
-dark_theme_var = BaseVar(
-    _var_name=f'{AntdNextTheme}.darkAlgorithm',
+dark_theme_var = Var(
+    _js_expr=f'{AntdNextTheme}.darkAlgorithm',
     _var_data=next_theme_var_data,
 )
 

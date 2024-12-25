@@ -5,7 +5,6 @@ from reflex import Component, Var
 from reflex.utils import imports
 from reflex.components.component import ComponentNamespace
 from reflex.components.base.bare import Bare
-from reflex.vars import BaseVar
 from reflex.event import EventSpec, call_script
 from reflex.utils.serializers import serialize
 
@@ -55,7 +54,7 @@ class Notification(JsValue):
 
         _hooks = [
             'const { notification } = App.useApp();',
-            str(f"{_ref} = notification"),
+            str(f"{str(_ref)} = notification"),
         ]
         if not self.is_global:
             _hooks.extend([
@@ -104,7 +103,7 @@ class NotificationHolder(Bare):
 
     def _get_vars(self, include_children: bool = False) -> Iterator[Var]:
         yield self.contents
-        yield BaseVar(
+        yield Var(
             _var_name='',
             _var_is_local=True,
             _var_data=self.noti.get_var_data(),
@@ -121,7 +120,7 @@ class Notifications(ComponentNamespace):
         """Send a message. """
         if type is None:
             type = 'open'
-        cmd = f"{_ref}.{type}"
+        cmd = f"{str(_ref)}.{type}"
         config = dict(
             message=title,
             description=content,

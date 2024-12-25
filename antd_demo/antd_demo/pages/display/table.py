@@ -141,7 +141,7 @@ class TableState(MyBaseState):
                         rx.menu.content(
                             rx.menu.item("Edit", shortcut="⌘ E"),
                             rx.menu.item("Duplicate", shortcut="⌘ D",
-                                         on_select=lambda _: GlobalState.on_event1(
+                                         on_select=lambda : GlobalState.on_event1(
                                              "Duplicate:" + record.key.to_js())
                                          ),
                             rx.menu.separator(),
@@ -428,9 +428,9 @@ def table_editable_page() -> rx.Component:
     """
     hk_editing_key = hooks.useState('editingkey', '')
     hk_data = hooks.useState('data', "'originData'")
-    # fix hooks.useState bug
-    for hk in [hk_editing_key, hk_data]:
-        hk._var_data.imports['react'][0].install = True
+    # TODO fix hooks.useState bug
+    # for hk in [hk_editing_key, hk_data]:
+    #     hk._var_data.imports['react'][0].install = True
 
     return rx.center(
         entry.form(

@@ -11,7 +11,6 @@ from reflex.base import Base
 from reflex.event import EventHandler, EventSpec
 from reflex.components.core.cond import color_mode_cond
 
-from reflex_antd import layout, general
 
 
 def load_modules(parent_md, is_pkg=True) -> Iterable[ModuleType]:
@@ -61,19 +60,35 @@ class RouteGroup(Base):
 
 
 routes: Dict[str, Route] = OrderedDict()
-route_groups: Dict[str, RouteGroup] = dict(
-    general=RouteGroup(name='general', icon=general.icon('UserOutlined'), path='/'),
-    layout=RouteGroup(name='layout', icon=general.icon('AlignCenterOutlined')),
-    navigation=RouteGroup(name='navigation', icon=general.icon('RadarChartOutlined')),
-    feedback=RouteGroup(name='feedback', icon=general.icon('MediumOutlined')),
-    display=RouteGroup(name='display', icon=general.icon('PicLeftOutlined')),
-    entry=RouteGroup(name='entry', icon=general.icon('LaptopOutlined')),
-    other=RouteGroup(name='other', icon=general.icon('QuestionOutlined')),
-)
+_route_groups: dict = None
+
+
+def get_route_groups() -> dict:
+    global _route_groups
+    if _route_groups:
+        return _route_groups
+    from reflex_antd import layout, general
+    _route_groups = dict(
+        general=RouteGroup(name='general', icon=general.icon('UserOutlined'), path='/'),
+        layout=RouteGroup(name='layout', icon=general.icon('AlignCenterOutlined')),
+        navigation=RouteGroup(name='navigation', icon=general.icon('RadarChartOutlined')),
+        feedback=RouteGroup(name='feedback', icon=general.icon('MediumOutlined')),
+        display=RouteGroup(name='display', icon=general.icon('PicLeftOutlined')),
+        entry=RouteGroup(name='entry', icon=general.icon('LaptopOutlined')),
+        other=RouteGroup(name='other', icon=general.icon('QuestionOutlined')),
+    )
+    return _route_groups
+
+
+def layout0(*children: rx.Component, min_height: str = '50vh', **kwargs) -> rx.Component:
+    return rx.hstack(
+        *children,
+    )
 
 
 # @rx.memo
 def layout1(*children: rx.Component, min_height: str = '50vh', **kwargs) -> rx.Component:
+    from reflex_antd import layout, general
     from antd_demo.components import footer, navbar, header, subnav, content
     # color_bg_contain = 'white'
     return layout.layout(

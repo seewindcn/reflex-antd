@@ -14,6 +14,7 @@ import re
 
 import reflex as rx
 from reflex import Component, Var, State, Base, ImportVar, NoSSRComponent
+from reflex.vars import StringVar
 from reflex.base import pydantic_main as pydantic_md
 
 from reflex.components.component import BaseComponent, CustomComponent, StatefulComponent, ComponentStyle
@@ -22,7 +23,7 @@ from reflex.components.core import Foreach, Match, Cond
 from reflex.components.tags import Tag
 from reflex.constants import Hooks, Reflex, MemoizationDisposition, MemoizationMode
 from reflex.utils import imports, format, serializers, exceptions
-from reflex.vars import BaseVar, VarData
+from reflex.vars import Var, VarData
 from reflex.event import EventHandler, EventSpec, EventChain
 from reflex.experimental import hooks
 
@@ -52,6 +53,7 @@ def stateless(hd: Callable[..., Component] = None, memo=memo_never_no_recursive)
             _com = _hd(*args, **kwargs)
             _com._memoization_mode = memo
             return _com
+
         return _wrap
 
     if hd is None:
@@ -145,15 +147,15 @@ class ExItem(ABC):
     def get_hooks(self) -> Dict[str, None]:
         return {}
 
-    def get_interpolations(self) -> List[Tuple[int, int]]:
-        return []
+    # def get_interpolations(self) -> List[Tuple[int, int]]:
+    #     return []
 
     def get_var_data(self) -> VarData:
         return VarData(
             state=self.get_state(),
             imports=self.get_imports(),
             hooks=self.get_hooks(),
-            interpolations=self.get_interpolations(),
+            # interpolations=self.get_interpolations(),
         )
 
     def get_custom_components(self) -> set[CustomComponent]:
@@ -362,23 +364,23 @@ class ExCallableItem(ExItem):
 
 
 class ExStateItem(ExItem):
-    item: BaseVar
+    item: Var
 
     @classmethod
     def isinstance(cls, item: Any) -> bool:
-        return isinstance(item, BaseVar) and item._var_full_name.startswith("state__")
+        return isinstance(item, Var) and item._var_full_name.startswith("state__")
 
     def serialize(self) -> str:
         return self.item._var_full_name
 
     def get_imports(self) -> imports.ImportDict:
-        return self.item._var_data.imports
+        return self.item._var_data.old_school_imports() if self.item._var_data else {}
 
     def get_hooks(self) -> Dict[str, None]:
-        return self.item._var_data.hooks
+        return {hook: None for hook in self.item._var_data.hooks} if self.item._var_data else {}
 
     def get_state(self) -> str:
-        return self.item._var_data.state
+        return self.item._var_data.state if self.item._var_data else ''
 
 
 class FakeComponentMixin:
@@ -614,13 +616,13 @@ class ExVarItem(ExItem):
         return self.item._var_data.imports if self.item._var_data else {}
 
     def get_hooks(self) -> Dict[str, None]:
-        return self.item._var_data.hooks if self.item._var_data else {}
+        return {hook: None for hook in self.item._var_data.hooks} if self.item._var_data else {}
 
     def get_state(self) -> str:
         return self.item._var_data.state if self.item._var_data else ""
 
-    def get_interpolations(self) -> List[Tuple[int, int]]:
-        return self.item._var_data.interpolations if self.item._var_data else []
+    # def get_interpolations(self) -> List[Tuple[int, int]]:
+    #     return self.item._var_data.interpolations if self.item._var_data else []
 
 
 class ExFormatter:
@@ -717,23 +719,23 @@ class ExFormatter:
             hooks.update(_hooks)
         return hooks
 
-    def get_interpolations(self) -> List[Tuple[int, int]]:
-        rs = []
-        for _, ex in self._coms.items():
-            rs += ex.get_interpolations()
-        return rs
+    # def get_interpolations(self) -> List[Tuple[int, int]]:
+    #     rs = []
+    #     for _, ex in self._coms.items():
+    #         rs += ex.get_interpolations()
+    #     return rs
 
     def get_var_data(self) -> VarData:
         return VarData(
             state=self.get_state(),
             imports=self.get_imports(),
             hooks=self.get_hooks(),
-            interpolations=self.get_interpolations(),
+            # interpolations=self.get_interpolations(),
         )
 
 
-class ExVar(BaseVar):
-    _var_value: Any
+class ExVar(Var):
+    _var_value: Any = dataclasses.field()
 
     def __init__(self, *args, _var_value=None, **kwargs):
         self._var_value = _var_value
@@ -744,32 +746,27 @@ class ExVar(BaseVar):
             cls, value: Any, _var_is_local: bool = True, _var_is_string: bool = False,
             _var_data: VarData | None = None,
     ) -> Var | None:
-        v = BaseVar.create(value, _var_is_local=_var_is_local, _var_is_string=_var_is_string, _var_data=_var_data)
+        v = Var.create(value, _var_is_local=_var_is_local, _var_is_string=_var_is_string, _var_data=_var_data)
         return cls(
-            _var_name=v._var_name,
+            _js_expr=v._js_expr,
             _var_type=v._var_type,
             _var_is_local=v._var_is_local,
             _var_is_string=v._var_is_string,
             _var_data=v._var_data,
         )
 
-    def _replace(self, merge_var_data=None, **kwargs: Any) -> Self:
-        return self.__class__(
-            _var_name=kwargs.pop("_var_name", self._var_name),
-            _var_type=kwargs.pop("_var_type", self._var_type),
-            _var_is_local=kwargs.pop("_var_is_local", self._var_is_local),
-            _var_is_string=kwargs.pop("_var_is_string", self._var_is_string),
-            _var_full_name_needs_state_prefix=kwargs.pop(
-                "_var_full_name_needs_state_prefix",
-                self._var_full_name_needs_state_prefix,
-            ),
-            _var_data=VarData.merge(
-                kwargs.get("_var_data", self._var_data), merge_var_data
-            ),
-        )
 
+class CasualVar(StringVar):
+    @classmethod
+    def create(
+            cls,
+            value: Any,
+            _var_is_local: bool | None = None,
+            _var_is_string: bool | None = None,
+            _var_data: VarData | None = None,
+    ) -> Var:
+        return cls(value, _var_data=_var_data, _var_type=str)
 
-class CasualVar(ExVar):
     def __getattribute__(self, name: str) -> Any:
         try:
             return super().__getattribute__(name)
@@ -777,7 +774,7 @@ class CasualVar(ExVar):
             if name.startswith("_"):
                 raise
             return self.create_safe(
-                f'{self._var_name}.{name}',
+                f'{self._js_expr}.{name}',
                 _var_is_string=False,
                 _var_is_local=False,
             )
@@ -789,7 +786,7 @@ class CasualVar(ExVar):
             if str(i).startswith("_"):
                 raise
             return self.create_safe(
-                f'{self._var_name}["{i}"]',
+                f'{self._js_expr}["{i}"]',
                 _var_is_string=False,
                 _var_is_local=False,
             )
@@ -797,22 +794,22 @@ class CasualVar(ExVar):
     def to_js(self) -> Self:
         return self._replace(
             _var_type=str,
-            _var_name=f'({self._var_name})'
+            _js_expr=f'({self._js_expr})'
         )
 
     def to_raw(self) -> str:
-        return self._var_name
+        return self._js_expr
 
     def to_react(self) -> Self:
         return self._replace(
             _var_type=str,
-            _var_name=f'{{{self._var_name}}}'
+            _js_expr=f'{{{self._js_expr}}}'
         )
 
     def to_event(self) -> Self:
         return self._replace(
             _var_type=EventChain,
-            _var_name=f'({self._var_name})'
+            _js_expr=f'({self._js_expr})'
         )
 
     to_type = Var.to
@@ -838,6 +835,9 @@ class NodeVar(ExVar):
 class ContainVar(ExVar):
     _var_fmt: ExFormatter
 
+    def __str__(self):
+        return self._var_full_name
+
     @property
     def _var_full_name(self) -> str:
         """ ContainVar used at Component property """
@@ -848,9 +848,9 @@ class ContainVar(ExVar):
     @classmethod
     def create(cls, _args_: Any = None, **kwargs) -> Self:
         value = _args_ if _args_ is not None else kwargs
-        # v: BaseVar = super().create(_name, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
+        # v: Var = super().create(_name, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
         rs = cls(
-            _var_name='',
+            _js_expr='',
             _var_type=cls,
             _var_is_local=True,
             _var_is_string=False,
@@ -861,9 +861,13 @@ class ContainVar(ExVar):
 
     def init(self, parent: Component, name: str) -> Self:
         fmt = ExFormatter(self._var_value, parent=parent, name=name)
-        self._var_fmt = fmt
-        self._var_data = fmt.get_var_data()
-        return self
+        _var = dataclasses.replace(
+            self,
+            _var_value=self._var_value,
+            _var_fmt=fmt,
+            _var_data=fmt.get_var_data(),
+        )
+        return _var
 
     def get_custom_components(self) -> set[CustomComponent]:
         rs = set()
@@ -878,10 +882,10 @@ class ContainVar(ExVar):
         return rs
 
     def get_hooks(self) -> Dict[str, None]:
-        return self._var_data.hooks
+        return {hook: None for hook in self._var_data.hooks}
 
     def get_imports(self) -> imports.ImportDict:
-        return self._var_data.imports
+        return self._var_data.old_school_imports()
 
     def get_dynamic_imports(self) -> Set[str]:
         rs = set()
@@ -933,6 +937,10 @@ contain = ContainVar.create
 
 
 class Container(Bare):
+    def _render(self) -> Tag:
+        from reflex.components.tags.tagless import Tagless
+        return Tagless(contents=str(self.contents))
+
     @classmethod
     def create(cls, contents: ContainVar, name: str = None) -> Component:
         assert isinstance(contents, ContainVar), f'contents({type(contents)}) must be a ContainVar'
@@ -945,7 +953,7 @@ class Container(Bare):
         return codes
 
     def _get_all_custom_components(
-        self, seen: set[str] | None = None
+            self, seen: set[str] | None = None
     ) -> Set[CustomComponent]:
         return self.contents.get_custom_components()
 
@@ -974,9 +982,11 @@ def container(
 # no use
 class VarDataMixin:
     def __iter__(self):
-        v = Var()
-        v._var_data = VarData(
-            imports=self.get_imports(),
+        v = Var(
+            _js_expr='',
+            _var_data=VarData(
+                imports=self.get_imports(),
+            )
         )
         yield from [v]
 
@@ -991,7 +1001,7 @@ class DataClassMixin:
                 continue
             # elif isinstance(v, ContainVar):
             #     ...
-            # elif isinstance(v, BaseVar):
+            # elif isinstance(v, Var):
             #     ...  # v = v._var_full_name
             result.append((f.name, v))
         d = dict(result)
@@ -1139,41 +1149,11 @@ class AntdBaseComponent(Component):
 
         return hooks
 
-    def _get_events_hooks(self) -> set[str] | Dict[str, None]:
-        _hooks = super()._get_events_hooks()
-        js_events: List[BaseVar] = [
-            v for k, v in self.event_triggers.items()
-            if isinstance(v, BaseVar) and v._var_data is not None and v._var_data.hooks]
-
-        rs = _hooks
-
-        if js_events:
-            for ev in js_events:
-                rs |= ev._var_data.hooks
-        return rs
-
-    def _get_hooks_internal(self) -> Set[str] | Dict[str, None]:
-        """Get the React hooks for this component managed by the framework.
-
-        Downstream components should NOT override this method to avoid breaking
-        framework functionality.
-
-        Returns:
-            Set of internally managed hooks.
-        """
-        # need order hooks, useContext code need first
-        s = {
-            hook: None
-            for hook in [self._get_ref_hook(), self._get_mount_lifecycle_hook()]
-            if hook is not None
-        }
-        var_hooks = self._get_vars_hooks()
+    def _get_vars_hooks(self) -> dict[str, None]:
+        var_hooks = super()._get_vars_hooks()
         if [h for h in var_hooks if 'addEvents' in h]:
-            s[Hooks.EVENTS] = None
-        s |= var_hooks
-        s |= self._get_events_hooks()
-        s |= self._get_special_hooks()
-        return s
+            var_hooks[Hooks.EVENTS] = None
+        return var_hooks
 
     def _iter_contains(self) -> Iterable[Tuple[str, ContainVar]]:
         """ iter component's property which is ContainVar """
@@ -1201,7 +1181,7 @@ class AntdBaseComponent(Component):
                 self._ex_hooks.append(ex.init(self, ''))
 
         for k, v in contains.items():
-            v.init(self, k)
+            v = v.init(self, k)
             self._custom_components |= v.get_custom_components()
             setattr(self, k, v)
 
@@ -1213,8 +1193,7 @@ class AntdBaseComponent(Component):
                 raise NotImplementedError(f"Unsupported type: {type(v)}")
             self._custom_components |= item.get_custom_components()
             _v = ExVar(
-                _var_name=item.serialize(),
-                _var_is_local=True,
+                _js_expr=item.serialize(),
                 _var_data=item.get_var_data(),
                 _var_value=v,
             )
@@ -1262,6 +1241,7 @@ _config_app: Optional[Component] = None
 
 
 def default_config(provider: Component = None, antd_app: Component = None):
+    return
     global _config_provider, _config_app
     from .antd.base import ConfigProvider, AntdApp
     if provider is not None:
@@ -1274,26 +1254,74 @@ def default_config(provider: Component = None, antd_app: Component = None):
 
 def patch_all():
     from reflex import constants, vars
+    from reflex.utils import prerequisites
     from reflex.compiler import templates
 
     constants.Templates.Dirs.JINJA_TEMPLATE = [path.join(template_path, 'jinja'),
                                                constants.Templates.Dirs.JINJA_TEMPLATE]
 
     templates.DOCUMENT_ROOT = templates.get_template("web/pages/_document.js.jinja2")
-    old_extract_var_data = vars._extract_var_data
 
-    def _my_extract_var_data(value: Union[Iterable, Component]) -> list[VarData | None]:
-        if isinstance(value, Component):
-            return [
-                VarData(
-                    imports=get_component_all_imports(value),
-                    hooks=get_component_hooks(value),
-                )
-            ]
-        var_datas = old_extract_var_data(value)
-        return var_datas
+    old_update_next_config = prerequisites.update_next_config
 
-    vars._extract_var_data = _my_extract_var_data
+    def my_update_next_config(export=False, transpile_packages: Optional[List[str]] = None):
+        transpile_packages = transpile_packages or []
+        transpile_packages.extend([
+            "@ant-design",
+            "@rc-component",
+            "antd",
+            "rc-cascader",
+            "rc-checkbox",
+            "rc-collapse",
+            "rc-dialog",
+            "rc-drawer",
+            "rc-dropdown",
+            "rc-field-form",
+            "rc-image",
+            "rc-input",
+            "rc-input-number",
+            "rc-mentions",
+            "rc-menu",
+            "rc-motion",
+            "rc-notification",
+            "rc-pagination",
+            "rc-picker",
+            "rc-progress",
+            "rc-rate",
+            "rc-resize-observer",
+            "rc-segmented",
+            "rc-select",
+            "rc-slider",
+            "rc-steps",
+            "rc-switch",
+            "rc-table",
+            "rc-tabs",
+            "rc-textarea",
+            "rc-tooltip",
+            "rc-tree",
+            "rc-tree-select",
+            "rc-upload",
+            "rc-util",
+        ])
+        return old_update_next_config(export=export, transpile_packages=transpile_packages)
+
+    prerequisites.update_next_config = my_update_next_config
+
+    # TODO new
+    # old_extract_var_data = vars._extract_var_data
+    #
+    # def _my_extract_var_data(value: Union[Iterable, Component]) -> list[VarData | None]:
+    #     if isinstance(value, Component):
+    #         return [
+    #             VarData(
+    #                 imports=get_component_all_imports(value),
+    #                 hooks=get_component_hooks(value),
+    #             )
+    #         ]
+    #     var_datas = old_extract_var_data(value)
+    #     return var_datas
+    #
+    # vars._extract_var_data = _my_extract_var_data
 
     def _my_get_memoized_event_triggers(
             cls,
