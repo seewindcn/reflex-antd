@@ -14,10 +14,12 @@ import re
 
 import reflex as rx
 from reflex import Component, Var, State, Base, ImportVar, NoSSRComponent
-from reflex.vars import StringVar
+from reflex.vars import StringVar, base as vars_base
 from reflex.base import pydantic_main as pydantic_md
 
-from reflex.components.component import BaseComponent, CustomComponent, StatefulComponent, ComponentStyle
+from reflex.components.component import (
+    BaseComponent, CustomComponent, StatefulComponent, ComponentStyle, render_dict_to_var,
+)
 from reflex.components.base.bare import Bare
 from reflex.components.core import Foreach, Match, Cond
 from reflex.components.tags import Tag
@@ -27,8 +29,7 @@ from reflex.vars import Var, VarData
 from reflex.event import EventHandler, EventSpec, EventChain
 from reflex.experimental import hooks
 
-from .constant import SizeType
-from .util import OrderedSet
+from . import util, constant
 
 pydantic = pydantic_md
 # 0.4.6 -> 000.004.006
@@ -84,10 +85,6 @@ def stateful(hd: Callable[..., Component] = None, forced=True, memo=memo_always)
         return _my(hd)
 
 
-def pretty_dumps(value: Any, indent=2) -> str:
-    return format.json.dumps(value, ensure_ascii=False, default=serializers.serialize, indent=indent)
-
-
 def compose_react_imports(tags: list[str]):
     return {"react": [ImportVar(tag=tag, install=tag in ['useEffect', 'useState']) for tag in tags]}
 
@@ -119,6 +116,21 @@ def get_custom_components(com: Any) -> set[CustomComponent]:
     if hasattr(com, '_get_all_custom_components'):
         return com._get_all_custom_components()
     return set()
+
+
+def get_var_data(v: Var) -> VarData | None:
+    if hasattr(v, '_get_all_var_data'):
+        _data = v._get_all_var_data()
+    elif hasattr(v, 'get_var_data'):
+        _data = v.get_var_data()
+    else:
+        _data = None
+    return _data
+
+
+def get_var_data_hooks(v: Var | VarData) -> dict[str, None]:
+    _var_data = get_var_data(v) if isinstance(v, Var) else v
+    return {hook: None for hook in _var_data.hooks} if _var_data else {}
 
 
 class ExItem(ABC):
@@ -368,19 +380,22 @@ class ExStateItem(ExItem):
 
     @classmethod
     def isinstance(cls, item: Any) -> bool:
-        return isinstance(item, Var) and item._var_full_name.startswith("state__")
+        return isinstance(item, Var) and str(item).startswith("state__")
 
     def serialize(self) -> str:
-        return self.item._var_full_name
+        return str(self.item)
 
     def get_imports(self) -> imports.ImportDict:
-        return self.item._var_data.old_school_imports() if self.item._var_data else {}
+        _var_data = get_var_data(self.item)
+        return _var_data.old_school_imports() if _var_data else {}
 
     def get_hooks(self) -> Dict[str, None]:
-        return {hook: None for hook in self.item._var_data.hooks} if self.item._var_data else {}
+        _var_data = get_var_data(self.item)
+        return {hook: None for hook in _var_data.hooks} if _var_data else {}
 
     def get_state(self) -> str:
-        return self.item._var_data.state if self.item._var_data else ''
+        _var_data = get_var_data(self.item)
+        return _var_data.state if _var_data else ''
 
 
 class FakeComponentMixin:
@@ -431,7 +446,13 @@ class JsValue:
         return item
 
     def serialize(self) -> str:
-        code = f"{self.value if isinstance(self.value, str) else str(self.value).strip('{}')}"
+        if isinstance(self.value, str):
+            code = self.value
+        else:
+            code = str(self.value)
+            code = code[2:] if code.startswith('<>') else code
+            code = code[:-3] if code.endswith('</>') else code
+            code = code.strip('{}')
         return f"({code})" if self.to_js else code
 
     def get_imports(self) -> imports.ImportDict:
@@ -469,7 +490,7 @@ class JsFunctionValue(JsValue):
 
     @property
     def args(self):
-        args = [CasualVar.create_safe(arg, _var_is_string=False) for arg in self._args.args]
+        args = [CasualVar.create_safe(arg, ) for arg in self._args.args]
         return args
 
     def _init(self, **kwargs) -> None:
@@ -532,7 +553,8 @@ class JsLocalDictVar(JsValue):
 
     @property
     def state_name(self) -> str:
-        return format.format_state_name(self.value._var_data.state)
+        _var_data = get_var_data(self.value)
+        return format.format_state_name(_var_data.state) if _var_data else ''
 
     def __init__(
             self, name: str, value: dict | rx.Var,
@@ -551,12 +573,12 @@ class JsLocalDictVar(JsValue):
 
     def get_hooks(self) -> Dict[str, None]:
         kw = dict(
-            value=self.value._var_full_name,
+            value=str(self.value),
             state=self.state_name,
             name=self.name,
             js=self.js,
         )
-        _hooks = self.value._var_data.hooks.copy()
+        _hooks = get_var_data_hooks(self.value)
         _hooks.update({
             "const[%(name)s, set%(name)s] = useState({})" % kw: None,
             """
@@ -613,13 +635,15 @@ class ExVarItem(ExItem):
         return str(self.item).strip('{}')
 
     def get_imports(self) -> imports.ImportDict:
-        return self.item._var_data.imports if self.item._var_data else {}
+        _var_data = get_var_data(self.item)
+        return _var_data.imports if _var_data else {}
 
     def get_hooks(self) -> Dict[str, None]:
-        return {hook: None for hook in self.item._var_data.hooks} if self.item._var_data else {}
+        return get_var_data_hooks(self.item)
 
     def get_state(self) -> str:
-        return self.item._var_data.state if self.item._var_data else ""
+        _var_data = get_var_data(self.item)
+        return _var_data.state if _var_data else ""
 
     # def get_interpolations(self) -> List[Tuple[int, int]]:
     #     return self.item._var_data.interpolations if self.item._var_data else []
@@ -694,7 +718,7 @@ class ExFormatter:
                 return i
 
     def get_value(self) -> str:
-        v = pretty_dumps(self._value)
+        v = util.pretty_dumps(self._value)
         for k, ex in self.iter_items():
             v = v.replace(f'"{k}"', ex.serialize())
         return v
@@ -764,8 +788,13 @@ class CasualVar(StringVar):
             _var_is_local: bool | None = None,
             _var_is_string: bool | None = None,
             _var_data: VarData | None = None,
+            _var_type: type = str,
     ) -> Var:
-        return cls(value, _var_data=_var_data, _var_type=str)
+        if isinstance(value, Var):
+            _var_type = value._var_type
+            _var_data = get_var_data(value)
+            value = str(value)
+        return cls(value, _var_data=_var_data, _var_type=_var_type)
 
     def __getattribute__(self, name: str) -> Any:
         try:
@@ -775,8 +804,6 @@ class CasualVar(StringVar):
                 raise
             return self.create_safe(
                 f'{self._js_expr}.{name}',
-                _var_is_string=False,
-                _var_is_local=False,
             )
 
     def __getitem__(self, i: Any) -> Var:
@@ -787,8 +814,6 @@ class CasualVar(StringVar):
                 raise
             return self.create_safe(
                 f'{self._js_expr}["{i}"]',
-                _var_is_string=False,
-                _var_is_local=False,
             )
 
     def to_js(self) -> Self:
@@ -863,6 +888,7 @@ class ContainVar(ExVar):
         fmt = ExFormatter(self._var_value, parent=parent, name=name)
         _var = dataclasses.replace(
             self,
+            _js_expr=fmt.get_value(),
             _var_value=self._var_value,
             _var_fmt=fmt,
             _var_data=fmt.get_var_data(),
@@ -882,7 +908,7 @@ class ContainVar(ExVar):
         return rs
 
     def get_hooks(self) -> Dict[str, None]:
-        return {hook: None for hook in self._var_data.hooks}
+        return get_var_data_hooks(self)
 
     def get_imports(self) -> imports.ImportDict:
         return self._var_data.old_school_imports()
@@ -979,18 +1005,6 @@ def container(
     return b
 
 
-# no use
-class VarDataMixin:
-    def __iter__(self):
-        v = Var(
-            _js_expr='',
-            _var_data=VarData(
-                imports=self.get_imports(),
-            )
-        )
-        yield from [v]
-
-
 class DataClassMixin:
     def to_component(self) -> Component:
         fields = dataclasses.fields(self)
@@ -1002,7 +1016,7 @@ class DataClassMixin:
             # elif isinstance(v, ContainVar):
             #     ...
             # elif isinstance(v, Var):
-            #     ...  # v = v._var_full_name
+            #     ...  # v = v._js_expr
             result.append((f.name, v))
         d = dict(result)
         c = container(d)
@@ -1015,18 +1029,19 @@ _custom_jss = {}
 class AntdBaseComponent(Component):
     _custom_components: Set[CustomComponent] = pydantic.PrivateAttr(default_factory=set)
     _ex_hooks: List[ContainVar] = pydantic.PrivateAttr(default_factory=list)
-    custom_js: str = None
+    _custom_js: str | None = pydantic.PrivateAttr(default=None)
 
     def _render_custom_js(self):
-        if self.custom_js in _custom_jss:
+        _custom_js = self.__class__._custom_js
+        if _custom_js in _custom_jss:
             return
-        _custom_jss[self.custom_js] = ''
+        _custom_jss[_custom_js] = ''
         import sys
         from reflex.utils import prerequisites
         from os.path import dirname, join
         web_dir = '.web'  # prerequisites.get_web_dir()
         cur_path = dirname(sys.modules[self.__module__].__file__)
-        js_path = join(cur_path, self.custom_js)
+        js_path = join(cur_path, _custom_js)
         dst_path = join(web_dir, f'{self.library[1:]}.js')
         if not path.exists(path.dirname(dst_path)):
             os.makedirs(path.dirname(dst_path), exist_ok=True)
@@ -1041,6 +1056,8 @@ class AntdBaseComponent(Component):
                 contains[k] = v
             elif isinstance(v, (JsValue, JsEvent)):
                 exs[k] = v
+            elif isinstance(v, Component):
+                kw[k] = LiteralAntdComponentVar.create(v)
             else:
                 kw[k] = v
         # super().__init__(*args, **kw)
@@ -1052,7 +1069,7 @@ class AntdBaseComponent(Component):
         self._init_contains(contains, exs, ex_hooks)
 
     def _render(self, *args, **kwargs) -> Tag:
-        if getattr(self, 'custom_js', None):
+        if isinstance(self.__class__._custom_js, str):
             self._render_custom_js()
         rs = super()._render(*args, **kwargs)
         return rs
@@ -1203,6 +1220,94 @@ class AntdBaseComponent(Component):
                 setattr(self, k, _v)
 
 
+class AntdComponentVar(Var[Component], python_types=AntdBaseComponent):
+    """A Var that represents a Component."""
+    ...
+
+
+@dataclasses.dataclass(
+    eq=False,
+    frozen=True,
+)
+class LiteralAntdComponentVar(vars_base.CachedVarOperation, vars_base.LiteralVar, AntdComponentVar):
+    """A Var that represents a Component that get _var_value._var_data forever """
+
+    _var_value: Component = dataclasses.field(default_factory=lambda: Bare.create(""))
+
+    @vars_base.cached_property_no_lock
+    def _cached_var_name(self) -> str:
+        """Get the name of the var.
+
+        Returns:
+            The name of the var.
+        """
+        var_data = self._get_all_var_data()
+        if var_data is not None:
+            # flatten imports
+            imported_names = {j.alias or j.name for i in var_data.imports for j in i[1]}
+        else:
+            imported_names = set()
+        return str(render_dict_to_var(self._var_value.render(), imported_names))
+
+    @vars_base.cached_property_no_lock
+    def _cached_get_all_var_data(self) -> VarData | None:
+        """Get the VarData for the var.
+
+        Returns:
+            The VarData for the var.
+        """
+        return VarData.merge(
+            VarData(
+                imports={
+                    "@emotion/react": [
+                        ImportVar(tag="jsx"),
+                    ],
+                }
+            ),
+            VarData(
+                imports=self._var_value._get_all_imports(),
+                hooks=get_component_hooks(self._var_value),
+            ),
+            VarData(
+                imports={
+                    "react": [
+                        ImportVar(tag="Fragment"),
+                    ],
+                }
+            ),
+        )
+
+    def __hash__(self) -> int:
+        """Get the hash of the var.
+
+        Returns:
+            The hash of the var.
+        """
+        return hash((type(self).__name__, self._js_expr))
+
+    @classmethod
+    def create(
+            cls,
+            value: Component,
+            _var_data: VarData | None = None,
+    ):
+        """Create a var from a value.
+
+        Args:
+            value: The value of the var.
+            _var_data: Additional hooks and imports associated with the Var.
+
+        Returns:
+            The var.
+        """
+        return LiteralAntdComponentVar(
+            _js_expr="",
+            _var_type=type(value),
+            _var_data=_var_data,
+            _var_value=value,
+        )
+
+
 class AntdComponent(AntdBaseComponent):
     """A component that wraps an Antd component."""
     library = "antd"
@@ -1241,7 +1346,6 @@ _config_app: Optional[Component] = None
 
 
 def default_config(provider: Component = None, antd_app: Component = None):
-    return
     global _config_provider, _config_app
     from .antd.base import ConfigProvider, AntdApp
     if provider is not None:
@@ -1256,6 +1360,10 @@ def patch_all():
     from reflex import constants, vars
     from reflex.utils import prerequisites
     from reflex.compiler import templates
+    from reflex.vars import sequence
+
+    # hack json.dumps: support unicode
+    sequence.json = util
 
     constants.Templates.Dirs.JINJA_TEMPLATE = [path.join(template_path, 'jinja'),
                                                constants.Templates.Dirs.JINJA_TEMPLATE]

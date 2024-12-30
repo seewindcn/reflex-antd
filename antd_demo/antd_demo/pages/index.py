@@ -11,6 +11,7 @@ from ..state import GlobalState
 def index_page() -> rx.Component:
     return rx.center(
         rx.button('ok'),
+        general.button('antd-button with icon', icon=general.icon('ExclamationCircleFilled'))
     )
 
 

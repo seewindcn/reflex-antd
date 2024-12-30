@@ -1,7 +1,7 @@
 from typing import Optional, Union, Dict, Any
 from reflex import Var,Component
 
-from ..base import AntdComponent, NodeVar, VarDataMixin
+from ..base import AntdComponent, NodeVar
 from ..constant import PlacementType, SizeType, BadgeStatusType
 
 

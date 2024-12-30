@@ -108,6 +108,12 @@ def subnav() -> rx.Component:
 
 def content(*children: rx.Component, **kwargs) -> rx.Component:
     return layout.content(
+        # feedback.message_holder(
+        #     msg=feedback.message(
+        #         is_global=False,
+        #         config=dict(type='info', content=''),
+        #     ),
+        # ),
         *children,
         general.float_group(
             general.float_button(

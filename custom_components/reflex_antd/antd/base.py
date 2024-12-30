@@ -4,6 +4,7 @@ from functools import lru_cache
 
 import reflex as rx
 from reflex import Var, Component
+from reflex.components.tags import Tag
 from reflex.vars import VarData
 from reflex.utils import imports
 
@@ -89,14 +90,15 @@ class ConfigProvider(AntdBaseComponent):
         Returns:
             A new ConfigProvider component.
         """
-        # if 'theme' not in props:
-        #     theme = Var.create('theme.styles.global.body.antd', _var_is_local=False)
-        #     props['theme'] = theme
         rs = super().create(
             *children,
             **props
         )
         rs._is_root = is_root
+        return rs
+
+    def _render(self, *args, **kwargs) -> Tag:
+        rs = super()._render(*args, **kwargs)
         return rs
 
     def _get_imports(self) -> imports.ImportDict:

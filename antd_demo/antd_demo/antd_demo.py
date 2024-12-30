@@ -53,9 +53,9 @@ def load_pages():
     load_all = True
     for md in load_modules(pages, is_pkg=False):
         name = f"{md.__name__.rsplit('.', 1)[-1]}_page"
-        if name == 'page404_page':
-            app.add_custom_404_page(md.page404_page.component)
-            continue
+        # if name == 'page404_page':
+        #     app.add_custom_404_page(md.page404_page.component)
+        #     continue
 
     for key, route in routes.items():
         if not load_all and key not in ['/', '/404', '/general']:
