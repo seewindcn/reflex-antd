@@ -96,13 +96,15 @@ class NotificationHolder(Bare):
             cs.append('{contextHolder}')
         cs.append('</>')
         data = '\n'.join(cs)
-        return cls(
+        rs = cls(
             noti=noti,
-            contents=vars.LiteralStringVar(
+            contents=Var(
                 _js_expr=data,
                 _var_type=str,
             ),
         )
+        rs.contents = data
+        return rs
 
     def _get_vars(self, include_children: bool = False) -> Iterator[Var]:
         yield self.contents

@@ -148,7 +148,7 @@ class MessageHolder(Bare):
         data = '\n'.join(cs)
         rs = cls(
             msg=msg,
-            contents=vars.LiteralStringVar(
+            contents=Var(
                 _js_expr=data,
                 _var_type=str,
             ),
