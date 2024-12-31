@@ -13,11 +13,12 @@ from reflex_antd.helper import (
 )
 
 patch_all()
-app = rx.App(
-)
-
 theme_scheme = 'light' if 1 else 'dark'
-app.theme.appearance = theme_scheme
+app = rx.App(
+    theme=rx.theme(
+        appearance=theme_scheme,
+    )
+)
 antd_theme_scheme = light_theme_var if theme_scheme == 'light' else dark_theme_var
 
 # config antd
@@ -49,13 +50,16 @@ default_config(
 def load_pages():
     from antd_demo.layout import load_modules, Route, routes
     from antd_demo import pages
+    load_all = True
     for md in load_modules(pages, is_pkg=False):
         name = f"{md.__name__.rsplit('.', 1)[-1]}_page"
-        if name == 'page404_page':
-            app.add_custom_404_page(md.page404_page.component)
-            continue
+        # if name == 'page404_page':
+        #     app.add_custom_404_page(md.page404_page.component)
+        #     continue
 
     for key, route in routes.items():
+        if not load_all and key not in ['/', '/404', '/general']:
+            continue
         route.add_page(app)
 
 

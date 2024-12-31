@@ -20,7 +20,7 @@ keywords = [
 ]
 
 dependencies = [
-    "reflex>=0.5.5,<0.6.0"
+    "reflex>=0.6.0"
 ]
 
 classifiers = [

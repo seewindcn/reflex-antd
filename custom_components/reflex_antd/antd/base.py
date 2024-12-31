@@ -4,7 +4,8 @@ from functools import lru_cache
 
 import reflex as rx
 from reflex import Var, Component
-from reflex.vars import BaseVar, VarData
+from reflex.components.tags import Tag
+from reflex.vars import VarData
 from reflex.utils import imports
 
 
@@ -24,17 +25,17 @@ next_theme_var_data = VarData(  # type: ignore
         f"const nextTheme = useTheme()": None,
     },
 )
-next_theme_var = BaseVar(
-    _var_name='nextTheme.theme',
+next_theme_var = Var(
+    _js_expr='nextTheme.theme',
     _var_type="str",
     _var_data=next_theme_var_data,
 )
-light_theme_var = BaseVar(
-    _var_name=f'{AntdNextTheme}.defaultAlgorithm',
+light_theme_var = Var(
+    _js_expr=f'{AntdNextTheme}.defaultAlgorithm',
     _var_data=next_theme_var_data,
 )
-dark_theme_var = BaseVar(
-    _var_name=f'{AntdNextTheme}.darkAlgorithm',
+dark_theme_var = Var(
+    _js_expr=f'{AntdNextTheme}.darkAlgorithm',
     _var_data=next_theme_var_data,
 )
 
@@ -89,14 +90,15 @@ class ConfigProvider(AntdBaseComponent):
         Returns:
             A new ConfigProvider component.
         """
-        # if 'theme' not in props:
-        #     theme = Var.create('theme.styles.global.body.antd', _var_is_local=False)
-        #     props['theme'] = theme
         rs = super().create(
             *children,
             **props
         )
         rs._is_root = is_root
+        return rs
+
+    def _render(self, *args, **kwargs) -> Tag:
+        rs = super()._render(*args, **kwargs)
         return rs
 
     def _get_imports(self) -> imports.ImportDict:

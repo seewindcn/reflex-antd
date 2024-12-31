@@ -51,9 +51,9 @@ def footer() -> rx.Component:
 
 
 def nav_items() -> list:
-    from .layout import routes, route_groups
+    from .layout import routes, get_route_groups
     items = []
-    for _, g in route_groups.items():
+    for _, g in get_route_groups().items():
         group = dict(key=g.name,
                      label=g.name if not g.path else rx.link(g.name, href=g.path),
                      icon=g.icon, children=[])
@@ -108,6 +108,12 @@ def subnav() -> rx.Component:
 
 def content(*children: rx.Component, **kwargs) -> rx.Component:
     return layout.content(
+        # feedback.message_holder(
+        #     msg=feedback.message(
+        #         is_global=False,
+        #         config=dict(type='info', content=''),
+        #     ),
+        # ),
         *children,
         general.float_group(
             general.float_button(

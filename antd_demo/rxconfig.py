@@ -12,13 +12,9 @@ def dev_run_backend(
     host: str,
     port: int,
     loglevel: constants.LogLevel = constants.LogLevel.ERROR,
+    frontend: bool = False,
 ):
     """debug but don't reload; Run the backend.
-
-    Args:
-        host: The app host
-        port: The app port
-        loglevel: The log level.
     """
     from reflex.config import get_config
     import uvicorn
@@ -44,7 +40,7 @@ def dev_run_backend(
 
 
 async def _disable():
-    yield
+    ...
 
 
 if environ.get("DEV_NO_RELOAD", False):

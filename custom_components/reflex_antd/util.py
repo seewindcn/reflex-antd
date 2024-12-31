@@ -1,7 +1,20 @@
 from typing import List, Tuple, Any, Callable
 import collections
+import json
 
 import reflex as rx
+from reflex.utils import format
+
+
+def dumps(data, **kwargs) -> str:
+    return format.json_dumps(data, **kwargs)
+
+
+loads = json.loads
+
+
+def pretty_dumps(value: Any, indent=2, **kwargs) -> str:
+    return format.json_dumps(value, indent=indent, **kwargs)
 
 
 def switch(

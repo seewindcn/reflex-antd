@@ -1,19 +1,17 @@
 from typing import Optional, Union, Dict, Any, List, Set, Iterator
 import uuid
 
-from reflex import Component, Var
-from reflex.utils import imports
+from reflex import Component, Var, vars
+from reflex.utils import imports, format
 from reflex.components.component import ComponentNamespace
 from reflex.components.base.bare import Bare
-from reflex.vars import BaseVar
 from reflex.event import EventSpec, call_script
-from reflex.utils.serializers import serialize
 
 from ..base import AntdComponent, ContainVar, JsValue, ReactNode, version
 from ..constant import PlacementType, RoleType
 
 
-_ref = Var.create_safe("refs['__antd_notification']", _var_is_string=False)
+_ref = Var(_js_expr="refs['__antd_notification']", )
 
 
 class Notification(JsValue):
@@ -55,7 +53,7 @@ class Notification(JsValue):
 
         _hooks = [
             'const { notification } = App.useApp();',
-            str(f"{_ref} = notification"),
+            str(f"{str(_ref)} = notification"),
         ]
         if not self.is_global:
             _hooks.extend([
@@ -97,16 +95,21 @@ class NotificationHolder(Bare):
         if not noti.is_global:
             cs.append('{contextHolder}')
         cs.append('</>')
-        return cls(
+        data = '\n'.join(cs)
+        rs = cls(
             noti=noti,
-            contents='\n'.join(cs),
+            contents=Var(
+                _js_expr=data,
+                _var_type=str,
+            ),
         )
+        rs.contents = data
+        return rs
 
     def _get_vars(self, include_children: bool = False) -> Iterator[Var]:
         yield self.contents
-        yield BaseVar(
-            _var_name='',
-            _var_is_local=True,
+        yield Var(
+            _js_expr='',
             _var_data=self.noti.get_var_data(),
         )
 
@@ -121,15 +124,15 @@ class Notifications(ComponentNamespace):
         """Send a message. """
         if type is None:
             type = 'open'
-        cmd = f"{_ref}.{type}"
+        cmd = f"{str(_ref)}.{type}"
         config = dict(
             message=title,
             description=content,
             **props
         )
 
-        send_cmd = f"{cmd}({serialize(config)})"
-        send_action = Var.create(send_cmd, _var_is_string=False, _var_is_local=True)
+        send_cmd = f"{cmd}({format.json_dumps(config)})"
+        send_action = Var(_js_expr=send_cmd)
         return call_script(send_action)  # type: ignore
 
     @staticmethod

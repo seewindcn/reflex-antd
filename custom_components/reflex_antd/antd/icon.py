@@ -3,8 +3,6 @@ from typing import Optional
 from reflex import Component, Var
 from reflex.utils import format
 
-from ..base import VarDataMixin
-
 
 class BaseIconComponent(Component):
     library = "@ant-design/icons"

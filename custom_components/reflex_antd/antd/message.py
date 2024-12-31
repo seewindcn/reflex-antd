@@ -1,19 +1,17 @@
 from typing import Optional, Union, Dict, Any, List, Set, Iterator
 import uuid
 
-from reflex import Component, Var
-from reflex.utils import imports
+from reflex import Component, Var, vars
+from reflex.utils import imports, format
 from reflex.components.component import ComponentNamespace
 from reflex.components.base.bare import Bare
-from reflex.vars import BaseVar
 from reflex.event import EventSpec, call_script
-from reflex.utils.serializers import serialize
 
 from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, version, compose_react_imports
 from ..constant import MessageType
 from . import helper
 
-_ref = Var.create_safe("refs['__antd_message']", _var_is_string=False)
+_ref = Var(_js_expr="refs['__antd_message']")
 
 
 class Message(JsValue):
@@ -107,7 +105,7 @@ class Message(JsValue):
 
         _hooks = [
             'const { message } = App.useApp();',
-            str(f"{_ref} = message"),
+            str(f"{str(_ref)} = message"),
         ]
         if self.is_global:
             _hooks.extend([
@@ -147,16 +145,20 @@ class MessageHolder(Bare):
         if not msg.is_global:
             cs.append('{contextHolder}')
         cs.append('</>')
-        return cls(
+        data = '\n'.join(cs)
+        rs = cls(
             msg=msg,
-            contents='\n'.join(cs),
+            contents=Var(
+                _js_expr=data,
+                _var_type=str,
+            ),
         )
+        return rs
 
     def _get_vars(self, include_children: bool = False) -> Iterator[Var]:
         yield self.contents
-        yield BaseVar(
-            _var_name='',
-            _var_is_local=True,
+        yield Var(
+            _js_expr='',
             _var_data=self.msg.get_var_data(),
         )
 
@@ -167,14 +169,14 @@ class Messages(ComponentNamespace):
         """Send a message. """
         if type is None:
             type = 'info'
-        cmd = f"{_ref}.{type}"
+        cmd = f"{str(_ref)}.{type}"
         config = dict(
             content=content,
             **props
         )
 
-        send_cmd = f"{cmd}({serialize(config)})"
-        send_action = Var.create(send_cmd, _var_is_string=False, _var_is_local=True)
+        send_cmd = f"{cmd}({format.json_dumps(config)})"
+        send_action = Var(_js_expr=send_cmd)
         return call_script(send_action)  # type: ignore
 
     @staticmethod

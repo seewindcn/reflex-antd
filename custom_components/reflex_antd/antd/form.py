@@ -2,7 +2,7 @@ import uuid
 from typing import Optional, Union, Dict, Any, List
 from reflex import Var, Component
 
-from ..base import (AntdComponent, ContainVar, JsValue, ReactNode, js_value,
+from ..base import (AntdComponent, ContainVar, CasualVar, JsValue, ReactNode, js_value,
                     memo_never_no_recursive, memo_always_no_recursive)
 from ..constant import AlignType, DirectionType, SizeType, VariantType
 
@@ -14,7 +14,7 @@ class Form(AntdComponent):
     component: Optional[Var[Union[bool, ReactNode]]]
     disabled: Optional[Var[bool]]
     fields: Optional[Var[ContainVar]]
-    form: Optional[Var[str]]
+    form: Optional[Var[Union[str, CasualVar]]]
     initial_values: Optional[Var[Dict]]
     label_align: Optional[Var[AlignType]]
     label_wrap: Optional[Var[bool]]
@@ -36,7 +36,7 @@ class Form(AntdComponent):
     @classmethod
     def create(cls, *children, **props) -> Component:
         if 'form' in props and isinstance(props['form'], str):
-            props['form'] = Var.create_safe(f'{props["form"]}', _var_is_local=False, _var_is_string=False)
+            props['form'] = CasualVar.create(f'{props["form"]}')
         comp = super().create(*children, **props)
         if comp._get_all_hooks() or comp._get_all_hooks_internal():
             comp._memoization_mode = memo_always_no_recursive
