@@ -89,14 +89,14 @@ def compose_react_imports(tags: list[str]):
     return {"react": [ImportVar(tag=tag, install=tag in ['useEffect', 'useState']) for tag in tags]}
 
 
-def get_component_all_imports(com: Component) -> imports.ImportDict:
+def get_component_all_imports(com: Component | Var) -> imports.ImportDict:
     return {} if isinstance(com, str) else com._get_all_imports()
 
 
-def get_component_all_dynamic_imports(com: Component) -> Set[str]:
-    if not com or isinstance(com, str):
-        return set()
-    return com._get_all_dynamic_imports()
+def get_component_all_dynamic_imports(com: Component | Var) -> Set[str]:
+    if hasattr(com, '_get_all_dynamic_imports'):
+        return com._get_all_dynamic_imports()
+    return set()
 
 
 def get_component_hooks(com) -> Dict[str, None]:
@@ -428,13 +428,25 @@ class JsValue:
     """
     value: Callable | str | Component
     to_js: bool = False
+    custom_imports: imports.ImportDict = None
+    dynamic_imports: Set[str] = None
 
     @property
     def to_react(self) -> bool:
         return not self.to_js
 
-    def __init__(self, value: Union[str, Callable, Component] = None, **kwargs):
+    def __init__(
+            self, value: Union[str, Callable, Component] = None,
+            custom_imports: imports.ImportDict = None,
+            dynamic_imports: Set[str] = None,
+            **kwargs):
         self.value = value
+        self.custom_imports = custom_imports if custom_imports is not None else {}
+        self.dynamic_imports = dynamic_imports if dynamic_imports is not None else set()
+        if self.dynamic_imports:
+            self.custom_imports.update(
+                {"next/dynamic": [ImportVar(tag="dynamic", is_default=True)]}
+            )
         self._init(**kwargs)
 
     def _init(self, **kwargs) -> None:
@@ -456,10 +468,14 @@ class JsValue:
         return f"({code})" if self.to_js else code
 
     def get_imports(self) -> imports.ImportDict:
-        return get_component_all_imports(self.value)
+        _imports = imports.merge_imports(
+            get_component_all_imports(self.value),
+            self.custom_imports
+        )
+        return _imports
 
     def get_dynamic_imports(self) -> Set[str]:
-        return get_component_all_dynamic_imports(self.value)
+        return get_component_all_dynamic_imports(self.value) | self.dynamic_imports
 
     def get_state(self) -> str:
         return ''
@@ -512,10 +528,13 @@ class JsFunctionValue(JsValue):
         {sep_1} {v} {sep_2} )"""
 
     def get_imports(self) -> imports.ImportDict:
-        return get_component_all_imports(self._value)
+        return imports.merge_imports(
+            get_component_all_imports(self._value),
+            self.custom_imports,
+        )
 
     def get_dynamic_imports(self) -> Set[str]:
-        return get_component_all_dynamic_imports(self._value)
+        return get_component_all_dynamic_imports(self._value) | self.dynamic_imports
 
     def get_hooks(self) -> Dict[str, None]:
         return get_component_hooks(self._value)
@@ -595,7 +614,10 @@ useEffect(() => {
         return _hooks
 
     def get_imports(self) -> imports.ImportDict:
-        return compose_react_imports(['useState', 'useEffect'])
+        return imports.merge_imports(
+            compose_react_imports(['useState', 'useEffect']),
+            self.custom_imports,
+        )
 
 
 class ExJsItem(ExItem):
@@ -1092,6 +1114,8 @@ class AntdBaseComponent(Component):
         rs = super()._get_all_dynamic_imports()
         for v in self._iter_all_contains():
             rs |= v.get_dynamic_imports()
+        for k, v in self._iter_exs():
+            rs |= v.get_dynamic_imports()
         return rs
 
     def _get_style(self) -> dict:
@@ -1179,6 +1203,13 @@ class AntdBaseComponent(Component):
             if isinstance(v, ContainVar):
                 yield k, v
 
+    def _iter_exs(self) -> Iterable[Tuple[str, ExItem]]:
+        """ iter component's property which is ContainVar """
+        for k in self.get_fields().keys():
+            v = getattr(self, k, None)
+            if isinstance(v, ExVar) and isinstance(v._var_value, ExItem):
+                yield k, v._var_value
+
     def _iter_ex_hooks(self) -> Iterable[ContainVar]:
         for ex in self._ex_hooks:
             yield ex
@@ -1212,7 +1243,7 @@ class AntdBaseComponent(Component):
             _v = ExVar(
                 _js_expr=item.serialize(),
                 _var_data=item.get_var_data(),
-                _var_value=v,
+                _var_value=item,
             )
             if k in event_keys:
                 self.event_triggers[k] = _v
