@@ -205,6 +205,7 @@ def antd_entry_time_picker() -> rx.Component:
     return rx.vstack(
         rx.vstack(
             entry.time_picker(),
+            entry.time_picker(default_value=helper.dayjs('12:08:23')),
             entry.time_picker(default_value=helper.dayjs(['12:08:23', 'HH:mm:ss'])),
             entry.time_picker(format="HH:mm", hour_step=2),
             entry.time_range_picker(),

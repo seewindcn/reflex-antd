@@ -85,7 +85,7 @@ def stateful(hd: Callable[..., Component] = None, forced=True, memo=memo_always)
         return _my(hd)
 
 
-STR_TYPES = (str, List[str])
+STR_TYPES = (str, list)
 
 
 def compose_react_imports(tags: list[str]):
