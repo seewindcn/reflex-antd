@@ -8,7 +8,7 @@ from .base import (  # noqa
 )
 from .antd.base import (  # noqa
     theme, next_theme_var, light_theme_var, dark_theme_var,
-    config_provider, antd_app, Locale,
+    config_provider, antd_app, Locale, DayJS, dayjs,
 )
 from .util import switch  # noqa
 

@@ -85,12 +85,15 @@ def stateful(hd: Callable[..., Component] = None, forced=True, memo=memo_always)
         return _my(hd)
 
 
+STR_TYPES = (str, List[str])
+
+
 def compose_react_imports(tags: list[str]):
     return {"react": [ImportVar(tag=tag, install=tag in ['useEffect', 'useState']) for tag in tags]}
 
 
 def get_component_all_imports(com: Component | Var) -> imports.ImportDict:
-    return {} if isinstance(com, str) else com._get_all_imports()
+    return {} if isinstance(com, STR_TYPES) else com._get_all_imports()
 
 
 def get_component_all_dynamic_imports(com: Component | Var) -> Set[str]:
@@ -100,7 +103,7 @@ def get_component_all_dynamic_imports(com: Component | Var) -> Set[str]:
 
 
 def get_component_hooks(com) -> Dict[str, None]:
-    return {} if isinstance(com, str) \
+    return {} if isinstance(com, STR_TYPES) \
         else com._get_all_hooks_internal() | com._get_all_hooks()
 
 
@@ -438,7 +441,7 @@ class JsValue:
         return not self.to_js
 
     def __init__(
-            self, value: Union[str, Callable, Component] = None,
+            self, value: Union[str, List[str], Callable, Component] = None,
             custom_imports: imports.ImportDict = None,
             dynamic_imports: Set[str] = None,
             **kwargs):

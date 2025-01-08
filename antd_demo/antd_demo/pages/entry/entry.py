@@ -200,6 +200,19 @@ def antd_entry_date_picker() -> rx.Component:
     )
 
 
+@rx.memo
+def antd_entry_time_picker() -> rx.Component:
+    return rx.vstack(
+        rx.vstack(
+            entry.time_picker(),
+            entry.time_picker(default_value=helper.dayjs(['12:08:23', 'HH:mm:ss'])),
+            entry.time_picker(format="HH:mm", hour_step=2),
+            entry.time_range_picker(),
+        ),
+        width="100%",
+    )
+
+
 class EntryFormState(State):
     formLayout: str = 'horizontal'
     componentDisabled: bool = False
@@ -508,6 +521,7 @@ def entry_page() -> rx.Component:
                 display.tab_item(key='checkbox', label='checkbox', children=antd_entry_checkbox()),
                 display.tab_item(key='color_picker', label='color_picker', children=antd_entry_color_picker()),
                 display.tab_item(key='date_picker', label='date_picker', children=antd_entry_date_picker()),
+                display.tab_item(key='time_picker', label='time_picker', children=antd_entry_time_picker()),
                 display.tab_item(key='form', label='form', children=antd_entry_form()),
                 display.tab_item(key='input', label='input', children=antd_entry_input()),
                 display.tab_item(key='inputnumber', label='inputnumber', children=antd_entry_inputnumber()),

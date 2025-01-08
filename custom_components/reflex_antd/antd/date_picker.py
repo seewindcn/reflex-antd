@@ -7,16 +7,10 @@ from reflex.constants import EventTriggers
 from ..base import AntdComponent, ContainVar, JsValue, ReactNode
 from ..constant import DatePickerModeType, DatePickerType, SizeType, PlacementType, StatusType, VariantType
 
-from .base import Locale
-
-
-class DayJS(JsValue):
-    def serialize(self) -> str:
-        return f"dayjs('{self.value}')"
+from .base import Locale, DayJS
 
 
 class BaseDatePicker(AntdComponent):
-
     allow_clear: Optional[Var[bool]]
     auto_focus: Optional[Var[bool]]
     date_render: Optional[Var[JsValue]]
@@ -28,7 +22,7 @@ class BaseDatePicker(AntdComponent):
     order: Optional[Var[bool]]
     popup_class_name: Optional[Var[str]]
     preserve_invalidOn_blur: Optional[Var[bool]]
-    getPopup_container: Optional[Var[JsValue]]
+    get_popup_container: Optional[Var[JsValue]]
     input_readOnly: Optional[Var[bool]]
     locale: Optional[Var[Locale]]
     min_date: Optional[Var[JsValue]]
@@ -137,6 +131,5 @@ class RangePicker(BaseDatePicker):
         return "const { RangePicker } = DatePicker;"
 
 
-dayjs = DayJS
 date_picker = DatePicker.create
 range_picker = RangePicker.create

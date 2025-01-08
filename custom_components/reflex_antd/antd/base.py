@@ -44,6 +44,16 @@ def theme(**kwargs):
     return ContainVar.create(**kwargs)
 
 
+class DayJS(JsValue):
+    def serialize(self) -> str:
+        if isinstance(self.value, list):
+            return f"""dayjs({[f"'{v}', " for v in self.value]})"""
+        return f"dayjs('{self.value}')"
+
+
+dayjs = DayJS
+
+
 class Locale(JsValue):
 
     @property
