@@ -128,7 +128,9 @@ def get_var_data(v: Var) -> VarData | None:
     return _data
 
 
-def get_var_data_hooks(v: Var | VarData) -> dict[str, None]:
+def get_var_data_hooks(v: Union[Var, VarData, "JsValue"]) -> dict[str, None]:
+    if isinstance(v, JsValue):
+        return v.get_hooks()
     _var_data = get_var_data(v) if isinstance(v, Var) else v
     return {hook: None for hook in _var_data.hooks} if _var_data else {}
 
@@ -563,10 +565,7 @@ def js_value(value: Union[str, Callable, Foreach, Match, Cond], **kwargs) -> JsV
     raise NotImplemented("Not implemented: %s(%s)" % (type(value), value))
 
 
-class JsLocalDictVar(JsValue):
-    """ custom local state's var by reflex state
-    """
-    name: str
+class JsUseEffect(JsValue):
     value: rx.Var[dict]
     js: str
 
@@ -576,6 +575,54 @@ class JsLocalDictVar(JsValue):
         return format.format_state_name(_var_data.state) if _var_data else ''
 
     def __init__(
+            self, value: rx.Var[dict],
+            js: str,
+            **kwargs):
+        """
+        :param js:str
+         """
+        super().__init__(value, **kwargs)
+        self.js = js
+
+    def serialize(self) -> str:
+        return ''
+
+    def _get_hooks(self, **kwargs) -> Dict[str, None]:
+        return {
+            """
+useEffect(() => {
+  if (! %(value)s) {
+    return
+  }
+  %(js)s
+}, [%(state)s]);
+            """ % kwargs: None,
+        }
+
+    def get_hooks(self) -> Dict[str, None]:
+        kw = dict(
+            value=str(self.value),
+            state=self.state_name,
+            js=self.js,
+        )
+        _hooks = get_var_data_hooks(self.value)
+        _my_hooks = self._get_hooks(**kw)
+        _hooks.update(_my_hooks)
+        return _hooks
+
+    def get_imports(self) -> imports.ImportDict:
+        return imports.merge_imports(
+            compose_react_imports(['useState', 'useEffect']),
+            self.custom_imports,
+        )
+
+
+class JsLocalDictVar(JsUseEffect):
+    """ custom local state's var by reflex state
+    """
+    name: str
+
+    def __init__(
             self, name: str, value: dict | rx.Var,
             js: str,
             **kwargs):
@@ -583,23 +630,22 @@ class JsLocalDictVar(JsValue):
         :param js:str, sample:
             values['test_date'] = dayjs(values['test_date'])
          """
-        super().__init__(value, **kwargs)
-        self.js = js
+        super().__init__(value, js, **kwargs)
         self.name = name
 
     def serialize(self) -> str:
         return self.name
 
-    def get_hooks(self) -> Dict[str, None]:
-        kw = dict(
-            value=str(self.value),
-            state=self.state_name,
-            name=self.name,
-            js=self.js,
+    def get_imports(self) -> imports.ImportDict:
+        return imports.merge_imports(
+            compose_react_imports(['useState', 'useEffect']),
+            self.custom_imports,
         )
-        _hooks = get_var_data_hooks(self.value)
-        _hooks.update({
-            "const[%(name)s, set%(name)s] = useState({})" % kw: None,
+
+    def _get_hooks(self, **kwargs) -> Dict[str, None]:
+        kwargs['name'] = self.name
+        return {
+            "const[%(name)s, set%(name)s] = useState({})" % kwargs: None,
             """
 useEffect(() => {
   if (! %(value)s) {
@@ -609,15 +655,8 @@ useEffect(() => {
   %(js)s
   set%(name)s(values)
 }, [%(state)s]);
-            """ % kw: None,
-        })
-        return _hooks
-
-    def get_imports(self) -> imports.ImportDict:
-        return imports.merge_imports(
-            compose_react_imports(['useState', 'useEffect']),
-            self.custom_imports,
-        )
+            """ % kwargs: None,
+        }
 
 
 class ExJsItem(ExItem):

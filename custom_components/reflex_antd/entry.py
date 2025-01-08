@@ -3,7 +3,10 @@ from .antd.cascader import cascader  # noqa
 from .antd.checkbox import checkbox_group, checkbox  # noqa
 from .antd.color_picker import color_picker  # noqa
 from .antd.date_picker import dayjs, date_picker, range_picker  # noqa
-from .antd.form import form, form_item, form_list, form_provider, confirm_form, modal_form  # noqa
+from .antd.form import (  # noqa
+    form, form_item, form_list, form_provider, confirm_form, modal_form,
+    gen_form_id, form_hook_reset_fields,
+)
 from .antd.input import input, text_area, search, password  # noqa
 from .antd.input_number import input_number  # noqa
 from .antd.mentions import mention  # noqa

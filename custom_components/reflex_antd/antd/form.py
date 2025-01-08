@@ -2,7 +2,8 @@ import uuid
 from typing import Optional, Union, Dict, Any, List
 from reflex import Var, Component
 
-from ..base import (AntdComponent, ContainVar, CasualVar, JsValue, ReactNode, js_value,
+from ..base import (AntdComponent, ContainVar, CasualVar, ReactNode,
+                    JsValue, js_value, JsUseEffect,
                     memo_never_no_recursive, memo_always_no_recursive)
 from ..constant import AlignType, DirectionType, SizeType, VariantType
 
@@ -35,7 +36,9 @@ class Form(AntdComponent):
 
     @classmethod
     def create(cls, *children, **props) -> Component:
-        if 'form' in props and isinstance(props['form'], str):
+        if 'form' not in props:
+            props['form'] = gen_form_id()
+        if isinstance(props['form'], str):
             props['form'] = CasualVar.create(f'{props["form"]}')
         comp = super().create(*children, **props)
         if comp._get_all_hooks() or comp._get_all_hooks_internal():
@@ -118,6 +121,18 @@ form_list = FormList.create
 form_provider = FormProvider.create
 
 
+def gen_form_id():
+    return f'form_{uuid.uuid4().hex}'
+
+
+def form_hook_reset_fields(form_id: str, state) -> JsValue:
+    _hook = JsUseEffect(
+        state,
+        f""" {str(form_id)}.resetFields(); """,
+    )
+    return _hook
+
+
 def _modal_form(
         modal_type: str, *children: Component,
         others: list[Component] = None,
@@ -126,7 +141,7 @@ def _modal_form(
         **props) -> JsValue | Component:
     from . import modal
     if form_id is None:
-        form_id = f'form_{uuid.uuid4().hex}'
+        form_id = gen_form_id()
     props.update(
         form=form_id,
         preserve=False,
