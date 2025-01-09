@@ -7,8 +7,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reflex-antd"
-version = "0.0.14"
-description = "Reflex custom component antd"
+version = "0.1.0"
+description = "Reflex custom component ant-design"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.8"
@@ -34,6 +34,8 @@ source = "https://github.com/seewindcn/reflex-antd"
 
 [project.optional-dependencies]
 dev = ["build", "twine"]
+
+
 
 
 

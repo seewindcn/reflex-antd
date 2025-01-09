@@ -1,4 +1,4 @@
-reflex>=0.4.2
+reflex>=0.6.0
 
 [dev]
 build
