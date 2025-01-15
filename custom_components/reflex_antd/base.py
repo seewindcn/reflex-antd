@@ -15,7 +15,7 @@ import re
 import reflex as rx
 from reflex import Component, Var, State, Base, ImportVar, NoSSRComponent
 from reflex.vars import StringVar, base as vars_base
-from reflex.base import pydantic_main as pydantic_md
+from reflex.base import pydantic_main as pydantic_md, BaseModel  # noqa
 
 from reflex.components.component import (
     BaseComponent, CustomComponent, StatefulComponent, ComponentStyle, render_dict_to_var,
@@ -104,7 +104,7 @@ def get_component_all_dynamic_imports(com: Component | Var) -> Set[str]:
 
 def get_component_hooks(com) -> Dict[str, None]:
     return {} if isinstance(com, STR_TYPES) \
-        else com._get_all_hooks_internal() | com._get_all_hooks()
+        else (com._get_all_hooks() if version > '000.006.007' else com._get_all_hooks_internal() | com._get_all_hooks())
 
 
 def get_component_custom_code(com: Component) -> Set[str]:
@@ -571,20 +571,24 @@ def js_value(value: Union[str, Callable, Foreach, Match, Cond], **kwargs) -> JsV
 class JsUseEffect(JsValue):
     value: rx.Var[dict]
     js: str
+    state_name: str = None
 
-    @property
-    def state_name(self) -> str:
+    def get_state_name(self) -> str:
+        if self.state_name is not None:
+            return self.state_name
         _var_data = get_var_data(self.value)
         return format.format_state_name(_var_data.state) if _var_data else ''
 
     def __init__(
             self, value: rx.Var[dict],
             js: str,
+            state_name: str = None,
             **kwargs):
         """
         :param js:str
          """
         super().__init__(value, **kwargs)
+        self.state_name = state_name
         self.js = js
 
     def serialize(self) -> str:
@@ -605,7 +609,7 @@ useEffect(() => {
     def get_hooks(self) -> Dict[str, None]:
         kw = dict(
             value=str(self.value),
-            state=self.state_name,
+            state=self.get_state_name(),
             js=self.js,
         )
         _hooks = get_var_data_hooks(self.value)
@@ -949,11 +953,12 @@ class ContainVar(ExVar):
         return rs
 
     def init(self, parent: Component, name: str) -> Self:
-        fmt = ExFormatter(self._var_value, parent=parent, name=name)
+        _vv = self._var_value
+        fmt = ExFormatter(_vv, parent=parent, name=name)
         _var = dataclasses.replace(
             self,
             _js_expr=fmt.get_value(),
-            _var_value=self._var_value,
+            _var_value=_vv,
             _var_fmt=fmt,
             _var_data=fmt.get_var_data(),
         )
@@ -989,14 +994,15 @@ class ContainVar(ExVar):
         . list item only support: JsValue, JsFunctionValue
         """
         support_clses = (JsValue, JsEvent, JsFunctionValue)
-        if isinstance(self._var_value, rx.Var):
-            return {self._var_value: None}
-        if isinstance(self._var_value, support_clses):
-            items = [self._var_value]
-        elif isinstance(self._var_value, (list, dict)):
-            items = self._var_value
+        _vv = self._var_value
+        if isinstance(_vv, rx.Var):
+            return {_vv: None}
+        elif isinstance(_vv, support_clses):
+            items = [_vv]
+        elif isinstance(_vv, (list, dict)):
+            items = _vv
         else:
-            raise ValueError(f"to_hook_code Unsupported type {type(self._var_value)}")
+            raise ValueError(f"to_hook_code Unsupported type {type(_vv)}")
 
         def _check(i):
             assert isinstance(i, support_clses), \
@@ -1021,6 +1027,26 @@ class ContainVar(ExVar):
             hooks[hook] = None
 
         return hooks
+
+
+class PropVarBase(ContainVar):
+    @classmethod
+    def create(cls, **kwargs) -> Self:
+        # v: Var = super().create(_name, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
+        rs = cls(
+            _js_expr='',
+            _var_type=cls,
+            _var_is_local=True,
+            _var_is_string=False,
+            _var_data=None,
+            _var_value=None,
+            **kwargs
+        )
+        return rs
+
+    def init(self, parent: Component, name: str) -> Self:
+        self._var_value = dict((k, v) for k, v in self.__dict__.items() if k[0] != '_')
+        return super().init(parent, name)
 
 
 contain = ContainVar.create
@@ -1209,17 +1235,21 @@ class AntdBaseComponent(Component):
             self._cache_get_all_hooks_internal_ = super()._get_all_hooks_internal()
             return self._cache_get_all_hooks_internal_
 
-    def _get_all_hooks(self) -> dict[str, None]:
+    def _get_hooks_internal(self) -> dict[str, VarData | None]:
+        rs = super()._get_hooks_internal()
+        return rs
+
+    def _get_all_hooks(self) -> dict[str, VarData | None]:
         """  """
         rs = super()._get_all_hooks()
-        # fix 0.5.1 bug #3365
-        # rs = dict((k, None) for k in rs.keys())
 
         # remove double Hooks.EVENTS, component._get_all_hooks_internal and _get_all_hooks is not merge
         # in stateful_component.js.jinja2,
-        _i_hooks = self._get_all_hooks_internal()
-        for _k in set(_i_hooks).intersection(rs):
-            rs.pop(_k, None)
+        if version <= '000.006.007':
+            _i_hooks = self._get_all_hooks_internal()
+            for _k in set(_i_hooks).intersection(rs):
+                rs.pop(_k, None)
+
         return rs
 
     def add_hooks(self) -> list[str | Var]:
@@ -1235,7 +1265,7 @@ class AntdBaseComponent(Component):
     def _get_vars_hooks(self) -> dict[str, None]:
         var_hooks = super()._get_vars_hooks()
         if [h for h in var_hooks if 'addEvents' in h]:
-            var_hooks[Hooks.EVENTS] = None
+            var_hooks = {Hooks.EVENTS: None, **var_hooks}
         return var_hooks
 
     def _iter_contains(self) -> Iterable[Tuple[str, ContainVar]]:
@@ -1387,14 +1417,14 @@ class AntdComponent(AntdBaseComponent):
 
     hidden: Optional[Var[bool]]
 
-    @staticmethod
-    @lru_cache(maxsize=None)
-    def _get_app_wrap_components() -> dict[tuple[int, str], Component]:
-        from .antd.base import config_provider, antd_app
-        return {
-            (50, "AntdApp"): _config_app if _config_app is not None else antd_app(),
-            (51, "AntdProvider"): _config_provider if _config_provider is not None else config_provider(),
-        }
+    # @staticmethod
+    # @lru_cache(maxsize=None)
+    # def _get_app_wrap_components() -> dict[tuple[int, str], Component]:
+    #     from .antd.base import config_provider, antd_app
+    #     return {
+    #         (50, "AntdApp"): _config_app if _config_app is not None else antd_app(),
+    #         (51, "AntdProvider"): _config_provider if _config_provider is not None else config_provider(),
+    #     }
 
 
 class AntdNoSSRComponent(NoSSRComponent, AntdBaseComponent):
@@ -1420,13 +1450,34 @@ _config_app: Optional[Component] = None
 
 def default_config(provider: Component = None, antd_app: Component = None):
     global _config_provider, _config_app
-    from .antd.base import ConfigProvider, AntdApp
+    from reflex.utils import prerequisites
+    from reflex import constants
+    from .antd.base import ConfigProvider, AntdApp, antd_registry_provider
     if provider is not None:
         assert isinstance(provider, ConfigProvider)
         _config_provider = provider
+    else:
+        _config_provider = ConfigProvider()
     if antd_app is not None:
         assert isinstance(antd_app, AntdApp)
         _config_app = antd_app
+    else:
+        _config_app = AntdApp()
+
+    _app = getattr(prerequisites.get_app(), constants.CompileVars.APP)
+    _old_error_boundary = _app.error_boundary
+
+    def _antd_error_boundary(*children: Component) -> Component:
+        _com = _old_error_boundary(*children)
+        return antd_registry_provider(
+            _config_provider.copy(update=dict(
+                children=[
+                    _config_app.copy(update=dict(children=[_com])),
+                ],
+            ),
+            ),
+        )
+    _app.error_boundary = _antd_error_boundary
 
 
 def patch_all():
@@ -1489,22 +1540,6 @@ def patch_all():
 
     prerequisites.update_next_config = my_update_next_config
 
-    # TODO new
-    # old_extract_var_data = vars._extract_var_data
-    #
-    # def _my_extract_var_data(value: Union[Iterable, Component]) -> list[VarData | None]:
-    #     if isinstance(value, Component):
-    #         return [
-    #             VarData(
-    #                 imports=get_component_all_imports(value),
-    #                 hooks=get_component_hooks(value),
-    #             )
-    #         ]
-    #     var_datas = old_extract_var_data(value)
-    #     return var_datas
-    #
-    # vars._extract_var_data = _my_extract_var_data
-
     def _my_get_memoized_event_triggers(
             cls,
             component: Component,
@@ -1519,3 +1554,5 @@ ReactNode = Union[str, Component]
 JsNode = Union[JsValue, JsEvent]
 
 fragment = AntdFragment.create
+
+ExTypes = JsValue | ContainVar | JsEvent

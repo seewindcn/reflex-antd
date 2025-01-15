@@ -123,17 +123,17 @@ class ConfigProvider(AntdBaseComponent):
 
     # @staticmethod
     # @lru_cache(maxsize=None)
-    def _get_app_wrap_components(self) -> dict[tuple[int, str], Component]:
-        """ support app router """
-        if self._is_root and base.APP_ROUTER:
-            return {
-                (170, "AntdRegistryProvider"): antd_registry_provider(),
-            }
-        else:
-            return {}
+    # def _get_app_wrap_components(self) -> dict[tuple[int, str], Component]:
+    #     """ support app router """
+    #     if self._is_root and base.APP_ROUTER:
+    #         return {
+    #             (170, "AntdRegistryProvider"): antd_registry_provider(),
+    #         }
+    #     else:
+    #         return {}
 
 
-class AntdRegistryProvider(Component):
+class AntdRegistryProvider(AntdBaseComponent):
     library = "@ant-design/nextjs-registry"
     tag = "AntdRegistry"
 

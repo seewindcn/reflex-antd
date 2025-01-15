@@ -36,10 +36,12 @@ class Form(AntdComponent):
 
     @classmethod
     def create(cls, *children, **props) -> Component:
-        if 'form' not in props:
-            props['form'] = gen_form_id()
-        if isinstance(props['form'], str):
-            props['form'] = CasualVar.create(f'{props["form"]}')
+        if 'form' in props:
+            # no auto gen form id; sometimes form can not be set, like foreach make a lot of forms
+            # if props['form'] is None:
+            #     props['form'] = gen_form_id()
+            if isinstance(props['form'], str):
+                props['form'] = CasualVar.create(f'{props["form"]}')
         comp = super().create(*children, **props)
         if comp._get_all_hooks() or comp._get_all_hooks_internal():
             comp._memoization_mode = memo_always_no_recursive
@@ -125,10 +127,11 @@ def gen_form_id():
     return f'form_{uuid.uuid4().hex}'
 
 
-def form_hook_reset_fields(form_id: str, state) -> JsValue:
+def form_hook_reset_fields(form_id: str, state, state_name: str = None) -> JsValue:
     _hook = JsUseEffect(
         state,
         f""" {str(form_id)}.resetFields(); """,
+        state_name=state_name,
     )
     return _hook
 
