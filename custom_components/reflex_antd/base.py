@@ -571,24 +571,26 @@ def js_value(value: Union[str, Callable, Foreach, Match, Cond], **kwargs) -> JsV
 class JsUseEffect(JsValue):
     value: rx.Var[dict]
     js: str
-    state_name: str = None
+    dep_name: str = None
 
-    def get_state_name(self) -> str:
-        if self.state_name is not None:
-            return self.state_name
-        _var_data = get_var_data(self.value)
-        return format.format_state_name(_var_data.state) if _var_data else ''
+    def get_dep_name(self) -> str:
+        if self.dep_name is not None:
+            return self.dep_name
+        return str(self.value)
+        # state name
+        # _var_data = get_var_data(self.value)
+        # return format.format_state_name(_var_data.state) if _var_data else ''
 
     def __init__(
             self, value: rx.Var[dict],
             js: str,
-            state_name: str = None,
+            dep_name: str = None,
             **kwargs):
         """
         :param js:str
          """
         super().__init__(value, **kwargs)
-        self.state_name = state_name
+        self.dep_name = dep_name
         self.js = js
 
     def serialize(self) -> str:
@@ -602,14 +604,14 @@ useEffect(() => {
     return
   }
   %(js)s
-}, [%(state)s]);
+}, [%(dep)s]);
             """ % kwargs: None,
         }
 
     def get_hooks(self) -> Dict[str, None]:
         kw = dict(
             value=str(self.value),
-            state=self.get_state_name(),
+            dep=self.get_dep_name(),
             js=self.js,
         )
         _hooks = get_var_data_hooks(self.value)
@@ -661,7 +663,7 @@ useEffect(() => {
   var values = { ...%(value)s}
   %(js)s
   set%(name)s(values)
-}, [%(state)s]);
+}, [%(dep)s]);
             """ % kwargs: None,
         }
 

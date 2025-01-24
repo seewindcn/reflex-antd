@@ -127,11 +127,11 @@ def gen_form_id():
     return f'form_{uuid.uuid4().hex}'
 
 
-def form_hook_reset_fields(form_id: str, state, state_name: str = None) -> JsValue:
+def form_hook_reset_fields(form_id: str, state, dep_name: str = None) -> JsValue:
     _hook = JsUseEffect(
         state,
         f""" {str(form_id)}.resetFields(); """,
-        state_name=state_name,
+        dep_name=dep_name,
     )
     return _hook
 

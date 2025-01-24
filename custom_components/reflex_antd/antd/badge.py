@@ -1,5 +1,5 @@
 from typing import Optional, Union, Dict, Any
-from reflex import Var,Component
+from reflex import Var, Component
 
 from ..base import AntdComponent, NodeVar
 from ..constant import PlacementType, SizeType, BadgeStatusType
@@ -17,6 +17,7 @@ class Badge(AntdComponent):
     size: Optional[Var[SizeType]]
     status: Optional[Var[BadgeStatusType]]
     text: Optional[Var[Union[str, Component]]]
+    styles: Optional[Var[Dict]]
 
 
 class BadgeRibbon(AntdComponent):

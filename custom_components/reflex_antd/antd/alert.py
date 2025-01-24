@@ -16,7 +16,7 @@ class Alert(AntdComponent):
     icon: Optional[Var[ReactNode]]
     message: Optional[Var[ReactNode]]
     show_icon: Optional[bool]
-    type: Optional[StatusType]
+    type: Optional[Var[StatusType | str]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
