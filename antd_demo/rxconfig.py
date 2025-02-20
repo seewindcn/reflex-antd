@@ -54,13 +54,19 @@ corePlugins = {
     "preflight": False,
 }
 safelist = [  # global css, no purge
-    {"pattern": r"/(static|fixed|absolute|relative|sticky|visible|invisible|collapse)/", "variants": variants},
-    {"pattern": r"/(columns|float|top|left|right|bottom|z)-[\w]+/", "variants": variants},
     # {"pattern": r"/(justify|content|items|self|place)-[\w-]+/", "variants": variants},
     # {"pattern": r"/(basis|flex|grow|shrink|order|grid|col|row|gap)-[\w-]+/", "variants": variants},
     # {"pattern": r"/(p|px|py|ps|pe|pt|pb|pl|pr)-[\w-]+/", "variants": variants},
     # {"pattern": r"/(m|mx|my|ms|me|mt|mb|ml|mr)-[\w-]+/", "variants": variants},
-    {"pattern": r"/(resize|resize-[\w-]+)/", "variants": variants}
+    {"pattern": r"/(static|fixed|absolute|relative|sticky|visible|invisible|collapse)/", "variants": variants},
+    {"pattern": r"/(top|left|right|bottom)-[\w]+/", "variants": variants},
+    {"pattern": r"/(resize|resize-[\w-]+)/", "variants": variants},
+    {"pattern": r"/(shadow|shadow-[\w-]+)/", "variants": variants},
+    {"pattern": r"/(z-[\w-]+)/", "variants": variants},
+    {
+      "pattern": r"/bg-(red|green|blue|gray|indigo|violet|purple)-(50|100|300)/",
+      "variants": variants,
+    },
 ]
 
 config = rx.Config(

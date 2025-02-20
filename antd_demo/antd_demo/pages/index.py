@@ -10,21 +10,20 @@ from reflex_antd import (
 
 from antd_demo.layout import page
 
-from ..state import GlobalState
+from ..state import GlobalState, MyBaseState
 
 
-@page('/', '')
-def index_page() -> rx.Component:
-    return editor_page()
-
-
-class AntdEditorState(rx.State):
+class AntdEditorState(MyBaseState):
     component_str: str = ""
     _com: rx.Component | None = pydantic.PrivateAttr(default=None)
 
     @rx.var
     def examples(self) -> list[dict[str, str]]:
         return [dict(label=k, value=k) for k in get_examples().keys()]
+
+    async def on_page_load(self):
+        self.component_str = ''
+        self._com = None
 
     @rx.event(background=True)
     async def editor_on_change(self, val):
@@ -142,6 +141,44 @@ def get_examples() -> dict:
     return _examples
 
 
+def _code_card_with_tailwind() -> rx.Component:
+    result = rx.card(
+        rx.el.div(
+            rx.link(
+                rx.flex(
+                    rx.avatar(src="/reflex_banner.png"),
+                    rx.box(
+                        rx.heading("Quick Start"),
+                        rx.text(
+                            "Get started with Reflex in 5 minutes.",
+                        ),
+                    ),
+                    spacing="2",
+                ),
+            ),
+            rx.flex(
+                rx.avatar(src="/reflex_banner.png"),
+                rx.el.div(
+                    rx.heading("Quick Start"),
+                    rx.text(
+                        "Get started with Reflex in 5 minutes.",
+                        height='50px',
+                    ),
+                    rx.el.div(
+                        rx.text("Absolute child"),
+                        class_name='absolute bottom-0 left-0 hover:bg-indigo-50',
+                    ),
+                    class_name='static',
+                ),
+                spacing="2",
+            ),
+            class_name='hover:shadow-lg',
+        ),
+        as_child=True,
+    )
+    return result
+
+
 def _code_transfer1() -> rx.Component:
     result = rx.vstack(
         rx.text(
@@ -230,3 +267,8 @@ def _code_form1() -> rx.Component:
         style={"maxWidth": "600"},
         initial_values={"remember": True},
     )
+
+
+@page('/', '', state=AntdEditorState)
+def index_page() -> rx.Component:
+    return editor_page()
