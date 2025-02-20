@@ -125,6 +125,8 @@ class Heatmap(PoltBase):
 
 class Pie(PoltBase):
     tag = 'Pie'
+    angle_field: Optional[Var[ExTypes | str]]
+    color_field: Optional[Var[ExTypes | str]]
 
 
 class Scatter(PoltBase):

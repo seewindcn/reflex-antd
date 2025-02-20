@@ -1,3 +1,4 @@
+import functools
 import logging
 import os
 import types
@@ -46,6 +47,17 @@ memo_never_no_recursive = MemoizationMode().set(disposition=MemoizationDispositi
 memo_always = MemoizationMode().set(disposition=MemoizationDisposition.ALWAYS)
 memo_always_no_recursive = MemoizationMode().set(disposition=MemoizationDisposition.ALWAYS, recursive=False)
 
+use_pretty_dumps = True
+default_to_js = False
+
+
+def wrap_use_pretty_dumps(func):
+    @wraps(func)
+    def _wrap(*args, **kwargs):
+        rs: str = func(*args, **kwargs)
+        return rs if use_pretty_dumps else rs.replace('\n', '')
+    return _wrap
+
 
 def stateless(hd: Callable[..., Component] = None, memo=memo_never_no_recursive) -> Callable:
     def _my(_hd: Callable[..., Component]) -> Callable:
@@ -85,7 +97,7 @@ def stateful(hd: Callable[..., Component] = None, forced=True, memo=memo_always)
         return _my(hd)
 
 
-STR_TYPES = (str, list)
+STR_TYPES = (str, list,)
 
 
 def compose_react_imports(tags: list[str]):
@@ -93,17 +105,17 @@ def compose_react_imports(tags: list[str]):
 
 
 def get_component_all_imports(com: Component | Var) -> imports.ImportDict:
-    return {} if isinstance(com, STR_TYPES) else com._get_all_imports()
+    return {} if isinstance(com, STR_TYPES) or isinstance(com, Var) else com._get_all_imports()
 
 
 def get_component_all_dynamic_imports(com: Component | Var) -> Set[str]:
-    if hasattr(com, '_get_all_dynamic_imports'):
+    if hasattr(com, '_get_all_dynamic_imports') and callable(com._get_all_dynamic_imports):
         return com._get_all_dynamic_imports()
     return set()
 
 
 def get_component_hooks(com) -> Dict[str, None]:
-    return {} if isinstance(com, STR_TYPES) \
+    return {} if isinstance(com, STR_TYPES) or isinstance(com, Var) \
         else (com._get_all_hooks() if version > '000.006.007' else com._get_all_hooks_internal() | com._get_all_hooks())
 
 
@@ -112,11 +124,13 @@ def get_component_custom_code(com: Component) -> Set[str]:
 
 
 def get_custom_components(com: Any) -> set[CustomComponent]:
+    if isinstance(com, CasualVar):
+        return set()
     if isinstance(com, CustomComponent):
         return {com}
-    if hasattr(com, 'get_custom_components'):
+    if hasattr(com, 'get_custom_components') and callable(com.get_custom_components):
         return com.get_custom_components()
-    if hasattr(com, '_get_all_custom_components'):
+    if hasattr(com, '_get_all_custom_components') and callable(com._get_all_custom_components):
         return com._get_all_custom_components()
     return set()
 
@@ -298,6 +312,7 @@ class ExEventHandlerItem(ExItem):
                     f"_{id(self)}")
         return f"{self.key.replace('.', '_')}_{md5(f'{str(self.item.hd)}'.encode('utf-8')).hexdigest()}"
 
+    @wrap_use_pretty_dumps
     def serialize(self) -> str:
         hd_name = self.hd_item.serialize()
         trigger = self.hd_item._get_event_trigger()
@@ -432,12 +447,14 @@ class JsValue:
       />
     """
     value: Callable | str | Component
-    to_js: bool = False
+    to_js: bool = None
     custom_imports: imports.ImportDict = None
     dynamic_imports: Set[str] = None
 
     @property
     def to_react(self) -> bool:
+        if self.to_js is None:
+            return not default_to_js
         return not self.to_js
 
     def __init__(
@@ -462,6 +479,7 @@ class JsValue:
         item = ExJsItem(self, parent, key=key)
         return item
 
+    @wrap_use_pretty_dumps
     def serialize(self) -> str:
         if isinstance(self.value, str):
             code = self.value
@@ -507,7 +525,7 @@ class JsValue:
 
 
 class JsFunctionValue(JsValue):
-    _value: Union[str, Component]
+    _value: Union[str, "CasualVar", Component]
 
     @property
     def args(self):
@@ -519,6 +537,7 @@ class JsFunctionValue(JsValue):
         self._args = inspect.getfullargspec(self.value)
         self._value = self.value(*self.args)
 
+    @wrap_use_pretty_dumps
     def serialize(self) -> str:
         is_component = False
         if isinstance(self._value, str):
@@ -527,8 +546,9 @@ class JsFunctionValue(JsValue):
             is_component = True
             v = str(self._value)
         else:
-            raise TypeError(self._value)
-        sep_1, sep_2 = (('{{', '}}') if self.to_react else ('(', ')')) if not is_component else ('(', ')')
+            v = str(self._value)
+            # raise TypeError(self._value)
+        sep_1, sep_2 = (('{', '}') if self.to_react else ('(', ')')) if not is_component else ('(', ')')
         return f"""(({','.join(self._args.args)}) => 
         {sep_1} {v} {sep_2} )"""
 
@@ -675,6 +695,7 @@ class ExJsItem(ExItem):
     def isinstance(cls, item: Any) -> bool:
         return isinstance(item, JsValue)
 
+    @wrap_use_pretty_dumps
     def serialize(self) -> str:
         return self.item.serialize()
 
@@ -788,7 +809,7 @@ class ExFormatter:
                 return i
 
     def get_value(self) -> str:
-        v = util.pretty_dumps(self._value)
+        v = util.pretty_dumps(self._value) if use_pretty_dumps else util.dumps(self._value)
         for k, ex in self.iter_items():
             v = v.replace(f'"{k}"', ex.serialize())
         return v
@@ -931,7 +952,8 @@ class ContainVar(ExVar):
     _var_fmt: ExFormatter
 
     def __str__(self):
-        return self._var_full_name
+        rs = self._var_full_name
+        return rs
 
     @property
     def _var_full_name(self) -> str:
@@ -1471,21 +1493,59 @@ def default_config(provider: Component = None, antd_app: Component = None):
 
     def _antd_error_boundary(*children: Component) -> Component:
         _com = _old_error_boundary(*children)
-        return antd_registry_provider(
-            _config_provider.copy(update=dict(
-                children=[
-                    _config_app.copy(update=dict(children=[_com])),
-                ],
-            ),
-            ),
-        )
+        _cfp = _config_provider.copy(update=dict(
+            children=[
+                _config_app.copy(update=dict(children=[_com])),
+            ],
+        ))
+        is_app_router = False
+        if not is_app_router:
+            return _cfp
+        else:
+            return antd_registry_provider(_cfp)
     _app.error_boundary = _antd_error_boundary
+
+
+_dynamic_ctx: dict = None
+
+
+def get_dynamic_ctx(**kwargs) -> dict:
+    global _dynamic_ctx
+    if _dynamic_ctx:
+        kwargs.update(_dynamic_ctx)
+    else:
+        from reflex_antd import (
+            helper, display, entry, feedback, general, layout,
+            navigation,
+            charts,
+        )
+        _dynamic_ctx = {
+            "rx": rx,
+            'helper': helper,
+            'display': display,
+            'general': general,
+            'layout': layout,
+            'feedback': feedback,
+            'entry': entry,
+            'navigation': navigation,
+            'charts': charts,
+            **helper.__dict__,
+        }
+    return kwargs
+
+
+def patch_after_start():
+    global use_pretty_dumps, default_to_js
+    # for support dynamic, which remove lines
+    use_pretty_dumps = False
+    default_to_js = True
+    # line_stripped.startswith("{") and line_stripped.endswith("}")
 
 
 def patch_all():
     from reflex import constants, vars
     from reflex.utils import prerequisites
-    from reflex.compiler import templates
+    from reflex.compiler import templates, compiler
     from reflex.vars import sequence
 
     # hack json.dumps: support unicode
@@ -1495,6 +1555,21 @@ def patch_all():
                                                constants.Templates.Dirs.JINJA_TEMPLATE]
 
     templates.DOCUMENT_ROOT = templates.get_template("web/pages/_document.js.jinja2")
+    templates.TAILWIND_CONFIG = templates.get_template("web/pages/tailwind.config.js.jinja2")
+
+    _r_js_regex = re.compile(r'"/([/*|\(\)\[\]+\\:\w-]+)/"')
+
+    def _support_js_regex(data: str) -> str:
+        s = _r_js_regex.sub(r'/\1/', data)
+        return s.replace('\\\\', '\\') \
+            .replace(""""'""", '') \
+            .replace(''''"''', '')
+
+    def _wrap_js_regex(_wrap_func, *args, **kwargs):
+        d = _wrap_func(*args, **kwargs)
+        return _support_js_regex(d)
+
+    compiler._compile_tailwind = functools.partial(_wrap_js_regex, compiler._compile_tailwind)
 
     old_update_next_config = prerequisites.update_next_config
 

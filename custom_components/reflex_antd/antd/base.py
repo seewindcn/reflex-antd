@@ -69,9 +69,8 @@ class Locale(JsValue):
         }
 
 
-class ConfigProvider(AntdBaseComponent):
+class ConfigProvider(AntdComponent):
     """Top level antd provider must be included in any app using antd components."""
-    library = "antd"
     tag = "ConfigProvider"
     alias = "AntdConfigProvider"
 
@@ -138,8 +137,7 @@ class AntdRegistryProvider(AntdBaseComponent):
     tag = "AntdRegistry"
 
 
-class AntdApp(AntdBaseComponent):
-    library = "antd"
+class AntdApp(AntdComponent):
     tag = "App"
     alias = "AntdApp"
 
