@@ -49,17 +49,33 @@ if environ.get("DEV_NO_RELOAD", False):
     from reflex.utils import compat
     compat.windows_hot_reload_lifespan_hack = _disable
 
+variants = ['hover', 'focus']
+corePlugins = {
+    "preflight": False,
+}
+safelist = [  # global css, no purge
+    {"pattern": r"/(static|fixed|absolute|relative|sticky|visible|invisible|collapse)/", "variants": variants},
+    {"pattern": r"/(columns|float|top|left|right|bottom|z)-[\w]+/", "variants": variants},
+    # {"pattern": r"/(justify|content|items|self|place)-[\w-]+/", "variants": variants},
+    # {"pattern": r"/(basis|flex|grow|shrink|order|grid|col|row|gap)-[\w-]+/", "variants": variants},
+    # {"pattern": r"/(p|px|py|ps|pe|pt|pb|pl|pr)-[\w-]+/", "variants": variants},
+    # {"pattern": r"/(m|mx|my|ms|me|mt|mb|ml|mr)-[\w-]+/", "variants": variants},
+    {"pattern": r"/(resize|resize-[\w-]+)/", "variants": variants}
+]
 
 config = rx.Config(
     app_name="antd_demo",
     tailwind={
+        "headers": [
+            "const colors = require('tailwindcss/colors')",
+        ],
         "theme": {
             "extend": {},
+            "colors": "'colors'",
         },
         "plugins": ["@tailwindcss/typography"],
-        "corePlugins": {
-            "preflight": False,
-        },
+        "corePlugins": corePlugins,
+        "safelist": safelist,
         # "important": True,
         # "prefix": "tw-",
         # "separator": "_",
