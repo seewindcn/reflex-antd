@@ -12,7 +12,7 @@ pip install reflex-antd
 
 ## antd-demo
 
-[antd-demo](https://antd-demo.reflex.run)
+[antd-demo](https://antd-demo-teal-sun.reflex.run/)
 
 
 ### screen

@@ -1,2 +1,2 @@
-reflex>=0.6.0
-reflex-antd
+reflex>=0.7.0
+reflex-antd>=0.1.3

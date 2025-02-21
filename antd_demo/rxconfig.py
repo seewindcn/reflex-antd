@@ -4,8 +4,10 @@ import reflex as rx
 from reflex import constants
 from reflex.utils import processes, exec
 
-environ['FRONTEND_PORT'] = '3001'
-environ['BACKEND_PORT'] = '8101'
+
+if environ.get('DEBUG', None):
+    environ['FRONTEND_PORT'] = '3001'
+    environ['BACKEND_PORT'] = '8101'
 
 
 def dev_run_backend(
