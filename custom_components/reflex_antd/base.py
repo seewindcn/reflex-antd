@@ -42,10 +42,10 @@ template_path = path.join(my_path, '.templates')
 APP_ROUTER = True
 RE_KEY_IDX = re.compile(r'\.\d+\.')
 
-memo_never = MemoizationMode().set(disposition=MemoizationDisposition.NEVER)
-memo_never_no_recursive = MemoizationMode().set(disposition=MemoizationDisposition.NEVER, recursive=False)
-memo_always = MemoizationMode().set(disposition=MemoizationDisposition.ALWAYS)
-memo_always_no_recursive = MemoizationMode().set(disposition=MemoizationDisposition.ALWAYS, recursive=False)
+memo_never = MemoizationMode(disposition=MemoizationDisposition.NEVER)
+memo_never_no_recursive = MemoizationMode(disposition=MemoizationDisposition.NEVER, recursive=False)
+memo_always = MemoizationMode(disposition=MemoizationDisposition.ALWAYS)
+memo_always_no_recursive = MemoizationMode(disposition=MemoizationDisposition.ALWAYS, recursive=False)
 
 use_pretty_dumps = True
 default_to_js = False
@@ -369,7 +369,7 @@ class ExLambdaHandlerItem(ExItem):
 
     def get_hooks(self) -> Dict[str, None]:
         key = self._get_event_trigger()
-        chain = self.parent._create_event_chain(key, self.item)
+        chain = EventChain.create(args_spec=key, value=self.item)
         rendered_chain = format.format_prop(chain).strip("{}")
         _hook = f"""const {self._get_fn_name()} = useCallback({rendered_chain}, [addEvents, Event]);"""
         return {Hooks.EVENTS: None, _hook: None}
@@ -1355,6 +1355,7 @@ class AntdComponentVar(Var[Component], python_types=AntdBaseComponent):
 @dataclasses.dataclass(
     eq=False,
     frozen=True,
+    slots=True,
 )
 class LiteralAntdComponentVar(vars_base.CachedVarOperation, vars_base.LiteralVar, AntdComponentVar):
     """A Var that represents a Component that get _var_value._var_data forever """
@@ -1427,12 +1428,13 @@ class LiteralAntdComponentVar(vars_base.CachedVarOperation, vars_base.LiteralVar
         Returns:
             The var.
         """
-        return LiteralAntdComponentVar(
+        _var = LiteralAntdComponentVar(
             _js_expr="",
             _var_type=type(value),
             _var_data=_var_data,
             _var_value=value,
         )
+        return _var
 
 
 class AntdComponent(AntdBaseComponent):

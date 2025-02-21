@@ -36,9 +36,12 @@ class MyApp(rx.App):
         3. base.random seek freeze
          """
         from reflex.components import dynamic
-        for lib in ['antd', '@ant-design/nextjs-registry', '@ant-design/icons',
-                    # '@ant-design/charts',  # charts 库不支持
-                    ]:
+        for lib in [
+            'antd',
+            '@ant-design/icons',
+            # '@ant-design/nextjs-registry',
+            # '@ant-design/charts',  # charts no support
+        ]:
             dynamic.bundle_library(lib)
 
     def _compile(self, *args, **kwargs):

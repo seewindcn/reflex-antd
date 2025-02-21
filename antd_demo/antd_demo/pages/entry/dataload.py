@@ -76,7 +76,7 @@ class DataLoadState(State):
     def on_card_tab_change(self, key):
         self.card_content = self.card_content_dict[key]
 
-    @rx.background
+    @rx.event(background=True)
     async def on_tag_close(self, ev):
         print('on_tag_close', ev)
         await asyncio.sleep(3)

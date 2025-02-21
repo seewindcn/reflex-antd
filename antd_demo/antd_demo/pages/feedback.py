@@ -61,7 +61,7 @@ class FeedbackSyncModalState(State):
     def change_open(self):
         self.open = True
 
-    @rx.background
+    @rx.event(background=True)
     async def on_ok(self):
         async with self:
             self.confirm_loading = not self.confirm_loading
@@ -85,7 +85,7 @@ class FeedbackMessageState(State):
     type1: str = 'success'
     ctx1: str = 'message from state'
 
-    @rx.background
+    @rx.event(background=True)
     async def on_click(self):
         async with self:
             self.exchange_cfg()

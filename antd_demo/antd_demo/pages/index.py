@@ -15,7 +15,8 @@ from ..state import GlobalState, MyBaseState
 
 class AntdEditorState(MyBaseState):
     component_str: str = ""
-    _com: rx.Component | None = pydantic.PrivateAttr(default=None)
+    gen: int = 0
+    # _com: rx.Component | None = pydantic.PrivateAttr(default=None)
 
     @rx.var
     def examples(self) -> list[dict[str, str]]:
@@ -23,7 +24,7 @@ class AntdEditorState(MyBaseState):
 
     async def on_page_load(self):
         self.component_str = ''
-        self._com = None
+        self.gen = 0
 
     @rx.event(background=True)
     async def editor_on_change(self, val):
@@ -40,15 +41,30 @@ class AntdEditorState(MyBaseState):
             self.component_str = codes
             self.on_refresh()
 
+    def _get_dynamic_var(self):
+        for k, v in self.computed_vars.items():
+            if k not in ['examples']:
+                return v
+
     def on_refresh(self):
-        self._com = None
+        self.gen += 1
+        _var = self._get_dynamic_var()
+        _var.mark_dirty(self)
         self._mark_dirty()
 
 
 @rx.dynamic
-def _dynamic(state: AntdEditorState):
-    if isinstance(state._com, rx.Component):
-        return state._com
+def _dynamic(state: AntdEditorState) -> rx.Component:
+    _hc = rx.text(AntdEditorState.gen, hidden=True)
+
+    def _gen(_com) -> rx.Component:
+        return rx.fragment(
+            com,
+            _hc,
+        )
+
+    if state.gen < 0:
+        return _gen(rx.box())
 
     try:
         if state.component_str == "":
@@ -72,8 +88,7 @@ def _dynamic(state: AntdEditorState):
         return rx.text(f"Error: {e}")
     if not isinstance(com, rx.Component):
         return rx.text("Invalid component")
-    state._com = com
-    return com
+    return _gen(com)
 
 
 def _ui_editor() -> rx.Component:
