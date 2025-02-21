@@ -37,7 +37,7 @@ pydantic = pydantic_md
 version = '.'.join(map(lambda x: x.zfill(3), Reflex.VERSION.split('.')))
 
 my_path = path.abspath(path.dirname(__file__))
-template_path = path.join(my_path, '.templates')
+template_path = path.join(my_path, 'templates')
 
 APP_ROUTER = True
 RE_KEY_IDX = re.compile(r'\.\d+\.')

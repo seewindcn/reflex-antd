@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reflex-antd"
-version = "0.1.2"
+version = "0.1.3"
 description = "Reflex custom component ant-design"
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -41,6 +41,12 @@ dev = ["build", "twine"]
 
 
 
+[tool.setuptools]
+include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["custom_components"]
+
+[tool.setuptools.package-data]
+"reflex_antd.templates" = ["**/*.jinja2"]
+
