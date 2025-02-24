@@ -8,7 +8,6 @@ from os import path
 from abc import ABC, abstractmethod
 from functools import lru_cache, wraps
 from hashlib import md5
-import uuid
 import dataclasses
 import inspect
 import re
@@ -27,6 +26,7 @@ from reflex.components.tags import Tag
 from reflex.constants import Hooks, Reflex, MemoizationDisposition, MemoizationMode
 from reflex.utils import imports, format, serializers, exceptions
 from reflex.vars import Var, VarData
+from reflex.vars.base import get_unique_variable_name
 from reflex.event import EventHandler, EventSpec, EventChain
 from reflex.experimental import hooks
 
@@ -775,7 +775,7 @@ class ExFormatter:
             _id = _v
             for ex in self.items:
                 if ex.isinstance(_v):
-                    _id = uuid.uuid4().hex
+                    _id = get_unique_variable_name()
                     self._coms[_id] = ex(_v, self.parent, key=key)
                     return _id
 
@@ -1513,9 +1513,7 @@ _dynamic_ctx: dict = None
 
 def get_dynamic_ctx(**kwargs) -> dict:
     global _dynamic_ctx
-    if _dynamic_ctx:
-        kwargs.update(_dynamic_ctx)
-    else:
+    if not _dynamic_ctx:
         from reflex_antd import (
             helper, display, entry, feedback, general, layout,
             navigation,
@@ -1533,6 +1531,7 @@ def get_dynamic_ctx(**kwargs) -> dict:
             'charts': charts,
             **helper.__dict__,
         }
+    kwargs.update(_dynamic_ctx)
     return kwargs
 
 

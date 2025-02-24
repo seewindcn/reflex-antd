@@ -1,5 +1,4 @@
 from typing import Optional, Union, Dict, Any, List, Set, Iterator
-import uuid
 
 from reflex import Component, Var, vars
 from reflex.utils import imports, format
@@ -7,7 +6,7 @@ from reflex.components.component import ComponentNamespace
 from reflex.components.base.bare import Bare
 from reflex.event import EventSpec, call_script
 
-from ..base import AntdComponent, ContainVar, JsValue, ReactNode, version
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode, version, get_unique_variable_name
 from ..constant import PlacementType, RoleType
 
 
@@ -67,7 +66,7 @@ class Notification(JsValue):
         try:
             return self._uid
         except AttributeError:
-            self._uid = uuid.uuid4().hex
+            self._uid = get_unique_variable_name()
             return self._uid
 
     def get_open_notification(self) -> str:

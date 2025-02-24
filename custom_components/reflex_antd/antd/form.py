@@ -1,10 +1,12 @@
-import uuid
 from typing import Optional, Union, Dict, Any, List
 from reflex import Var, Component
 
-from ..base import (AntdComponent, ContainVar, CasualVar, ReactNode,
-                    JsValue, js_value, JsUseEffect,
-                    memo_never_no_recursive, memo_always_no_recursive)
+from ..base import (
+    AntdComponent, ContainVar, CasualVar, ReactNode,
+    JsValue, js_value, JsUseEffect,
+    memo_never_no_recursive, memo_always_no_recursive,
+    get_unique_variable_name,
+)
 from ..constant import AlignType, DirectionType, SizeType, VariantType
 
 
@@ -124,7 +126,7 @@ form_provider = FormProvider.create
 
 
 def gen_form_id():
-    return f'form_{uuid.uuid4().hex}'
+    return f'form_{get_unique_variable_name()}'
 
 
 def form_hook_reset_fields(form_id: str, state, dep_name: str = None) -> JsValue:

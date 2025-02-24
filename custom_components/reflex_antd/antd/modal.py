@@ -1,11 +1,11 @@
 from typing import Optional, Union, Dict, Any, List, Set
-import uuid
 
 from reflex import Component, Var
 from reflex.utils import imports
 
 from ..base import (
     AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, FakeComponentMixin, memo_never_no_recursive,
+    get_unique_variable_name,
 )
 from ..constant import TypeType
 
@@ -86,7 +86,7 @@ class Confirm(FakeComponentMixin, JsValue):
         try:
             return self._uid
         except AttributeError:
-            self._uid = uuid.uuid4().hex
+            self._uid = get_unique_variable_name()
             return self._uid
 
     def get_name(self) -> str:

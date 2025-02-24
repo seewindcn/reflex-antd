@@ -1,5 +1,4 @@
 from typing import Optional, Union, Dict, Any, List, Set, Iterator
-import uuid
 
 from reflex import Component, Var, vars
 from reflex.utils import imports, format
@@ -7,7 +6,10 @@ from reflex.components.component import ComponentNamespace
 from reflex.components.base.bare import Bare
 from reflex.event import EventSpec, call_script
 
-from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, version, compose_react_imports
+from ..base import (
+    AntdComponent, ContainVar, JsValue, ReactNode, ExStateItem, version, compose_react_imports,
+    get_unique_variable_name,
+)
 from ..constant import MessageType
 from . import helper
 
@@ -45,7 +47,7 @@ class Message(JsValue):
         try:
             return self._uid
         except AttributeError:
-            self._uid = uuid.uuid4().hex
+            self._uid = get_unique_variable_name()
             return self._uid
 
     def get_open_message(self) -> str:
