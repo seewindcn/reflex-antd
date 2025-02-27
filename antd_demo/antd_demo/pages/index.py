@@ -49,18 +49,21 @@ class AntdEditorState(MyBaseState):
     def on_refresh(self):
         self.gen += 1
         _var = self._get_dynamic_var()
-        _var.mark_dirty(self)
+        if _var is not None:
+            _var.mark_dirty(self)
+        else:
+            raise ValueError('dynamic ver no found')  # _com = _dynamic()
         self._mark_dirty()
 
 
 @rx.dynamic
 def _dynamic(state: AntdEditorState) -> rx.Component:
-    _hc = rx.text(AntdEditorState.gen, hidden=True)
+    # _hc = rx.text(AntdEditorState.gen, hidden=True)
 
     def _gen(_com) -> rx.Component:
         return rx.fragment(
             com,
-            _hc,
+            # _hc,
         )
 
     if state.gen < 0:
@@ -103,7 +106,7 @@ def _ui_editor() -> rx.Component:
     )
     return rx.vstack(
         layout.space(
-            rx.text('examples:'),
+            rx.text(f'gen({AntdEditorState.gen}) examples:'),
             entry.select(
                 options=AntdEditorState.examples,
                 show_search=True,
@@ -209,7 +212,7 @@ def _code_transfer1() -> rx.Component:
                 ],
                 titles=helper.contain(['Source', 'Target']),
                 item_render=helper.js_value(
-                    lambda record: (record.key + '-' + record.title)
+                    lambda record: record.key + '-' + record["title"]
                 ),
             ),
         ),

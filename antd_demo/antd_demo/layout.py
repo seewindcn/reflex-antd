@@ -6,11 +6,11 @@ import pkgutil
 from collections import OrderedDict
 
 import reflex as rx
-from reflex import Component
+from reflex import Component, ImportDict, ImportVar
+from reflex.vars import VarData
 from reflex.base import Base
 from reflex.event import EventHandler, EventSpec
 from reflex.components.core.cond import color_mode_cond
-
 
 
 def load_modules(parent_md, is_pkg=True) -> Iterable[ModuleType]:
@@ -80,6 +80,18 @@ def get_route_groups() -> dict:
     return _route_groups
 
 
+def get_root_hooks() -> list:
+    hook = rx.Var(
+        _js_expr=f"",
+        _var_data=VarData(
+            imports={
+                "$/utils/state": [ImportVar(tag="refs")],
+            }
+        ),
+    )
+    return [hook]
+
+
 def layout0(*children: rx.Component, min_height: str = '50vh', **kwargs) -> rx.Component:
     return rx.hstack(
         *children,
@@ -129,7 +141,10 @@ def page(path: str, group: str = 'other',
     def _webpage(contents: Callable[[tuple, dict], rx.Component]) -> Route:
         def wrapper(*children, **c_props) -> rx.Component:
             child = contents(*children, **c_props)
-            return layout1(child, **layout_props)
+            return layout1(
+                child,
+                ex_hooks=get_root_hooks(),
+                **layout_props)
 
         from .state import GlobalState
 

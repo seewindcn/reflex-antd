@@ -1494,10 +1494,10 @@ def default_config(provider: Component = None, antd_app: Component = None):
     _old_error_boundary = _app.error_boundary
 
     def _antd_error_boundary(*children: Component) -> Component:
-        _com = _old_error_boundary(*children)
+        _coms = [_old_error_boundary(*children)] if _old_error_boundary else children
         _cfp = _config_provider.copy(update=dict(
             children=[
-                _config_app.copy(update=dict(children=[_com])),
+                _config_app.copy(update=dict(children=_coms)),
             ],
         ))
         is_app_router = False

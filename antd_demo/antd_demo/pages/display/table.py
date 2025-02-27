@@ -259,7 +259,7 @@ def table2_page() -> rx.Component:
         rx.vstack(
             rx.hstack(
                 rx.button('clear Select', on_click=TableState.on_clean_selected),
-                rx.text('selected_row_count: ' + TableState.selected_row_count)
+                rx.text(f'selected_row_count: {TableState.selected_row_count}')
             ),
             display.table(
                 data_source=TableState.data_source,

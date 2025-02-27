@@ -129,7 +129,7 @@ def antd_transfer() -> rx.Component:
                             rx.hstack(
                                 rx.badge(record.key.to_react()),
                                 '-',
-                                rx.code(record.title.to_react()),
+                                rx.code(record['title'].to_react()),
                             )
                         ),
                     ),

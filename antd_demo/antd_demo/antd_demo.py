@@ -2,6 +2,7 @@ from os import path
 import sys
 import random
 import reflex as rx
+import logging
 
 my_path = path.dirname(path.realpath(__file__))
 custom_components_path = path.join(path.dirname(my_path), '..', 'custom_components')
@@ -45,14 +46,19 @@ class MyApp(rx.App):
             dynamic.bundle_library(lib)
 
     def _compile(self, *args, **kwargs):
+        logging.info('app._compile starting')
         from reflex.vars import base
+        from reflex import state
         _my_random = random.Random(123321)  # make get_unique_variable_name in clear random queue
         try:
             _my_random.abc = 1
             base.random = _my_random
+            # hack fix _stateful_pages, all page is stateful
+            self._stateful_pages = dict((r, None) for r in self._unevaluated_pages.keys())
             return super()._compile(*args, **kwargs)
         finally:
             base.random = random
+            logging.info('app._compile done')
             # random.seed()  # 去掉固定种子, 保证随机
 
 
