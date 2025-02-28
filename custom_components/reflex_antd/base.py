@@ -49,6 +49,7 @@ memo_always_no_recursive = MemoizationMode(disposition=MemoizationDisposition.AL
 
 use_pretty_dumps = True
 default_to_js = False
+is_dynamic = False
 
 
 def wrap_use_pretty_dumps(func):
@@ -85,7 +86,8 @@ def stateful(hd: Callable[..., Component] = None, forced=True, memo=memo_always)
             if forced:
                 _com._memoization_mode = memo
                 # _com._memoization_mode.recursive = False
-            _sc = StatefulComponent.create(_com)
+            _sc = AntdStatefulComponent.create(_com)
+            # _sc = None
             return _sc if _sc is not None else _com
             # return _com
 
@@ -150,6 +152,12 @@ def get_var_data_hooks(v: Union[Var, VarData, "JsValue"]) -> dict[str, None]:
         return v.get_hooks()
     _var_data = get_var_data(v) if isinstance(v, Var) else v
     return {hook: None for hook in _var_data.hooks} if _var_data else {}
+
+
+class AntdStatefulComponent(StatefulComponent):
+    """ # hack """
+    def _get_vars(self, **kwargs):
+        return self.component._get_vars(**kwargs)
 
 
 class ExItem(ABC):
@@ -1156,7 +1164,8 @@ class AntdBaseComponent(Component):
         web_dir = '.web'  # prerequisites.get_web_dir()
         cur_path = dirname(sys.modules[self.__module__].__file__)
         js_path = join(cur_path, _custom_js)
-        dst_path = join(web_dir, f'{self.library[1:]}.js')
+        suffix = _custom_js.split('.')[-1]
+        dst_path = join(web_dir, f'{self.library[1:]}.{suffix}')
         if not path.exists(path.dirname(dst_path)):
             os.makedirs(path.dirname(dst_path), exist_ok=True)
         prerequisites.path_ops.cp(js_path, dst_path)
@@ -1171,7 +1180,7 @@ class AntdBaseComponent(Component):
             elif isinstance(v, (JsValue, JsEvent)):
                 exs[k] = v
             elif isinstance(v, Component):
-                kw[k] = LiteralAntdComponentVar.create(v)
+                kw[k] = vars_base.LiteralVar.create(v)
             else:
                 kw[k] = v
         # super().__init__(*args, **kw)
@@ -1260,6 +1269,8 @@ class AntdBaseComponent(Component):
             return self._cache_get_all_hooks_internal_
 
     def _get_hooks_internal(self) -> dict[str, VarData | None]:
+        if is_dynamic:
+            return {}
         rs = super()._get_hooks_internal()
         return rs
 
@@ -1536,10 +1547,11 @@ def get_dynamic_ctx(**kwargs) -> dict:
 
 
 def patch_after_start():
-    global use_pretty_dumps, default_to_js
+    global use_pretty_dumps, default_to_js, is_dynamic
     # for support dynamic, which remove lines
     use_pretty_dumps = False
     default_to_js = True
+    is_dynamic = True
     # line_stripped.startswith("{") and line_stripped.endswith("}")
 
 
@@ -1626,6 +1638,47 @@ def patch_all():
         pass
 
     # StatefulComponent._get_memoized_event_triggers = classmethod(_my_get_memoized_event_triggers)
+
+    from reflex.components import component as component_md
+    from reflex.components.component import ArgsFunctionOperation, FunctionStringVar, ObjectVar
+
+    def my_render_dict_to_var(tag: dict | Component | str, imported_names: set[str]) -> Var:
+        """Convert a render dict to a Var.
+
+        Args:
+            tag: The render dict.
+            imported_names: The names of the imported components.
+
+        Returns:
+            The Var.
+        """
+        if not isinstance(tag, dict):
+            if isinstance(tag, Component):
+                return render_dict_to_var(tag.render(), imported_names)
+            return Var.create(tag)
+
+        if "iterable" in tag:
+            function_return = Var.create(
+                [  # hack antd child is dict when is rx.cond rx.match
+                    render_dict_to_var(child.render() if not isinstance(child, dict) else child, imported_names)
+                    for child in tag["children"]
+                ]
+            )
+
+            func = ArgsFunctionOperation.create(
+                (tag["arg_var_name"], tag["index_var_name"]),
+                function_return,
+            )
+
+            return FunctionStringVar.create("Array.prototype.map.call").call(
+                tag["iterable"]
+                if not isinstance(tag["iterable"], ObjectVar)
+                else tag["iterable"].items(),
+                func,
+            )
+        return _old_render_dict_to_var(tag, imported_names)
+    _old_render_dict_to_var = component_md.render_dict_to_var
+    component_md.render_dict_to_var = my_render_dict_to_var
 
 
 ReactNode = Union[str, Component]
