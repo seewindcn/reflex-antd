@@ -18,7 +18,7 @@ _ref = Var(_js_expr="refs['__antd_message']")
 
 class Message(JsValue):
     is_global: bool = True
-    class_name: Optional[Var[str]]
+    class_name: Optional[Var[str | list]]
     content: Optional[Var[ReactNode]]
     duration: Optional[Var[Union[int, float]]]
     icon: Optional[Var[ReactNode]]

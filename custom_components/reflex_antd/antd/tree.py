@@ -52,7 +52,7 @@ class Tree(AntdComponent):
             "on_drag_leave": lambda e: [e.event, e.node],
             "on_drag_over": lambda e: [e.event, e.node],
             "on_drag_start": lambda e: [e.event, e.node],
-            "on_drop": lambda e: [e.event, e.node, e.dragNode, e.dragNodesKeys],
+            "on_drop": lambda e: [e.node, e.dragNode, e.dragNodesKeys, e.dropPosition, e.dropToGap],  # e.event,
             "on_expand": lambda keys, e: [keys, e],
             "on_load": lambda keys, e: [keys, e],
             "on_right_click": lambda e: [e.event, e.node],

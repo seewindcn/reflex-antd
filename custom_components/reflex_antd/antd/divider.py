@@ -11,6 +11,7 @@ class Divider(AntdComponent):
     tag = 'Divider'
 
     dashed: Optional[Var[bool]]
+    variant: Optional[Var[str]]
     orientation: Optional[Var[OrientationType]]
     orientation_margin: Optional[Var[Union[int, str]]]
     plain: Optional[Var[bool]]

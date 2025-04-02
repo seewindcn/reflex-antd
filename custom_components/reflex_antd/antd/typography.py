@@ -14,7 +14,7 @@ class TypographyBase(AntdComponent):
     delete: Optional[Var[bool]]
     disabled: Optional[Var[bool]]
     editable: Optional[Var[Union[bool, ContainVar]]]
-    ellipsis: Optional[Var[Union[bool, ContainVar]]]
+    ellipsis: Optional[Var[Union[bool, dict, ContainVar]]]
 
     mark: Optional[Var[bool]]
     italic: Optional[Var[bool]]

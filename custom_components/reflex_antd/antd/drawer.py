@@ -10,7 +10,6 @@ class Drawer(AntdComponent):
     tag = 'Drawer'
 
     auto_focus: Optional[Var[bool]]
-    class_name: Optional[Var[str]]
     class_names: Optional[Var[ContainVar]]
     close_icon: Optional[Var[Union[ReactNode, bool]]]
     destroy_on_close: Optional[Var[bool]]

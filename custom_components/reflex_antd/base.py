@@ -1,8 +1,8 @@
+from typing import Type, Any, Tuple, Dict, List, Iterable, Callable, Set, Union, Optional, Self, cast
 import functools
 import logging
 import os
 import types
-from typing import Type, Any, Tuple, Dict, List, Iterable, Callable, Set, Union, Optional, Self
 import sys
 from os import path
 from abc import ABC, abstractmethod
@@ -12,6 +12,7 @@ import dataclasses
 import inspect
 import re
 
+import pydantic as pydantic2_md
 import reflex as rx
 from reflex import Component, Var, State, Base, ImportVar, NoSSRComponent
 from reflex.vars import StringVar, base as vars_base
@@ -42,13 +43,14 @@ template_path = path.join(my_path, 'templates')
 APP_ROUTER = True
 RE_KEY_IDX = re.compile(r'\.\d+\.')
 
-memo_never = MemoizationMode(disposition=MemoizationDisposition.NEVER)
-memo_never_no_recursive = MemoizationMode(disposition=MemoizationDisposition.NEVER, recursive=False)
-memo_always = MemoizationMode(disposition=MemoizationDisposition.ALWAYS)
-memo_always_no_recursive = MemoizationMode(disposition=MemoizationDisposition.ALWAYS, recursive=False)
+memo_never = MemoizationMode().set(disposition=MemoizationDisposition.NEVER)
+memo_never_no_recursive = MemoizationMode().set(disposition=MemoizationDisposition.NEVER, recursive=False)
+memo_always = MemoizationMode().set(disposition=MemoizationDisposition.ALWAYS)
+memo_always_no_recursive = MemoizationMode().set(disposition=MemoizationDisposition.ALWAYS, recursive=False)
 
 use_pretty_dumps = True
 default_to_js = False
+is_dynamic = False
 
 
 def wrap_use_pretty_dumps(func):
@@ -369,7 +371,7 @@ class ExLambdaHandlerItem(ExItem):
 
     def get_hooks(self) -> Dict[str, None]:
         key = self._get_event_trigger()
-        chain = EventChain.create(args_spec=key, value=self.item)
+        chain = self.parent._create_event_chain(key, self.item)
         rendered_chain = format.format_prop(chain).strip("{}")
         _hook = f"""const {self._get_fn_name()} = useCallback({rendered_chain}, [addEvents, Event]);"""
         return {Hooks.EVENTS: None, _hook: None}
@@ -488,7 +490,7 @@ class JsValue:
             code = code[2:] if code.startswith('<>') else code
             code = code[:-3] if code.endswith('</>') else code
             code = code.strip('{}')
-        return f"({code})" if self.to_js else code
+        return f"({code})" if self.to_js else f"{code}"
 
     def get_imports(self) -> imports.ImportDict:
         _imports = imports.merge_imports(
@@ -767,6 +769,8 @@ class ExFormatter:
         def _op(_v: Any, key: str):
             if isinstance(_v, (list, tuple)):
                 return _list(_v, pkey=key)
+            elif isinstance(_v, PropBase):
+                return _dict(_v.to_dict(), pkey=key)
             elif isinstance(_v, dict):
                 return _dict(_v, pkey=key)
             elif isinstance(_v, (int, float, str, bool)):
@@ -1029,33 +1033,48 @@ class ContainVar(ExVar):
             raise ValueError(f"to_hook_code Unsupported type {type(_vv)}")
 
         def _check(i):
-            assert isinstance(i, support_clses), \
-                'ContainVar.to_hook_code list item only support: JsValue, JsFunctionValue'
+            _is_ok = isinstance(i, support_clses)
+            # assert _is_ok, \
+            #     'ContainVar.to_hook_code list item only support: JsValue, JsFunctionValue'
+            return _is_ok
 
         def _iter_items():
             _prefix = f'{self._var_fmt.name}_' if self._var_fmt.name else '_'
             if isinstance(items, list):
                 for idx, item in enumerate(items):
-                    _check(item)
                     yield f'{_prefix}{idx}', item
             elif isinstance(items, dict):
                 for k, v in items.items():
-                    _check(v)
                     yield f'{_prefix}{k}', v
 
         hooks: Dict[str, None] = {}
         for name, ex in _iter_items():
-            if isinstance(ex, JsEvent):
-                ex.get_ex_item(self, name)
-            hook = ex.to_hook_code(name)
-            hooks[hook] = None
+            if _check(ex):
+                if isinstance(ex, JsEvent):
+                    ex.get_ex_item(self, name)
+                _hook = ex.to_hook_code(name)
+            else:
+                _hook = str(ex)  # support reflex's hook, like ConnectionToaster, use Var to code js
+            hooks[_hook] = None
 
         return hooks
 
 
-class PropVarBase(ContainVar):
+class PropBase(pydantic2_md.BaseModel):
+    model_config = pydantic2_md.ConfigDict(arbitrary_types_allowed=True)
+
+    def to_dict(self) -> dict:
+        """
+            . support use in Component, field is Var, can not use model_dump
+        """
+        values = dict((k, getattr(self, k)) for k in self.model_fields)
+        # rs = self.model_dump(exclude_none=True)
+        return values
+
+
+class PropVar(ContainVar):
     @classmethod
-    def create(cls, **kwargs) -> Self:
+    def create(cls, prop: PropBase) -> Self:
         # v: Var = super().create(_name, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
         rs = cls(
             _js_expr='',
@@ -1063,14 +1082,27 @@ class PropVarBase(ContainVar):
             _var_is_local=True,
             _var_is_string=False,
             _var_data=None,
-            _var_value=None,
-            **kwargs
+            _var_value=prop,
         )
         return rs
 
+    def to_dict(self) -> dict:
+        d = dict((k, v) for k, v in self.__dict__.items() if k[0] != '_')
+        return d
+        # return self._var_value.copy()
+
     def init(self, parent: Component, name: str) -> Self:
-        self._var_value = dict((k, v) for k, v in self.__dict__.items() if k[0] != '_')
         return super().init(parent, name)
+
+    def __bool__(self):
+        return bool(self._var_value)
+
+
+# @serializers.serializer(to=dict)
+# def serialize_prop_var(prop: PropBase) -> dict:
+#     _prop = cast(PropVarBase, prop)
+#     rs = _prop.to_dict()
+#     return rs
 
 
 contain = ContainVar.create
@@ -1156,9 +1188,16 @@ class AntdBaseComponent(Component):
         web_dir = '.web'  # prerequisites.get_web_dir()
         cur_path = dirname(sys.modules[self.__module__].__file__)
         js_path = join(cur_path, _custom_js)
-        dst_path = join(web_dir, f'{self.library[1:]}.js')
-        if not path.exists(path.dirname(dst_path)):
-            os.makedirs(path.dirname(dst_path), exist_ok=True)
+        # if not path.exists(path.dirname(js_path)):
+        #     os.makedirs(path.dirname(js_path), exist_ok=True)
+        if path.isfile(js_path):
+            suffix = _custom_js.split('.')[-1]
+            dst_path = join(web_dir, f'{self.library[1:]}.{suffix}')
+        else:
+            dst_path = join(web_dir, f'{self.library[1:]}')
+        dst_parent_path = dirname(dst_path)
+        if not path.exists(dst_parent_path):
+            os.makedirs(dst_parent_path, exist_ok=True)
         prerequisites.path_ops.cp(js_path, dst_path)
 
     def __init__(self, *args, ex_hooks: List[ContainVar | list | dict] = None, **kwargs):
@@ -1166,7 +1205,9 @@ class AntdBaseComponent(Component):
         exs = {}
         kw = {}
         for k, v in kwargs.items():
-            if isinstance(v, ContainVar):
+            if isinstance(v, (ContainVar, PropBase)):
+                if isinstance(v, PropBase):
+                    v = PropVar.create(v)
                 contains[k] = v
             elif isinstance(v, (JsValue, JsEvent)):
                 exs[k] = v
@@ -1260,6 +1301,8 @@ class AntdBaseComponent(Component):
             return self._cache_get_all_hooks_internal_
 
     def _get_hooks_internal(self) -> dict[str, VarData | None]:
+        if is_dynamic:
+            return {}
         rs = super()._get_hooks_internal()
         return rs
 
@@ -1355,7 +1398,6 @@ class AntdComponentVar(Var[Component], python_types=AntdBaseComponent):
 @dataclasses.dataclass(
     eq=False,
     frozen=True,
-    slots=True,
 )
 class LiteralAntdComponentVar(vars_base.CachedVarOperation, vars_base.LiteralVar, AntdComponentVar):
     """A Var that represents a Component that get _var_value._var_data forever """
@@ -1428,13 +1470,12 @@ class LiteralAntdComponentVar(vars_base.CachedVarOperation, vars_base.LiteralVar
         Returns:
             The var.
         """
-        _var = LiteralAntdComponentVar(
+        return LiteralAntdComponentVar(
             _js_expr="",
             _var_type=type(value),
             _var_data=_var_data,
             _var_value=value,
         )
-        return _var
 
 
 class AntdComponent(AntdBaseComponent):
@@ -1494,10 +1535,10 @@ def default_config(provider: Component = None, antd_app: Component = None):
     _old_error_boundary = _app.error_boundary
 
     def _antd_error_boundary(*children: Component) -> Component:
-        _com = _old_error_boundary(*children)
+        _coms = [_old_error_boundary(*children)] if _old_error_boundary else children
         _cfp = _config_provider.copy(update=dict(
             children=[
-                _config_app.copy(update=dict(children=[_com])),
+                _config_app.copy(update=dict(children=_coms)),
             ],
         ))
         is_app_router = False
@@ -1536,10 +1577,11 @@ def get_dynamic_ctx(**kwargs) -> dict:
 
 
 def patch_after_start():
-    global use_pretty_dumps, default_to_js
+    global use_pretty_dumps, default_to_js, is_dynamic
     # for support dynamic, which remove lines
     use_pretty_dumps = False
     default_to_js = True
+    is_dynamic = True
     # line_stripped.startswith("{") and line_stripped.endswith("}")
 
 

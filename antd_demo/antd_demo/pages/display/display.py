@@ -1,6 +1,7 @@
 import random
 from typing import List, Any, Dict
 import asyncio
+import logging
 
 import reflex as rx
 from reflex import State, Var
@@ -87,6 +88,62 @@ class DisplayState(State):
     async def on_tag_close(self, ev):
         print('on_tag_close', ev)
         await asyncio.sleep(3)
+
+    # 为自定义树节点添加状态
+    custom_tree_data = [
+        dict(title='父节点 1', key='0-0', children=[
+            dict(title='子节点 1-0', key='0-0-0'),
+            dict(title='子节点 1-1', key='0-0-1'),
+        ]),
+        dict(title='父节点 2', key='0-1', children=[
+            dict(title='子节点 2-0', key='0-1-0'),
+            dict(title='子节点 2-1', key='0-1-1'),
+        ]),
+    ]
+
+    # 记录节点开关状态
+    node_switch_states: Dict[str, bool] = {}
+
+    # 记录节点选择状态
+    node_select_values: Dict[str, str] = {}
+
+    def toggle_node_switch(self, node_key: str):
+        """切换节点的开关状态"""
+        current = self.node_switch_states.get(node_key, False)
+        self.node_switch_states[node_key] = not current
+
+    def update_node_select(self, node_key: str, value: str):
+        """更新节点的选择值"""
+        self.node_select_values[node_key] = value
+
+    # 添加可拖拽排序的树数据
+    draggable_tree_data = [
+        dict(title='父节点 1', key='0-0', children=[
+            dict(title='子节点 1-0', key='0-0-0'),
+            dict(title='子节点 1-1', key='0-0-1'),
+        ]),
+        dict(title='父节点 2', key='0-1', children=[
+            dict(title='子节点 2-0', key='0-1-0'),
+            dict(title='子节点 2-1', key='0-1-1'),
+        ]),
+    ]
+
+    # 记录拖拽信息
+    drop_info: Dict[str, dict[str, Any]] = {}
+
+    def on_tree_drop(self, node, drag_node, drag_nodes_keys, drop_position, drop_to_gap):
+        """处理树节点拖拽事件"""
+        self.drop_info = dict(
+            node=node, drag_node=drag_node,
+            drag_nodes_keys=drag_nodes_keys,
+            drop_position=drop_position, drop_to_gap=drop_to_gap,
+        )
+
+        # 更新树数据结构（实际应用中需要更复杂的逻辑来处理树结构变化）
+        # 这里只是简单记录拖拽信息用于展示
+        logging.info(f"拖拽节点: {drag_node.get('key')} 到目标节点: {node.get('key')}, %s, %s, %s",
+                     drop_position, drop_to_gap, drag_nodes_keys,
+                     )
 
 
 class AvatarState(State):
@@ -797,5 +854,48 @@ def tree_page() -> rx.Component:
                 tree_data=DisplayState.tree_data,
                 checkable=True,
             ),
+                        rx.text("自定义树节点渲染示例", font_weight="bold", margin_top="2em"),
+            display.tree(
+                tree_data=DisplayState.custom_tree_data,
+                title_render=helper.js_value(lambda item: rx.hstack(
+                    rx.text(item["title"]),
+                    entry.switch(
+                        checked=DisplayState.node_switch_states[item["key"]],
+                        on_change=lambda checked: DisplayState.toggle_node_switch(item["key"]),
+                        size="small",
+                    ),
+                    entry.select(
+                        options=helper.contain([
+                            {"value": "option1", "label": "选项1"},
+                            {"value": "option2", "label": "选项2"},
+                            {"value": "option3", "label": "选项3"},
+                        ]),
+                        value=DisplayState.node_select_values[item["key"]],
+                        on_change=lambda value: DisplayState.update_node_select(item["key"], value),
+                        style={"width": "100px"},
+                        size="small",
+                    ),
+                    spacing="2",
+                    align_items="center",
+                )),
+                default_expanded_keys=["0-0", "0-1"],
+                style={"width": "400px"},
+            ),
+
+            # 添加分隔线和标题
+            layout.divider(
+                rx.text("可拖拽排序的树组件")
+            ),
+            # 添加可拖拽排序的树组件
+            display.tree(
+                tree_data=DisplayState.draggable_tree_data,
+                draggable=True,
+                block_node=True,
+                on_drop=DisplayState.on_tree_drop,
+                default_expanded_keys=["0-0", "0-1"],
+            ),
+
+            width="100%",
+            spacing="4",
         ),
     )

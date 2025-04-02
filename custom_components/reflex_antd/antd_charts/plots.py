@@ -7,7 +7,7 @@ from abc import ABC
 import dataclasses
 
 from . import g2, base
-from ..base import Var, BaseModel, Base, ExTypes, ContainVar, ReactNode, PropVarBase
+from ..base import Var, BaseModel, Base, ExTypes, ContainVar, ReactNode, PropBase
 
 
 # class Spec(g2.AxisComponent, g2.BaseMark, ABC):
@@ -42,7 +42,7 @@ class ContainerConfig(Base, ABC):
 
 
 class DataConfig(Base, ABC):
-    data: Optional[Var[ExTypes]]
+    data: Optional[Var[ExTypes | list[dict]]]
     x_field: Optional[Var[ExTypes | str]]
     y_field: Optional[Var[ExTypes | str]]
     series_field: Optional[Var[ExTypes | str]]
@@ -64,7 +64,7 @@ class ShapeConfig(Base, ABC):
     # label: Optional[Var[ExTypes | bool]]
 
 
-class LabelProp(PropVarBase):
+class LabelProp(PropBase):
     text: str | ExTypes = ''
     font_size: int | ExTypes = None
     font_family: str | ExTypes = None
@@ -93,10 +93,10 @@ class LabelProp(PropVarBase):
 
 
 class PoltProp(SimpleNamespace):
-    label = LabelProp.create
+    label = LabelProp
 
 
-class PoltBase(base.ChartBase, ContainerConfig, DataConfig, ShapeConfig):
+class PoltBase(base.ChartBase, ContainerConfig, DataConfig, ShapeConfig, g2.BaseMark):
     title: Optional[ReactNode | ContainVar]
     state: Optional[Var[str | ExTypes]]
     label: Optional[LabelProp]

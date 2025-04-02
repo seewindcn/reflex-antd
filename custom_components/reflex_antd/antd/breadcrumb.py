@@ -15,7 +15,6 @@ class Breadcrumb(AntdComponent):
 class RouteItemType(AntdComponent):
     tag = "RouteItemType"
 
-    class_name: Optional[Var[str]]
     href: Optional[Var[str]]
     path: Optional[Var[str]]
     title: Optional[Var[ReactNode]]

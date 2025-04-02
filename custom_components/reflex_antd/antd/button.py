@@ -18,10 +18,13 @@ class Button(AntdComponent):
     target: Optional[Var[str]]
     html_type: Optional[Var[str]]
     icon: Optional[Var[ReactNode]]
+    icon_position: Optional[Var[str]]
     loading: Optional[Var[bool]]
     shape: Optional[Var[ButtonShape]]
     size: Optional[Var[SizeType]]
     type: Optional[Var[TypeType]]
+    variant: Optional[Var[str]]
+    color: Optional[Var[str]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

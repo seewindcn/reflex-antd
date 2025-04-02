@@ -12,3 +12,9 @@ from .antd_charts.plots import (  # noqa
     gauge,
 )
 
+from .antd_charts.graphs import (  # noqa
+    g6,
+    flow_graph,
+)
+
+

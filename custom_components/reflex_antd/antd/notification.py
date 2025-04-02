@@ -16,7 +16,7 @@ _ref = Var(_js_expr="refs['__antd_notification']", )
 class Notification(JsValue):
     is_global: bool = False
     btn: Optional[Var[ReactNode]]
-    class_name: Optional[Var[str]]
+    class_name: Optional[Var[str | list]]
     close_icon: Optional[Var[ReactNode]]
     description: Optional[Var[str]]
     duration: Optional[Var[int]]
