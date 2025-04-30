@@ -28,7 +28,7 @@ class G6Edge(PropBase):
 
 class G6BaseComponent(AntdBaseComponent):
     animation: Optional[Var[bool]]
-    auto_fit: Optional[Var[str]]
+    auto_fit: Optional[Var[str]]  # view | center
     auto_resize: Optional[Var[bool]]
     background: Optional[Var[str]]
     cursor: Optional[Var[str]]

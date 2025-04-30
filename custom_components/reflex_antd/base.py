@@ -27,7 +27,7 @@ from reflex.components.tags import Tag
 from reflex.constants import Hooks, Reflex, MemoizationDisposition, MemoizationMode
 from reflex.utils import imports, format, serializers, exceptions
 from reflex.vars import Var, VarData
-from reflex.vars.base import get_unique_variable_name
+from reflex.vars.base import get_unique_variable_name, var_operation_return
 from reflex.event import EventHandler, EventSpec, EventChain
 from reflex.experimental import hooks
 
@@ -243,6 +243,7 @@ class ExStatefulComponentItem(ExComponentItemBase):
 
 
 class JsEvent:
+    """ can use like event value """
     hd: EventHandler
     # event_trigger use for custom trigger, must work with fmt=True
     event_trigger: Callable
@@ -527,7 +528,7 @@ class JsValue:
 
 
 class JsFunctionValue(JsValue):
-    _value: Union[str, "CasualVar", Component]
+    _value: Union[str, "CasualVar", Component, JsValue]
 
     @property
     def args(self):
@@ -932,6 +933,15 @@ class CasualVar(StringVar):
             _js_expr=f'({self._js_expr})'
         )
 
+    def array_filter(self, filter_op: str | Callable[[Self], Self]):
+        if callable(filter_op):
+            filter_op = filter_op(casual_var('item'))
+        rs = var_operation_return(
+            js_expression=f"{self}.filter(item => {filter_op})",
+            var_type=list,
+        )
+        return rs
+
     to_type = Var.to
 
 
@@ -1061,7 +1071,9 @@ class ContainVar(ExVar):
 
 
 class PropBase(pydantic2_md.BaseModel):
-    model_config = pydantic2_md.ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic2_md.ConfigDict(
+        arbitrary_types_allowed=True,  # 允许你在 Pydantic 模型中使用任意类型，而不仅仅是内置的 Python 类型
+    )
 
     def to_dict(self) -> dict:
         """
@@ -1241,6 +1253,10 @@ class AntdBaseComponent(Component):
         code = super()._get_all_custom_code()
         for v in self._iter_all_contains():
             code.update(v.get_custom_code())
+        for k, v in self._iter_exs():
+            code.update(v.get_custom_code())
+        for n, prop in self.iter_component_props():
+            code.update(prop._get_all_custom_code())
         return code
 
     def _get_all_dynamic_imports(self) -> Set[str]:
@@ -1334,6 +1350,18 @@ class AntdBaseComponent(Component):
         if [h for h in var_hooks if 'addEvents' in h]:
             var_hooks = {Hooks.EVENTS: None, **var_hooks}
         return var_hooks
+
+    def iter_component_props(self) -> Iterable[tuple[str, Component]]:
+        cls = self.__class__
+        _props = cls.get_props()
+        for name, field in cls.get_fields().items():
+            if name not in _props:
+                continue
+            _p = getattr(self, name)
+            if isinstance(_p, Var):
+                _v = getattr(_p, '_var_value', None)
+                if isinstance(_v, Component):
+                    yield name, _v
 
     def _iter_contains(self) -> Iterable[Tuple[str, ContainVar]]:
         """ iter component's property which is ContainVar """
@@ -1615,8 +1643,31 @@ def patch_all():
     compiler._compile_tailwind = functools.partial(_wrap_js_regex, compiler._compile_tailwind)
 
     old_update_next_config = prerequisites.update_next_config
+    old__update_next_config = prerequisites._update_next_config
 
-    # https://github.com/vercel/next.js/issues/58817 next.js 14.0.3 fail to use antd
+    # 2. https://github.com/ant-design/pro-components/issues/8543
+    def my__update_next_config(*args, **kwargs) -> str:
+        fix_antd_pro = """, experimental: {
+    forceSwcTransforms: true,
+    optimizePackageImports: [
+      '@ant-design/pro-card',
+      '@ant-design/pro-components',
+      '@ant-design/pro-descriptions',
+      '@ant-design/pro-field',
+      '@ant-design/pro-form',
+      '@ant-design/pro-layout',
+      '@ant-design/pro-list',
+      '@ant-design/pro-layout',
+      '@ant-design/pro-provider',
+      '@ant-design/pro-skeleton',
+      '@ant-design/pro-table',
+      '@ant-design/pro-utils',
+    ]
+  }, transpilePackages:"""
+        rs = old__update_next_config(*args, **kwargs)
+        return rs.replace(', transpilePackages:', fix_antd_pro)
+
+    # 1. https://github.com/vercel/next.js/issues/58817 next.js 14.0.3 fail to use antd
     def my_update_next_config(export=False, transpile_packages: Optional[List[str]] = None):
         transpile_packages = transpile_packages or []
         transpile_packages.extend([
@@ -1659,6 +1710,7 @@ def patch_all():
         return old_update_next_config(export=export, transpile_packages=transpile_packages)
 
     prerequisites.update_next_config = my_update_next_config
+    prerequisites._update_next_config = my__update_next_config
 
     def _my_get_memoized_event_triggers(
             cls,
@@ -1670,7 +1722,7 @@ def patch_all():
     # StatefulComponent._get_memoized_event_triggers = classmethod(_my_get_memoized_event_triggers)
 
 
-ReactNode = Union[str, Component]
+ReactNode = Union[Component, str]
 JsNode = Union[JsValue, JsEvent]
 
 fragment = AntdFragment.create

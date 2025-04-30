@@ -3,7 +3,7 @@ from reflex import Var, Component
 from reflex.constants import EventTriggers
 from reflex.utils import imports
 
-from ..base import AntdComponent, ContainVar, JsValue, JsEvent
+from ..base import AntdComponent, ContainVar, JsValue, ExTypes
 from ..constant import StatusType, SizeType
 
 

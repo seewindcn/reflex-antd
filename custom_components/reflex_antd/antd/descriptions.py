@@ -21,4 +21,13 @@ class Descriptions(AntdComponent):
     title: Optional[Var[ReactNode]]
 
 
+class DescriptionItem(AntdComponent):
+    """ for <5.8.0; >=5.8.0 use items """
+    tag = 'Descriptions.Item'
+
+    label: Var[str]
+    span: Var[int]
+
+
 descriptions = Descriptions.create
+description_item = DescriptionItem.create

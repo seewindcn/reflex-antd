@@ -1,7 +1,8 @@
 from typing import Optional
 
-from reflex import Component, Var
-from reflex.utils import format
+from reflex import Component, Var, ImportVar
+from reflex.utils import format, imports
+from ..base import AntdComponent
 
 
 class BaseIconComponent(Component):
@@ -44,8 +45,38 @@ class IconComponent(BaseIconComponent):
         return super().create(*children, **props)
 
 
-icon = IconComponent.create
+class DynamicIcon(BaseIconComponent):
+    """ dynamic icon """
+    alias = 'Icon'
 
+    icon: Var[str]  # icon str, like: 'QuestionCircleOutlined', 'CheckCircleOutlined'
+    rotate: Var[int]
+    spin: Var[bool]
+    two_tone_color: Var[str]
+
+    def add_custom_code(self) -> list[str]:
+        return [
+            """
+        import * as icons from '@ant-design/icons';
+        const Icon = (props) => {
+            const { icon, ..._props } = props;
+            const antIcon = icons;
+            if (!icon) {
+                return createElement(antIcon['QuestionCircleOutlined']);
+            }
+            return createElement(antIcon[icon], _props);
+        };
+            """
+        ]
+
+    def add_imports(self) -> dict[str, str | ImportVar | list[str | ImportVar]]:
+        return {
+            "react": [imports.ImportVar(tag="createElement")],
+        }
+
+
+icon = IconComponent.create
+dynamic_icon = DynamicIcon.create
 
 # class CustomerServiceOutlined(BaseIconComponent):
 #     tag = 'CustomerServiceOutlined'

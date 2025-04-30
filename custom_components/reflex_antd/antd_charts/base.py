@@ -40,7 +40,7 @@ class GraphBase(g6.G6BaseComponent):
     # layout 布局，支持 G6 内置布局
 
     # behaviors 设置用户交互事件
-    behaviors: Optional[Var[ExTypes]]
+    behaviors: Optional[Var[ExTypes | dict]]
 
     # plugins 设置插件
     # transforms 设置数据处理

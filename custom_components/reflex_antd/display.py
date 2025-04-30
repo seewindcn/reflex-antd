@@ -6,7 +6,7 @@ from .antd.calendar import calendar,dayjs  # noqa
 from .antd.card import card,card_grid,card_meta  # noqa
 from .antd.carousel import carousel  # noqa
 from .antd.collapse import collapse  # noqa
-from .antd.descriptions import descriptions  # noqa
+from .antd.descriptions import descriptions, description_item  # noqa
 from .antd.empty import empty  # noqa
 from .antd.image import image,image_preview_group  # noqa
 from .antd.list import alist,list_item,list_item_meta  # noqa

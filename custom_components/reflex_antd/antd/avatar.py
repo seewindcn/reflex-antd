@@ -10,7 +10,7 @@ class Avatar(AntdComponent):
 
     alt: Optional[Var[str]]
     gap: Optional[Var[int]]
-    icon: Optional[Var[ReactNode]]
+    icon: Var[ReactNode]
     shape: Optional[Var[str]]
     size: Optional[Var[Union[str, int, Dict]]]
     src: Optional[Var[ReactNode]]

@@ -2,7 +2,7 @@ from typing import Optional, Union, Dict, Any
 
 from reflex import Component, Var
 
-from ..base import AntdComponent, ContainVar, JsValue, ReactNode
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExTypes
 from ..constant import SizeType
 
 
@@ -18,7 +18,7 @@ class AList(AntdComponent):
     loading: Optional[Var[Union[bool, dict]]]
     load_more: Optional[Var[ReactNode]]
     locale: Optional[Var[dict]]
-    pagination: Optional[Var[Union[bool, dict]]]
+    pagination: Optional[Var[Union[bool, dict, ContainVar]]]
     render_item: Optional[Var[JsValue]]
     size: Optional[Var[SizeType]]
     split: Optional[Var[bool]]
@@ -27,8 +27,8 @@ class AList(AntdComponent):
 class ListItem(AntdComponent):
     tag = 'List.Item'
 
-    actions: Optional[Var[list[ContainVar]]]
-    extra: Optional[Var[ReactNode]]
+    actions: Optional[Var[ExTypes]]
+    extra: Optional[Var[ExTypes]]
 
 
 class ListItemMeta(AntdComponent):
