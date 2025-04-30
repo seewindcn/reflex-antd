@@ -5,12 +5,20 @@ from reflex import Component
 from reflex.utils.imports import ImportDict, ImportVar, ParsedImportDict
 from reflex_antd import helper
 
-lib_dependencies: list[str] = ['@uiw/codemirror-theme-okaidia']
+
+# *** v4.23.9开始, package.json中增加了 type: "module" 配置 ***
+# 会引起页面刷新报错, 具体看 README.md
+VERSION = '@4.23.8'
+lib_dependencies: list[str] = [
+    f'@uiw/codemirror-extensions-basic-setup{VERSION}',
+    f'@uiw/codemirror-theme-okaidia{VERSION}',
+]
 
 
 class CodeMirror(rx.Component):
     """ https://github.com/uiwjs/react-codemirror
 
+    # 需要转义成类似如下内容
     import CodeMirror from '@uiw/react-codemirror';
     import { yaml } from '@codemirror/lang-yaml';
     import { okaidia } from '@uiw/codemirror-theme-okaidia';
@@ -28,7 +36,7 @@ class CodeMirror(rx.Component):
         );
     }
     """
-    library = '@uiw/react-codemirror'
+    library = f'@uiw/react-codemirror{VERSION}'
     tag = 'CodeMirror'
     lib_dependencies: list[str] = lib_dependencies
     is_default = True
@@ -53,10 +61,10 @@ class CodeMirror(rx.Component):
 
     def _get_imports(self) -> ParsedImportDict:
         _imports = {
-            '@uiw/codemirror-theme-okaidia': [
+            f'@uiw/codemirror-theme-okaidia{VERSION}': [
                 ImportVar(tag='okaidia', is_default=False, alias=None, install=True, render=True, transpile=False)
             ],
-            '@uiw/react-codemirror': [
+            f'@uiw/react-codemirror{VERSION}': [
                 ImportVar(tag='CodeMirror', is_default=True, alias=None, install=True, render=True, transpile=False)
             ]
         }
@@ -138,3 +146,10 @@ json_edit = JsonEdit.create
 python_edit = PythonEdit.create
 
 
+def test_yaml_edit() -> None:
+    return yaml_edit(
+        height='300px',
+        theme=helper.casual_var('okaidia'),
+        extensions=helper.casual_var('extensions', _var_type=list),
+        read_only=True,
+    )
