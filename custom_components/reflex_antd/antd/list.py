@@ -2,41 +2,41 @@ from typing import Optional, Union, Dict, Any
 
 from reflex import Component, Var
 
-from ..base import AntdComponent, ContainVar, JsValue, ReactNode
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExTypes
 from ..constant import SizeType
 
 
 class AList(AntdComponent):
     tag = 'List'
 
-    bordered: Optional[Var[bool]]
-    data_source: Optional[Var[Any]]
-    footer: Optional[Var[ReactNode]]
-    grid: Optional[Var[dict]]
-    header: Optional[Var[ReactNode]]
-    item_layout: Optional[Var[str]]
-    loading: Optional[Var[Union[bool, dict]]]
-    load_more: Optional[Var[ReactNode]]
-    locale: Optional[Var[dict]]
-    pagination: Optional[Var[Union[bool, dict]]]
-    render_item: Optional[Var[JsValue]]
-    size: Optional[Var[SizeType]]
-    split: Optional[Var[bool]]
+    bordered: Var[bool]
+    data_source: Var[Any]
+    footer: Var[ReactNode]
+    grid: Var[dict]
+    header: Var[ReactNode]
+    item_layout: Var[str]
+    loading: Var[Union[bool, dict]]
+    load_more: Var[ReactNode]
+    locale: Var[dict]
+    pagination: Var[Union[bool, dict, ContainVar]]
+    render_item: Var[JsValue]
+    size: Var[SizeType]
+    split: Var[bool]
 
 
 class ListItem(AntdComponent):
     tag = 'List.Item'
 
-    actions: Optional[Var[list[ContainVar]]]
-    extra: Optional[Var[ReactNode]]
+    actions: Var[ExTypes]
+    extra: Var[ExTypes]
 
 
 class ListItemMeta(AntdComponent):
     tag = 'List.Item.Meta'
 
-    avatar: Optional[Var[ReactNode]]
-    description: Optional[Var[ReactNode]]
-    title: Optional[Var[ReactNode]]
+    avatar: Var[ReactNode]
+    description: Var[ReactNode]
+    title: Var[ReactNode]
 
 
 alist = AList.create

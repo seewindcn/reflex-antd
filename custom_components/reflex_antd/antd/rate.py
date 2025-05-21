@@ -9,15 +9,15 @@ from ..constant import StatusType, SizeType, RadioStyleType, RadioType
 class Rate(AntdComponent):
     tag = 'Rate'
 
-    allow_clear: Optional[Var[bool]]
-    allow_half: Optional[Var[bool]]
-    auto_focus: Optional[Var[bool]]
-    character: Optional[Var[Union[Component, JsValue]]]
-    count: Optional[Var[int]]
-    default_value: Optional[Var[int]]
-    disabled: Optional[Var[bool]]
-    tooltips: Optional[Var[List[str]]]
-    value: Optional[Var[int]]
+    allow_clear: Var[bool]
+    allow_half: Var[bool]
+    auto_focus: Var[bool]
+    character: Var[Union[Component, JsValue]]
+    count: Var[int]
+    default_value: Var[int]
+    disabled: Var[bool]
+    tooltips: Var[List[str]]
+    value: Var[int]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

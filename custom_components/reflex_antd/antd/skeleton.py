@@ -11,12 +11,12 @@ from ..constant import SizeType
 class Skeleton(AntdComponent):
     tag = 'Skeleton'
 
-    active: Optional[Var[bool]]
-    avatar: Optional[Var[Union[bool, Dict]]]
-    loading: Optional[Var[bool]]
-    paragraph: Optional[Var[Union[bool, Dict]]]
-    round: Optional[Var[bool]]
-    title: Optional[Var[Union[bool, Dict]]]
+    active: Var[bool]
+    avatar: Var[Union[bool, Dict]]
+    loading: Var[bool]
+    paragraph: Var[Union[bool, Dict]]
+    round: Var[bool]
+    title: Var[Union[bool, Dict]]
 
 
 skeleton = Skeleton.create

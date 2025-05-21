@@ -9,21 +9,21 @@ from ..constant import StatusType, SizeType, VariantType, PlacementType
 class Mention(AntdComponent):
     tag = 'Mention'
 
-    allow_clear: Optional[Var[Union[bool, ContainVar]]]
-    auto_focus: Optional[Var[bool]]
-    auto_size: Optional[Var[Union[bool, Dict]]]
-    default_value: Optional[Var[str]]
-    filter_option: Optional[Var[Union[bool, JsValue]]]
-    get_popup_container: Optional[Var[JsValue]]
-    not_found_content: Optional[Var[ReactNode]]
-    placement: Optional[Var[PlacementType]]
-    prefix: Optional[Var[Union[str, List[str]]]]
-    split: Optional[Var[str]]
-    status: Optional[Var[StatusType]]
-    validate_search: Optional[Var[JsValue]]
-    value: Optional[Var[str]]
-    variant: Optional[Var[VariantType]]
-    options: Optional[Var[ContainVar]]
+    allow_clear: Var[Union[bool, ContainVar]]
+    auto_focus: Var[bool]
+    auto_size: Var[Union[bool, Dict]]
+    default_value: Var[str]
+    filter_option: Var[Union[bool, JsValue]]
+    get_popup_container: Var[JsValue]
+    not_found_content: Var[ReactNode]
+    placement: Var[PlacementType]
+    prefix: Var[Union[str, List[str]]]
+    split: Var[str]
+    status: Var[StatusType]
+    validate_search: Var[JsValue]
+    value: Var[str]
+    variant: Var[VariantType]
+    options: Var[ContainVar]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

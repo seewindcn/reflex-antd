@@ -11,13 +11,13 @@ from ..constant import SizeType
 class Spin(AntdComponent):
     tag = 'Spin'
 
-    delay: Optional[Var[int]]
-    indicator: Optional[Var[ReactNode]]
-    size: Optional[Var[SizeType]]
-    spinning: Optional[Var[bool]]
-    tip: Optional[Var[ReactNode]]
-    wrapper_class_name: Optional[Var[str]]
-    fullscreen: Optional[Var[bool]]
+    delay: Var[int]
+    indicator: Var[ReactNode]
+    size: Var[SizeType]
+    spinning: Var[bool]
+    tip: Var[ReactNode]
+    wrapper_class_name: Var[str]
+    fullscreen: Var[bool]
 
 
 spin = Spin.create

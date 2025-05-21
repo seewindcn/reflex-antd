@@ -9,11 +9,11 @@ from ..constant import StatusType, SizeType
 class Checkbox(AntdComponent):
     tag = "Checkbox"
 
-    auto_focus: Optional[Var[bool]]
-    checked: Optional[Var[bool]]
-    default_checked: Optional[Var[bool]]
-    disabled: Optional[Var[bool]]
-    indeterminate: Optional[Var[bool]]
+    auto_focus: Var[bool]
+    checked: Var[bool]
+    default_checked: Var[bool]
+    disabled: Var[bool]
+    indeterminate: Var[bool]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
@@ -26,11 +26,11 @@ class Checkbox(AntdComponent):
 class CheckboxGroup(AntdComponent):
     tag = 'Checkbox.Group'
 
-    default_value: Optional[Var[List[Union[int, str]]]]
-    disabled: Optional[Var[bool]]
-    name: Optional[Var[str]]
-    options: Optional[Var[List[Union[str, int, Dict]]]]
-    value: Optional[Var[List[Union[int, str, bool]]]]
+    default_value: Var[List[Union[int, str]]]
+    disabled: Var[bool]
+    name: Var[str]
+    options: Var[List[Union[str, int, Dict]]]
+    value: Var[List[Union[int, str, bool]]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

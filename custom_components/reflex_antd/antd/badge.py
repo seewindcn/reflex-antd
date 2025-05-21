@@ -8,24 +8,24 @@ from ..constant import PlacementType, SizeType, BadgeStatusType
 class Badge(AntdComponent):
     tag = "Badge"
 
-    color: Optional[Var[str]]
-    count: Optional[Var[Union[int, NodeVar]]]
-    dot: Optional[Var[bool]]
-    offset: Optional[Var[NodeVar]]
-    overflow_count: Optional[Var[int]]
-    show_zero: Optional[Var[bool]]
-    size: Optional[Var[SizeType]]
-    status: Optional[Var[BadgeStatusType]]
-    text: Optional[Var[Union[str, Component]]]
-    styles: Optional[Var[Dict]]
+    color: Var[str]
+    count: Var[Union[int, NodeVar]]
+    dot: Var[bool]
+    offset: Var[NodeVar]
+    overflow_count: Var[int]
+    show_zero: Var[bool]
+    size: Var[SizeType]
+    status: Var[BadgeStatusType]
+    text: Var[Union[str, Component]]
+    styles: Var[Dict]
 
 
 class BadgeRibbon(AntdComponent):
     tag = 'Badge.Ribbon'
 
-    color: Optional[Var[str]]
-    placement: Optional[Var[PlacementType]]
-    text: Optional[Var[Union[str, NodeVar]]]
+    color: Var[str]
+    placement: Var[PlacementType]
+    text: Var[Union[str, NodeVar]]
 
 
 badge = Badge.create

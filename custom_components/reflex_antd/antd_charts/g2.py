@@ -4,6 +4,10 @@ from abc import ABC
 from ..base import Var, ContainVar, ReactNode, Base, ExTypes
 from . import constant as C
 
+""" 
+https://g2.antv.antgroup.com/api/overview 
+ """
+
 
 class AxisComponent(Base, ABC):
     title: Optional[ReactNode | ContainVar]
@@ -22,7 +26,7 @@ class BaseMark(Base, ABC):
     animate: Optional[Var[ExTypes]]
     labels: Optional[Var[ExTypes]]
     # tooltip: Optional[Var[ExTypes | ReactNode]]
-    axis: Optional[Var[ExTypes]]
+    axis: Optional[Var[ExTypes | dict]]
     legend: Optional[Var[ExTypes]]
     slider: Optional[Var[ExTypes]]
     scrollbar: Optional[Var[ExTypes]]

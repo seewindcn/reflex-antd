@@ -11,12 +11,12 @@ from ..constant import SizeType, PlacementType, TabsType
 class Segmented(AntdComponent):
     tag = 'Segmented'
 
-    block: Optional[Var[bool]]
-    default_value: Optional[Var[Union[str, int]]]
-    disabled: Optional[Var[bool]]
+    block: Var[bool]
+    default_value: Var[Union[str, int]]
+    disabled: Var[bool]
     options: Optional[Union[List[str], List[int], List[Dict]]]
-    size: Optional[Var[SizeType]]
-    value: Optional[Var[Union[str, int]]]
+    size: Var[SizeType]
+    value: Var[Union[str, int]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

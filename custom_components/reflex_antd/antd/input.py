@@ -9,23 +9,23 @@ from ..constant import StatusType, SizeType, VariantType
 class Input(AntdComponent):
     tag = "Input"
 
-    addon_after: Optional[Var[ReactNode]]
-    addon_before: Optional[Var[ReactNode]]
-    allow_clear: Optional[Var[Union[bool, ContainVar]]]
-    count: Optional[Var[Union[Dict, ContainVar]]]
-    default_value: Optional[Var[str]]
-    disabled: Optional[Var[bool]]
-    id: Optional[Var[str]]
-    max_length: Optional[Var[int]]
-    prefix: Optional[Var[ReactNode]]
-    show_count: Optional[Var[Union[bool, JsValue]]]
-    status: Optional[Var[StatusType]]
-    size: Optional[Var[SizeType]]
-    suffix: Optional[Var[ReactNode]]
-    type: Optional[Var[str]]
-    value: Optional[Var[str]]
-    variant: Optional[Var[VariantType]]
-    placeholder: Optional[Var[str]]
+    addon_after: Var[ReactNode]
+    addon_before: Var[ReactNode]
+    allow_clear: Var[Union[bool, ContainVar]]
+    count: Var[Union[Dict, ContainVar]]
+    default_value: Var[str]
+    disabled: Var[bool]
+    id: Var[str]
+    max_length: Var[int]
+    prefix: Var[ReactNode]
+    show_count: Var[Union[bool, JsValue]]
+    status: Var[StatusType]
+    size: Var[SizeType]
+    suffix: Var[ReactNode]
+    type: Var[str]
+    value: Var[str]
+    variant: Var[VariantType]
+    placeholder: Var[str]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
@@ -39,14 +39,14 @@ class Input(AntdComponent):
 class TextArea(Input):
     tag = "Input.TextArea"
 
-    auto_size: Optional[Var[Union[bool, Dict, ContainVar]]]
+    auto_size: Var[Union[bool, Dict, ContainVar]]
 
 
 class Search(Input):
     tag = 'Input.Search'
 
-    enter_button: Optional[Var[ReactNode]]
-    loading: Optional[Var[bool]]
+    enter_button: Var[ReactNode]
+    loading: Var[bool]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
@@ -59,8 +59,8 @@ class Search(Input):
 class Password(Input):
     tag = 'Input.Password'
 
-    icon_render: Optional[Var[JsValue]]
-    visibility_toggle: Optional[Var[Union[bool, ContainVar]]]
+    icon_render: Var[JsValue]
+    visibility_toggle: Var[Union[bool, ContainVar]]
 
 
 input = Input.create  # noqa

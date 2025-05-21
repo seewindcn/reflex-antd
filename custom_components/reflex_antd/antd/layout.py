@@ -15,7 +15,7 @@ class LayoutBase(AntdComponent):
 class Layout(LayoutBase):
     tag = 'Layout'
 
-    has_sider: Optional[Var[bool]]
+    has_sider: Var[bool]
 
     # def _get_custom_code(self) -> str | None:
     #     return """
@@ -24,7 +24,7 @@ class Layout(LayoutBase):
 
 
 class SubLayout(AntdComponent):
-    width: Optional[Var[Union[int, str]]]
+    width: Var[Union[int, str]]
 
 
 class Header(SubLayout):
@@ -48,15 +48,15 @@ class Footer(SubLayout):
 class Sider(SubLayout):
     tag = 'Layout.Sider'
 
-    breakpoint: Optional[Var[Union[BreakpointType, Dict]]]
-    collapsed: Optional[Var[bool]]
-    collapsed_width: Optional[Var[int]]
-    collapsible: Optional[Var[bool]]
-    default_collapsed: Optional[Var[bool]]
-    reverse_arrow: Optional[Var[bool]]
-    theme: Optional[Var[ThemeType]]
-    trigger: Optional[Var[ReactNode]]
-    zero_width_trigger_style: Optional[Var[Union[Dict, ContainVar]]]
+    breakpoint: Var[Union[BreakpointType, Dict]]
+    collapsed: Var[bool]
+    collapsed_width: Var[int]
+    collapsible: Var[bool]
+    default_collapsed: Var[bool]
+    reverse_arrow: Var[bool]
+    theme: Var[ThemeType]
+    trigger: Var[ReactNode]
+    zero_width_trigger_style: Var[Union[Dict, ContainVar]]
 
     _memoization_mode = memo_never
 

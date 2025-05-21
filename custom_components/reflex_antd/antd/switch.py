@@ -9,16 +9,16 @@ from ..constant import StatusType, SizeType, SelectModeType, PlacementType, Vari
 class Switch(AntdComponent):
     tag = 'Switch'
 
-    auto_focus: Optional[Var[bool]]
-    checked: Optional[Var[bool]]
-    checked_children: Optional[Var[ReactNode]]
-    default_checked: Optional[Var[bool]]
-    default_value: Optional[Var[bool]]
-    disabled: Optional[Var[bool]]
-    loading: Optional[Var[bool]]
-    size: Optional[Var[SizeType]]
-    un_checked_children: Optional[Var[ReactNode]]
-    value: Optional[Var[bool]]
+    auto_focus: Var[bool]
+    checked: Var[bool]
+    checked_children: Var[ReactNode]
+    default_checked: Var[bool]
+    default_value: Var[bool]
+    disabled: Var[bool]
+    loading: Var[bool]
+    size: Var[SizeType]
+    un_checked_children: Var[ReactNode]
+    value: Var[bool]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

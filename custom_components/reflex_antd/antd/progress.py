@@ -11,23 +11,23 @@ from ..constant import StatusType, ProgressType, SizeType, OrientationType
 class Progress(AntdComponent):
     tag = 'Progress'
 
-    format: Optional[Var[JsValue]]
-    percent: Optional[Var[int]]
-    show_info: Optional[Var[bool]]
-    status: Optional[Var[StatusType]]
-    stroke_color: Optional[Var[str]]
-    stroke_linecap: Optional[Var[str]]
-    success: Optional[Var[Dict]]
-    trail_color: Optional[Var[str]]
-    type: Optional[Var[ProgressType]]
-    size: Optional[Var[Union[int, SizeType, List[Union[int, SizeType]]]]]
+    format: Var[JsValue]
+    percent: Var[int]
+    show_info: Var[bool]
+    status: Var[StatusType]
+    stroke_color: Var[str]
+    stroke_linecap: Var[str]
+    success: Var[Dict]
+    trail_color: Var[str]
+    type: Var[ProgressType]
+    size: Var[Union[int, SizeType, List[Union[int, SizeType]]]]
     # type=...
-    steps: Optional[Var[Union[int, Dict]]]
-    stroke_color: Optional[Var[Union[str, List[str], Dict]]]
-    stroke_width: Optional[Var[int]]
+    steps: Var[Union[int, Dict]]
+    stroke_color: Var[Union[str, List[str], Dict]]
+    stroke_width: Var[int]
     # dashboard
-    gap_degree: Optional[Var[int]]
-    gap_position: Optional[Var[OrientationType]]
+    gap_degree: Var[int]
+    gap_position: Var[OrientationType]
 
 
 progress = Progress.create

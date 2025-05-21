@@ -10,21 +10,21 @@ from ..constant import AlignType, DirectionType, SizeType
 class Space(AntdComponent):
     tag = 'Space'
 
-    align: Optional[Var[AlignType]]
-    class_names: Optional[Var[Dict]]
-    direction: Optional[Var[DirectionType]]
-    size: Optional[Var[SizeType]]
-    split: Optional[Var[ReactNode]]
-    styles: Optional[Var[Dict]]
-    wrap: Optional[Var[bool]]
+    align: Var[AlignType]
+    class_names: Var[Dict]
+    direction: Var[DirectionType]
+    size: Var[SizeType]
+    split: Var[ReactNode]
+    styles: Var[Dict]
+    wrap: Var[bool]
 
 
 class SpaceCompact(AntdComponent):
     tag = 'Space.Compact'
 
-    block: Optional[Var[bool]]
-    direction: Optional[Var[DirectionType]]
-    size: Optional[Var[SizeType]]
+    block: Var[bool]
+    direction: Var[DirectionType]
+    size: Var[SizeType]
 
 
 space = Space.create

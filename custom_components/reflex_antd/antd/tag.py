@@ -11,10 +11,10 @@ from ..constant import TimelineModeType
 class Tag(AntdComponent):
     tag = 'Tag'
 
-    close_icon: Optional[Var[Union[bool, ReactNode]]]
-    color: Optional[Var[str]]
-    icon: Optional[Var[ReactNode]]
-    bordered: Optional[Var[bool]]
+    close_icon: Var[Union[bool, ReactNode]]
+    color: Var[str]
+    icon: Var[ReactNode]
+    bordered: Var[bool]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
@@ -27,7 +27,7 @@ class Tag(AntdComponent):
 class CheckableTag(AntdComponent):
     tag = 'Tag.CheckableTag'
 
-    checked: Optional[Var[bool]]
+    checked: Var[bool]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

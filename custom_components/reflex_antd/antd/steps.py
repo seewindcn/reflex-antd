@@ -11,18 +11,18 @@ from ..constant import PlacementType, DirectionType, SizeType, StepsStatusType, 
 class Steps(AntdComponent):
     tag = 'Steps'
 
-    current: Optional[Var[int]]
-    direction: Optional[Var[DirectionType]]
-    initial: Optional[Var[int]]
-    label_placement: Optional[Var[DirectionType]]
-    percent: Optional[Var[int]]
-    progress_dot: Optional[Var[Union[bool, JsValue]]]
-    responsive: Optional[Var[bool]]
-    size: Optional[Var[SizeType]]
-    status: Optional[Var[StepsStatusType]]
-    type: Optional[Var[StepsType]]
+    current: Var[int]
+    direction: Var[DirectionType]
+    initial: Var[int]
+    label_placement: Var[DirectionType]
+    percent: Var[int]
+    progress_dot: Var[Union[bool, JsValue]]
+    responsive: Var[bool]
+    size: Var[SizeType]
+    status: Var[StepsStatusType]
+    type: Var[StepsType]
 
-    items: Optional[Var[ContainVar]]
+    items: Var[ContainVar]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

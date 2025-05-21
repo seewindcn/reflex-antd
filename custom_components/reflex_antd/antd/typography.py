@@ -9,17 +9,17 @@ from ..constant import TypographyTextType
 
 
 class TypographyBase(AntdComponent):
-    code: Optional[Var[bool]]
-    copyable: Optional[Var[Union[bool, ContainVar]]]
-    delete: Optional[Var[bool]]
-    disabled: Optional[Var[bool]]
-    editable: Optional[Var[Union[bool, ContainVar]]]
-    ellipsis: Optional[Var[Union[bool, ContainVar]]]
+    code: Var[bool]
+    copyable: Var[Union[bool, ContainVar]]
+    delete: Var[bool]
+    disabled: Var[bool]
+    editable: Var[Union[bool, ContainVar]]
+    ellipsis: Var[Union[bool, dict, ContainVar]]
 
-    mark: Optional[Var[bool]]
-    italic: Optional[Var[bool]]
-    type: Optional[Var[TypographyTextType]]
-    underline: Optional[Var[bool]]
+    mark: Var[bool]
+    italic: Var[bool]
+    type: Var[TypographyTextType]
+    underline: Var[bool]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
@@ -39,20 +39,20 @@ class TypographyBase(AntdComponent):
 class TypographyText(TypographyBase):
     tag = 'Typography.Text'
 
-    keyboard: Optional[Var[bool]]
-    strong: Optional[Var[bool]]
+    keyboard: Var[bool]
+    strong: Var[bool]
 
 
 class TypographyTitle(TypographyBase):
     tag = 'Typography.Title'
 
-    level: Optional[Var[int]]
+    level: Var[int]
 
 
 class TypographyParagraph(TypographyBase):
     tag = 'Typography.Paragraph'
 
-    strong: Optional[Var[bool]]
+    strong: Var[bool]
 
 
 class Typography(AntdComponent):

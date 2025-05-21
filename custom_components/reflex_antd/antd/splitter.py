@@ -11,8 +11,8 @@ from ..constant import AlignType, DirectionType, SizeType
 class Splitter(AntdComponent):
     tag = 'Splitter'
 
-    layout: Optional[Var[str]]
-    lazy: Optional[Var[bool]]
+    layout: Var[str]
+    lazy: Var[bool]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
@@ -27,12 +27,12 @@ class Splitter(AntdComponent):
 class SplitterPanel(AntdComponent):
     tag = 'Splitter.Panel'
 
-    default_size: Optional[Var[Union[int, str]]]
-    min: Optional[Var[Union[int, str]]]
-    max: Optional[Var[Union[int, str]]]
-    size: Optional[Var[Union[int, str]]]
-    collapsible: Optional[Var[Union[bool, dict]]]
-    resizable: Optional[Var[bool]]
+    default_size: Var[Union[int, str]]
+    min: Var[Union[int, str]]
+    max: Var[Union[int, str]]
+    size: Var[Union[int, str]]
+    collapsible: Var[Union[bool, dict]]
+    resizable: Var[bool]
 
 
 splitter = Splitter.create

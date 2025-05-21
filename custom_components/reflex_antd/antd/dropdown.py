@@ -11,16 +11,16 @@ from ..constant import PlacementType, DirectionType
 class Dropdown(AntdComponent):
     tag = 'Dropdown'
 
-    arrow: Optional[Var[bool]]
-    auto_adjust_overflow: Optional[Var[bool]]
-    auto_focus: Optional[Var[bool]]
-    disabled: Optional[Var[bool]]
-    destroy_popup_on_hide: Optional[Var[bool]]
-    dropdown_render: Optional[Var[JsValue]]
-    menu: Optional[Var[Union[ContainVar, list]]]
-    placement: Optional[Var[PlacementType]]
-    trigger: Optional[Var[ContainVar]]
-    open: Optional[Var[bool]]
+    arrow: Var[bool]
+    auto_adjust_overflow: Var[bool]
+    auto_focus: Var[bool]
+    disabled: Var[bool]
+    destroy_popup_on_hide: Var[bool]
+    dropdown_render: Var[JsValue]
+    menu: Var[Union[ContainVar, list]]
+    placement: Var[PlacementType]
+    trigger: Var[ContainVar]
+    open: Var[bool]
 
     _memoization_mode = memo_never_no_recursive
 
@@ -38,12 +38,12 @@ class Dropdown(AntdComponent):
 class DropdownButton(Dropdown):
     tag = 'Dropdown.Button'
 
-    buttons_render: Optional[Var[JsValue]]
-    loading: Optional[Var[bool]]
-    danger: Optional[Var[bool]]
-    icon: Optional[Var[ReactNode]]
-    size: Optional[Var[str]]
-    type: Optional[Var[str]]
+    buttons_render: Var[JsValue]
+    loading: Var[bool]
+    danger: Var[bool]
+    icon: Var[ReactNode]
+    size: Var[str]
+    type: Var[str]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

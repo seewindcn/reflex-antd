@@ -11,16 +11,16 @@ from ..constant import OrientationType, DirectionType
 class Anchor(AntdComponent):
     tag = 'Anchor'
 
-    affix: Optional[Var[bool]]
-    bounds: Optional[Var[int]]
-    get_container: Optional[Var[JsNode]]
-    get_current_anchor: Optional[Var[JsNode]]
-    offset_top: Optional[Var[int]]
-    show_ink_in_fixed: Optional[Var[bool]]
-    target_offset: Optional[Var[int]]
-    items: Optional[Var[Union[List, ContainVar]]]
-    direction: Optional[Var[DirectionType]]
-    replace: Optional[Var[bool]]
+    affix: Var[bool]
+    bounds: Var[int]
+    get_container: Var[JsNode]
+    get_current_anchor: Var[JsNode]
+    offset_top: Var[int]
+    show_ink_in_fixed: Var[bool]
+    target_offset: Var[int]
+    items: Var[Union[List, ContainVar]]
+    direction: Var[DirectionType]
+    replace: Var[bool]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

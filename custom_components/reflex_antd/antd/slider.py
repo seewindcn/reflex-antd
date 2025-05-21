@@ -9,24 +9,24 @@ from ..constant import StatusType, SizeType, SelectModeType, PlacementType, Vari
 class Slider(AntdComponent):
     tag = 'Slider'
 
-    auto_adjust_overflow: Optional[Var[bool]]
-    auto_focus: Optional[Var[bool]]
-    default_value: Optional[Var[Union[int, List[int]]]]
-    disabled: Optional[Var[bool]]
-    keyboard: Optional[Var[bool]]
-    dots: Optional[Var[bool]]
-    included: Optional[Var[bool]]
-    marks: Optional[Var[Union[Dict, ContainVar]]]
-    max: Optional[Var[int]]
-    min: Optional[Var[int]]
-    range: Optional[Var[bool]]
-    reverse: Optional[Var[bool]]
-    step: Optional[Var[int]]
-    tooltip: Optional[Var[Union[ReactNode, Dict, ContainVar]]]
-    value: Optional[Var[Union[int, List[int]]]]
-    vertical: Optional[Var[bool]]
+    auto_adjust_overflow: Var[bool]
+    auto_focus: Var[bool]
+    default_value: Var[Union[int, List[int]]]
+    disabled: Var[bool]
+    keyboard: Var[bool]
+    dots: Var[bool]
+    included: Var[bool]
+    marks: Var[Union[Dict, ContainVar]]
+    max: Var[int]
+    min: Var[int]
+    range: Var[bool]
+    reverse: Var[bool]
+    step: Var[int]
+    tooltip: Var[Union[ReactNode, Dict, ContainVar]]
+    value: Var[Union[int, List[int]]]
+    vertical: Var[bool]
     # range
-    draggable_track: Optional[Var[bool]]
+    draggable_track: Var[bool]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

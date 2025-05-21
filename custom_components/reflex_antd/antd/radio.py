@@ -9,11 +9,11 @@ from ..constant import StatusType, SizeType, RadioStyleType, RadioType
 class Radio(AntdComponent):
     tag = 'Radio'
 
-    auto_focus: Optional[Var[bool]]
-    checked: Optional[Var[bool]]
-    default_checked: Optional[Var[bool]]
-    disabled: Optional[Var[bool]]
-    value: Optional[Var[Any]]
+    auto_focus: Var[bool]
+    checked: Var[bool]
+    default_checked: Var[bool]
+    disabled: Var[bool]
+    value: Var[Any]
 
 
 class RadioButton(Radio):
@@ -23,14 +23,14 @@ class RadioButton(Radio):
 class RadioGroup(AntdComponent):
     tag = 'Radio.Group'
 
-    button_style: Optional[Var[RadioStyleType]]
-    default_value: Optional[Var[Any]]
-    disabled: Optional[Var[bool]]
-    name: Optional[Var[str]]
-    options: Optional[Var[Union[List[Union[str, int]], ContainVar]]]
-    option_type: Optional[Var[RadioType]]
-    size: Optional[Var[SizeType]]
-    value: Optional[Var[Any]]
+    button_style: Var[RadioStyleType]
+    default_value: Var[Any]
+    disabled: Var[bool]
+    name: Var[str]
+    options: Var[Union[List[Union[str, int]], ContainVar]]
+    option_type: Var[RadioType]
+    size: Var[SizeType]
+    value: Var[Any]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

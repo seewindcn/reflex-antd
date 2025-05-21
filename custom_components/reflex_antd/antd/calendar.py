@@ -12,15 +12,15 @@ from .date_picker import DayJS
 class Calendar(AntdComponent):
     tag = 'Calendar'
 
-    cell_render: Optional[Var[JsValue]]
-    full_cell_render: Optional[Var[JsValue]]
-    default_value: Optional[Var[JsValue]]
-    disabled_date: Optional[Var[JsValue]]
-    fullscreen: Optional[Var[bool]]
-    header_render: Optional[Var[JsValue]]
-    locale: Optional[Var[Locale]]
-    mode: Optional[Var[str]]
-    value: Optional[Var[JsValue]]
+    cell_render: Var[JsValue]
+    full_cell_render: Var[JsValue]
+    default_value: Var[JsValue]
+    disabled_date: Var[JsValue]
+    fullscreen: Var[bool]
+    header_render: Var[JsValue]
+    locale: Var[Locale]
+    mode: Var[str]
+    value: Var[JsValue]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

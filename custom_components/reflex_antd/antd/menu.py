@@ -35,25 +35,25 @@ def on_menu_click(ev: OnSelectEvent):
 class Menu(AntdComponent):
     tag = 'Menu'
 
-    default_open_keys: Optional[Var[List[str]]]
-    default_selected_keys: Optional[Var[List[str]]]
-    expand_icon: Optional[Var[ReactNode]]
-    force_sub_menu_render: Optional[Var[bool]]
-    inline_collapsed: Optional[Var[bool]]
-    inline_indent: Optional[Var[bool]]
+    default_open_keys: Var[List[str]]
+    default_selected_keys: Var[List[str]]
+    expand_icon: Var[ReactNode]
+    force_sub_menu_render: Var[bool]
+    inline_collapsed: Var[bool]
+    inline_indent: Var[bool]
 
     items: Var[Union[ContainVar, list]]
-    mode: Optional[Var[DirectionType]]
-    multiple: Optional[Var[bool]]
-    open_keys: Optional[Var[List[str]]]
-    overflowed_indicator: Optional[Var[ReactNode]]
-    selectable: Optional[Var[bool]]
-    selected_keys: Optional[Var[List[str]]]
-    sub_menu_close_delay: Optional[Var[float]]
-    sub_menu_open_delay: Optional[Var[float]]
+    mode: Var[DirectionType]
+    multiple: Var[bool]
+    open_keys: Var[List[str]]
+    overflowed_indicator: Var[ReactNode]
+    selectable: Var[bool]
+    selected_keys: Var[List[str]]
+    sub_menu_close_delay: Var[float]
+    sub_menu_open_delay: Var[float]
 
-    theme: Optional[Var[ThemeType]]
-    trigger_sub_menu_action: Optional[Var[TriggerType]]
+    theme: Var[ThemeType]
+    trigger_sub_menu_action: Var[TriggerType]
 
     @classmethod
     def get_menu_triggers(cls, triggers: dict, prepare: str = ''):

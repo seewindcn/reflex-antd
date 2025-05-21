@@ -8,17 +8,17 @@ from ..constant import TypeType
 class Popconfirm(AntdComponent):
     tag = 'Popconfirm'
 
-    cancel_button_orops: Optional[Var[dict]]
-    cancel_text: Optional[Var[str]]
-    disabled: Optional[Var[bool]]
-    icon: Optional[Var[ReactNode]]
-    ok_button_props: Optional[Var[dict]]
-    ok_text: Optional[Var[str]]
-    ok_type: Optional[Var[TypeType]]
-    open: Optional[Var[bool]]
-    show_cancel: Optional[Var[bool]]
-    title: Optional[Var[ReactNode]]
-    description: Optional[Var[ReactNode]]
+    cancel_button_orops: Var[dict]
+    cancel_text: Var[str]
+    disabled: Var[bool]
+    icon: Var[ReactNode]
+    ok_button_props: Var[dict]
+    ok_text: Var[str]
+    ok_type: Var[TypeType]
+    open: Var[bool]
+    show_cancel: Var[bool]
+    title: Var[ReactNode]
+    description: Var[ReactNode]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

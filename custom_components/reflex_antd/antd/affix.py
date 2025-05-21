@@ -11,9 +11,9 @@ from ..constant import OrientationType, DirectionType
 class Affix(AntdComponent):
     tag = 'Affix'
 
-    offset_bottom: Optional[Var[int]]
-    offset_top: Optional[Var[int]]
-    target: Optional[Var[JsValue]]
+    offset_bottom: Var[int]
+    offset_top: Var[int]
+    target: Var[JsValue]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

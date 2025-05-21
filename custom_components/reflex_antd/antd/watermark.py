@@ -11,16 +11,16 @@ from ..constant import OrientationType, DirectionType
 class Watermark(AntdComponent):
     tag = 'Watermark'
 
-    width: Optional[Var[int]]
-    height: Optional[Var[int]]
-    inherit: Optional[Var[bool]]
-    rotate: Optional[Var[int]]
-    z_index: Optional[Var[int]]
-    image: Optional[Var[str]]
-    content: Optional[Var[Union[str, List[str]]]]
-    font: Optional[Var[Union[Dict, ContainVar]]]
-    gap: Optional[Var[Tuple[int, int]]]
-    offset: Optional[Var[Tuple[int, int]]]
+    width: Var[int]
+    height: Var[int]
+    inherit: Var[bool]
+    rotate: Var[int]
+    z_index: Var[int]
+    image: Var[str]
+    content: Var[Union[str, List[str]]]
+    font: Var[Union[Dict, ContainVar]]
+    gap: Var[Tuple[int, int]]
+    offset: Var[Tuple[int, int]]
 
 
 watermark = Watermark.create

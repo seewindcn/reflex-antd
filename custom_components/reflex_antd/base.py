@@ -1,8 +1,8 @@
+from typing import Type, Any, Tuple, Dict, List, Iterable, Callable, Set, Union, Optional, Self, cast
 import functools
 import logging
 import os
 import types
-from typing import Type, Any, Tuple, Dict, List, Iterable, Callable, Set, Union, Optional, Self
 import sys
 from os import path
 from abc import ABC, abstractmethod
@@ -11,7 +11,9 @@ from hashlib import md5
 import dataclasses
 import inspect
 import re
+import json
 
+import pydantic as pydantic2_md
 import reflex as rx
 from reflex import Component, Var, State, Base, ImportVar, NoSSRComponent
 from reflex.vars import StringVar, base as vars_base
@@ -26,7 +28,7 @@ from reflex.components.tags import Tag
 from reflex.constants import Hooks, Reflex, MemoizationDisposition, MemoizationMode
 from reflex.utils import imports, format, serializers, exceptions
 from reflex.vars import Var, VarData
-from reflex.vars.base import get_unique_variable_name
+from reflex.vars.base import get_unique_variable_name, var_operation_return
 from reflex.event import EventHandler, EventSpec, EventChain
 from reflex.experimental import hooks
 
@@ -60,6 +62,13 @@ def wrap_use_pretty_dumps(func):
     return _wrap
 
 
+class MyStatefulComponent(StatefulComponent):
+    _valid_parents: List[str] = []  # hack: support use in rx.match
+
+    def _get_vars(self, **kwargs):
+        return self.component._get_vars(**kwargs)
+
+
 def stateless(hd: Callable[..., Component] = None, memo=memo_never_no_recursive) -> Callable:
     def _my(_hd: Callable[..., Component]) -> Callable:
         @wraps(_hd)
@@ -86,8 +95,7 @@ def stateful(hd: Callable[..., Component] = None, forced=True, memo=memo_always)
             if forced:
                 _com._memoization_mode = memo
                 # _com._memoization_mode.recursive = False
-            _sc = AntdStatefulComponent.create(_com)
-            # _sc = None
+            _sc = MyStatefulComponent.create(_com)
             return _sc if _sc is not None else _com
             # return _com
 
@@ -99,7 +107,19 @@ def stateful(hd: Callable[..., Component] = None, forced=True, memo=memo_always)
         return _my(hd)
 
 
-STR_TYPES = (str, list,)
+STR_TYPES = (str, list, dict)
+
+
+def to_str(v: str | list | dict | Any) -> Any:
+    if isinstance(v, str):
+        return v
+    if isinstance(v, dict):
+        _v = dict([(k, to_str(_v)) for k, _v in v.items()])
+        return _v
+    if isinstance(v, list):
+        _v = [to_str(i) for i in v]
+        return _v
+    return str(v)
 
 
 def compose_react_imports(tags: list[str]):
@@ -152,12 +172,6 @@ def get_var_data_hooks(v: Union[Var, VarData, "JsValue"]) -> dict[str, None]:
         return v.get_hooks()
     _var_data = get_var_data(v) if isinstance(v, Var) else v
     return {hook: None for hook in _var_data.hooks} if _var_data else {}
-
-
-class AntdStatefulComponent(StatefulComponent):
-    """ # hack """
-    def _get_vars(self, **kwargs):
-        return self.component._get_vars(**kwargs)
 
 
 class ExItem(ABC):
@@ -249,6 +263,7 @@ class ExStatefulComponentItem(ExComponentItemBase):
 
 
 class JsEvent:
+    """ can use like event value """
     hd: EventHandler
     # event_trigger use for custom trigger, must work with fmt=True
     event_trigger: Callable
@@ -496,7 +511,7 @@ class JsValue:
             code = code[2:] if code.startswith('<>') else code
             code = code[:-3] if code.endswith('</>') else code
             code = code.strip('{}')
-        return f"({code})" if self.to_js else code
+        return f"({code})" if self.to_js else f"{code}"
 
     def get_imports(self) -> imports.ImportDict:
         _imports = imports.merge_imports(
@@ -533,7 +548,7 @@ class JsValue:
 
 
 class JsFunctionValue(JsValue):
-    _value: Union[str, "CasualVar", Component]
+    _value: Union[str, "CasualVar", Component, JsValue]
 
     @property
     def args(self):
@@ -554,7 +569,7 @@ class JsFunctionValue(JsValue):
             is_component = True
             v = str(self._value)
         else:
-            v = str(self._value)
+            v = to_str(self._value)
             # raise TypeError(self._value)
         sep_1, sep_2 = (('{', '}') if self.to_react else ('(', ')')) if not is_component else ('(', ')')
         return f"""(({','.join(self._args.args)}) => 
@@ -730,7 +745,14 @@ class ExVarItem(ExItem):
     def isinstance(cls, item: Any) -> bool:
         return isinstance(item, Var)
 
+    def __init__(self, item: Any, parent: Component, key: str = ''):
+        if isinstance(item, ContainVar):  # nesting ContainVar
+            item = item.init(parent, key)
+        super().__init__(item, parent, key=key)
+
     def serialize(self) -> str:
+        if isinstance(self.item, ContainVar):  # nesting ContainVar
+            return str(self.item)
         return str(self.item).strip('{}')
 
     def get_imports(self) -> imports.ImportDict:
@@ -760,7 +782,7 @@ class ExFormatter:
         # ExCallableItem,
     ]
 
-    def __init__(self, value: Any, parent: Component, name: str = ''):
+    def __init__(self, value: Any, parent: Component = None, name: str = ''):
         self.name = name
         self.value = value
         self.parent = parent
@@ -775,6 +797,8 @@ class ExFormatter:
         def _op(_v: Any, key: str):
             if isinstance(_v, (list, tuple)):
                 return _list(_v, pkey=key)
+            elif isinstance(_v, PropBase):
+                return _dict(_v.to_dict(), pkey=key)
             elif isinstance(_v, dict):
                 return _dict(_v, pkey=key)
             elif isinstance(_v, (int, float, str, bool)):
@@ -906,14 +930,17 @@ class CasualVar(StringVar):
             )
 
     def __getitem__(self, i: Any) -> Var:
-        try:
-            return super().__getitem__(i)
-        except (exceptions.VarTypeError,):
-            if str(i).startswith("_"):
-                raise
-            return self.create_safe(
-                f'{self._js_expr}["{i}"]',
-            )
+        return self.create_safe(
+            f'{self._js_expr}["{i}"]',
+        )
+        # try:
+        #     return super().__getitem__(i)
+        # except (exceptions.VarTypeError,):
+        #     if str(i).startswith("_"):
+        #         raise
+        #     return self.create_safe(
+        #         f'{self._js_expr}["{i}"]',
+        #     )
 
     def to_js(self) -> Self:
         return self._replace(
@@ -935,6 +962,15 @@ class CasualVar(StringVar):
             _var_type=EventChain,
             _js_expr=f'({self._js_expr})'
         )
+
+    def array_filter(self, filter_op: str | Callable[[Self], Self]):
+        if callable(filter_op):
+            filter_op = filter_op(casual_var('item'))
+        rs = var_operation_return(
+            js_expression=f"{self}.filter(item => {filter_op})",
+            var_type=list,
+        )
+        return rs
 
     to_type = Var.to
 
@@ -967,7 +1003,9 @@ class ContainVar(ExVar):
     def _var_full_name(self) -> str:
         """ ContainVar used at Component property """
         if getattr(self, '_var_fmt', None) is None:
-            raise AttributeError('please call init first')
+            _c = self.init(None, '')
+            return _c._var_fmt.get_value()
+            # raise AttributeError('please call init first')
         return self._var_fmt.get_value()
 
     @classmethod
@@ -984,7 +1022,7 @@ class ContainVar(ExVar):
         )
         return rs
 
-    def init(self, parent: Component, name: str) -> Self:
+    def init(self, parent: Optional[Component], name: str) -> Self:
         _vv = self._var_value
         fmt = ExFormatter(_vv, parent=parent, name=name)
         _var = dataclasses.replace(
@@ -1037,33 +1075,67 @@ class ContainVar(ExVar):
             raise ValueError(f"to_hook_code Unsupported type {type(_vv)}")
 
         def _check(i):
-            assert isinstance(i, support_clses), \
-                'ContainVar.to_hook_code list item only support: JsValue, JsFunctionValue'
+            _is_ok = isinstance(i, support_clses)
+            # assert _is_ok, \
+            #     'ContainVar.to_hook_code list item only support: JsValue, JsFunctionValue'
+            return _is_ok
 
         def _iter_items():
             _prefix = f'{self._var_fmt.name}_' if self._var_fmt.name else '_'
             if isinstance(items, list):
                 for idx, item in enumerate(items):
-                    _check(item)
                     yield f'{_prefix}{idx}', item
             elif isinstance(items, dict):
                 for k, v in items.items():
-                    _check(v)
                     yield f'{_prefix}{k}', v
 
         hooks: Dict[str, None] = {}
         for name, ex in _iter_items():
-            if isinstance(ex, JsEvent):
-                ex.get_ex_item(self, name)
-            hook = ex.to_hook_code(name)
-            hooks[hook] = None
+            if _check(ex):
+                if isinstance(ex, JsEvent):
+                    ex.get_ex_item(self, name)
+                _hook = ex.to_hook_code(name)
+            else:
+                _hook = str(ex)  # support reflex's hook, like ConnectionToaster, use Var to code js
+            hooks[_hook] = None
 
         return hooks
 
 
-class PropVarBase(ContainVar):
+class PropBase(BaseModel):
+    # v1
+    class Config:
+        arbitrary_types_allowed = True
+    # v2
+    # model_config = dict(
+    #     arbitrary_types_allowed=True,  # 允许你在 Pydantic 模型中使用任意类型，而不仅仅是内置的 Python 类型
+    # )
+
+    def to_dict(self) -> dict:
+        """
+            . support use in Component, field is Var, can not use model_dump
+        """
+        # keys = self.model_fields.keys()  # v2
+        keys = self.__fields__.keys()  # v1
+        values = {}
+        for k in keys:
+            v = getattr(self, k)
+            if v is None:
+                continue
+            values[k] = v
+        # rs = self.model_dump(exclude_none=True)
+        return values
+
+    def to_component(self) -> Component:
+        """ sometimes, prop use with rx.foreach, like TabItem """
+        d = self.to_dict()
+        c = container(d)
+        return c
+
+
+class PropVar(ContainVar):
     @classmethod
-    def create(cls, **kwargs) -> Self:
+    def create(cls, prop: PropBase) -> Self:
         # v: Var = super().create(_name, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
         rs = cls(
             _js_expr='',
@@ -1071,14 +1143,27 @@ class PropVarBase(ContainVar):
             _var_is_local=True,
             _var_is_string=False,
             _var_data=None,
-            _var_value=None,
-            **kwargs
+            _var_value=prop,
         )
         return rs
 
+    def to_dict(self) -> dict:
+        d = dict((k, v) for k, v in self.__dict__.items() if k[0] != '_')
+        return d
+        # return self._var_value.copy()
+
     def init(self, parent: Component, name: str) -> Self:
-        self._var_value = dict((k, v) for k, v in self.__dict__.items() if k[0] != '_')
         return super().init(parent, name)
+
+    def __bool__(self):
+        return bool(self._var_value)
+
+
+# @serializers.serializer(to=dict)
+# def serialize_prop_var(prop: PropBase) -> dict:
+#     _prop = cast(PropVarBase, prop)
+#     rs = _prop.to_dict()
+#     return rs
 
 
 contain = ContainVar.create
@@ -1164,32 +1249,44 @@ class AntdBaseComponent(Component):
         web_dir = '.web'  # prerequisites.get_web_dir()
         cur_path = dirname(sys.modules[self.__module__].__file__)
         js_path = join(cur_path, _custom_js)
-        suffix = _custom_js.split('.')[-1]
-        dst_path = join(web_dir, f'{self.library[1:]}.{suffix}')
-        if not path.exists(path.dirname(dst_path)):
-            os.makedirs(path.dirname(dst_path), exist_ok=True)
+        # if not path.exists(path.dirname(js_path)):
+        #     os.makedirs(path.dirname(js_path), exist_ok=True)
+        if path.isfile(js_path):
+            suffix = _custom_js.split('.')[-1]
+            dst_path = join(web_dir, f'{self.library[1:]}.{suffix}')
+        else:
+            dst_path = join(web_dir, f'{self.library[1:]}')
+        dst_parent_path = dirname(dst_path)
+        if not path.exists(dst_parent_path):
+            os.makedirs(dst_parent_path, exist_ok=True)
         prerequisites.path_ops.cp(js_path, dst_path)
 
-    def __init__(self, *args, ex_hooks: List[ContainVar | list | dict] = None, **kwargs):
+    # def __init__(self, *args, ex_hooks: List[ContainVar | list | dict] = None, **kwargs):
+
+    @classmethod
+    def _create(cls, *args, ex_hooks: List[ContainVar | list | dict] = None, **kwargs: Any):
         contains = {}
         exs = {}
         kw = {}
         for k, v in kwargs.items():
-            if isinstance(v, ContainVar):
+            if isinstance(v, (ContainVar, PropBase)):
+                if isinstance(v, PropBase):
+                    v = PropVar.create(v)
                 contains[k] = v
             elif isinstance(v, (JsValue, JsEvent)):
                 exs[k] = v
             elif isinstance(v, Component):
-                kw[k] = vars_base.LiteralVar.create(v)
+                kw[k] = LiteralAntdComponentVar.create(v)
             else:
                 kw[k] = v
         # super().__init__(*args, **kw)
         try:
-            super().__init__(*args, **kw)
+            comp = super()._create(*args, **kw)
         except Exception as err:
-            logging.exception(f"class<{self}>, args={args}, kw={kw}, error: {err}")
+            logging.exception(f"class<{cls}>, args={args}, kw={kw}, error: {err}")
             raise
-        self._init_contains(contains, exs, ex_hooks)
+        comp._init_contains(contains, exs, ex_hooks)
+        return comp
 
     def _render(self, *args, **kwargs) -> Tag:
         if isinstance(self.__class__._custom_js, str):
@@ -1200,7 +1297,9 @@ class AntdBaseComponent(Component):
     def _get_all_custom_components(
             self, seen: set[str] | None = None
     ) -> Set[CustomComponent]:
-        _coms = super()._get_all_custom_components(seen=seen)
+        # hack 0.7 remove
+        # _coms = super()._get_all_custom_components(seen=seen)
+        _coms = set()
         if hasattr(self, '_custom_components') and self._custom_components:
             _coms |= self._custom_components
         return _coms
@@ -1209,6 +1308,10 @@ class AntdBaseComponent(Component):
         code = super()._get_all_custom_code()
         for v in self._iter_all_contains():
             code.update(v.get_custom_code())
+        for k, v in self._iter_exs():
+            code.update(v.get_custom_code())
+        for n, prop in self.iter_component_props():
+            code.update(prop._get_all_custom_code())
         return code
 
     def _get_all_dynamic_imports(self) -> Set[str]:
@@ -1302,6 +1405,18 @@ class AntdBaseComponent(Component):
         if [h for h in var_hooks if 'addEvents' in h]:
             var_hooks = {Hooks.EVENTS: None, **var_hooks}
         return var_hooks
+
+    def iter_component_props(self) -> Iterable[tuple[str, Component]]:
+        cls = self.__class__
+        _props = cls.get_props()
+        for name, field in cls.get_fields().items():
+            if name not in _props:
+                continue
+            _p = getattr(self, name)
+            if isinstance(_p, Var):
+                _v = getattr(_p, '_var_value', None)
+                if isinstance(_v, Component):
+                    yield name, _v
 
     def _iter_contains(self) -> Iterable[Tuple[str, ContainVar]]:
         """ iter component's property which is ContainVar """
@@ -1439,13 +1554,12 @@ class LiteralAntdComponentVar(vars_base.CachedVarOperation, vars_base.LiteralVar
         Returns:
             The var.
         """
-        _var = LiteralAntdComponentVar(
+        return LiteralAntdComponentVar(
             _js_expr="",
             _var_type=type(value),
             _var_data=_var_data,
             _var_value=value,
         )
-        return _var
 
 
 class AntdComponent(AntdBaseComponent):
@@ -1585,8 +1699,43 @@ def patch_all():
     compiler._compile_tailwind = functools.partial(_wrap_js_regex, compiler._compile_tailwind)
 
     old_update_next_config = prerequisites.update_next_config
+    old__update_next_config = prerequisites._update_next_config
 
-    # https://github.com/vercel/next.js/issues/58817 next.js 14.0.3 fail to use antd
+    # 2. https://github.com/ant-design/pro-components/issues/8543
+    def my__update_next_config(*args, **kwargs) -> str:
+        fix_antd_pro = """, experimental: {
+    forceSwcTransforms: true,
+    optimizePackageImports: [
+      '@ant-design/pro-card',
+      '@ant-design/pro-components',
+      '@ant-design/pro-descriptions',
+      '@ant-design/pro-field',
+      '@ant-design/pro-form',
+      '@ant-design/pro-layout',
+      '@ant-design/pro-list',
+      '@ant-design/pro-layout',
+      '@ant-design/pro-provider',
+      '@ant-design/pro-skeleton',
+      '@ant-design/pro-table',
+      '@ant-design/pro-utils',
+    ]
+  }, transpilePackages:"""
+
+        def _hack_json_dumps(next_config: dict):
+            # sort transpilePackages, make sure next_config_file no update every times
+            next_config["transpilePackages"].sort()
+            return _old_json_dumps(next_config)
+        _old_json_dumps = json.dumps
+        json.dumps = _hack_json_dumps
+        try:
+            rs = old__update_next_config(*args, **kwargs)
+        finally:
+            json.dumps = _old_json_dumps
+
+        return rs.replace(', transpilePackages:', fix_antd_pro)
+
+
+    # 1. https://github.com/vercel/next.js/issues/58817 next.js 14.0.3 fail to use antd
     def my_update_next_config(export=False, transpile_packages: Optional[List[str]] = None):
         transpile_packages = transpile_packages or []
         transpile_packages.extend([
@@ -1629,6 +1778,7 @@ def patch_all():
         return old_update_next_config(export=export, transpile_packages=transpile_packages)
 
     prerequisites.update_next_config = my_update_next_config
+    prerequisites._update_next_config = my__update_next_config
 
     def _my_get_memoized_event_triggers(
             cls,
@@ -1681,9 +1831,11 @@ def patch_all():
     component_md.render_dict_to_var = my_render_dict_to_var
 
 
-ReactNode = Union[str, Component]
-JsNode = Union[JsValue, JsEvent]
+def vt(t):
+    return t | Var[t]
 
-fragment = AntdFragment.create
 
+ReactNode = BaseComponent | str
+JsNode = JsValue | JsEvent
 ExTypes = JsValue | ContainVar | JsEvent
+fragment = AntdFragment.create
