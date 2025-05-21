@@ -11,6 +11,7 @@ from hashlib import md5
 import dataclasses
 import inspect
 import re
+import json
 
 import pydantic as pydantic2_md
 import reflex as rx
@@ -61,6 +62,10 @@ def wrap_use_pretty_dumps(func):
     return _wrap
 
 
+class MyStatefulComponent(StatefulComponent):
+    _valid_parents: List[str] = []  # hack: support use in rx.match
+
+
 def stateless(hd: Callable[..., Component] = None, memo=memo_never_no_recursive) -> Callable:
     def _my(_hd: Callable[..., Component]) -> Callable:
         @wraps(_hd)
@@ -87,7 +92,7 @@ def stateful(hd: Callable[..., Component] = None, forced=True, memo=memo_always)
             if forced:
                 _com._memoization_mode = memo
                 # _com._memoization_mode.recursive = False
-            _sc = StatefulComponent.create(_com)
+            _sc = MyStatefulComponent.create(_com)
             return _sc if _sc is not None else _com
             # return _com
 
@@ -99,7 +104,19 @@ def stateful(hd: Callable[..., Component] = None, forced=True, memo=memo_always)
         return _my(hd)
 
 
-STR_TYPES = (str, list,)
+STR_TYPES = (str, list, dict)
+
+
+def to_str(v: str | list | dict | Any) -> Any:
+    if isinstance(v, str):
+        return v
+    if isinstance(v, dict):
+        _v = dict([(k, to_str(_v)) for k, _v in v.items()])
+        return _v
+    if isinstance(v, list):
+        _v = [to_str(i) for i in v]
+        return _v
+    return str(v)
 
 
 def compose_react_imports(tags: list[str]):
@@ -549,7 +566,7 @@ class JsFunctionValue(JsValue):
             is_component = True
             v = str(self._value)
         else:
-            v = str(self._value)
+            v = to_str(self._value)
             # raise TypeError(self._value)
         sep_1, sep_2 = (('{', '}') if self.to_react else ('(', ')')) if not is_component else ('(', ')')
         return f"""(({','.join(self._args.args)}) => 
@@ -725,7 +742,14 @@ class ExVarItem(ExItem):
     def isinstance(cls, item: Any) -> bool:
         return isinstance(item, Var)
 
+    def __init__(self, item: Any, parent: Component, key: str = ''):
+        if isinstance(item, ContainVar):  # nesting ContainVar
+            item = item.init(parent, key)
+        super().__init__(item, parent, key=key)
+
     def serialize(self) -> str:
+        if isinstance(self.item, ContainVar):  # nesting ContainVar
+            return str(self.item)
         return str(self.item).strip('{}')
 
     def get_imports(self) -> imports.ImportDict:
@@ -755,7 +779,7 @@ class ExFormatter:
         # ExCallableItem,
     ]
 
-    def __init__(self, value: Any, parent: Component, name: str = ''):
+    def __init__(self, value: Any, parent: Component = None, name: str = ''):
         self.name = name
         self.value = value
         self.parent = parent
@@ -903,14 +927,17 @@ class CasualVar(StringVar):
             )
 
     def __getitem__(self, i: Any) -> Var:
-        try:
-            return super().__getitem__(i)
-        except (exceptions.VarTypeError,):
-            if str(i).startswith("_"):
-                raise
-            return self.create_safe(
-                f'{self._js_expr}["{i}"]',
-            )
+        return self.create_safe(
+            f'{self._js_expr}["{i}"]',
+        )
+        # try:
+        #     return super().__getitem__(i)
+        # except (exceptions.VarTypeError,):
+        #     if str(i).startswith("_"):
+        #         raise
+        #     return self.create_safe(
+        #         f'{self._js_expr}["{i}"]',
+        #     )
 
     def to_js(self) -> Self:
         return self._replace(
@@ -973,7 +1000,9 @@ class ContainVar(ExVar):
     def _var_full_name(self) -> str:
         """ ContainVar used at Component property """
         if getattr(self, '_var_fmt', None) is None:
-            raise AttributeError('please call init first')
+            _c = self.init(None, '')
+            return _c._var_fmt.get_value()
+            # raise AttributeError('please call init first')
         return self._var_fmt.get_value()
 
     @classmethod
@@ -990,7 +1019,7 @@ class ContainVar(ExVar):
         )
         return rs
 
-    def init(self, parent: Component, name: str) -> Self:
+    def init(self, parent: Optional[Component], name: str) -> Self:
         _vv = self._var_value
         fmt = ExFormatter(_vv, parent=parent, name=name)
         _var = dataclasses.replace(
@@ -1070,18 +1099,35 @@ class ContainVar(ExVar):
         return hooks
 
 
-class PropBase(pydantic2_md.BaseModel):
-    model_config = pydantic2_md.ConfigDict(
-        arbitrary_types_allowed=True,  # 允许你在 Pydantic 模型中使用任意类型，而不仅仅是内置的 Python 类型
-    )
+class PropBase(BaseModel):
+    # v1
+    class Config:
+        arbitrary_types_allowed = True
+    # v2
+    # model_config = dict(
+    #     arbitrary_types_allowed=True,  # 允许你在 Pydantic 模型中使用任意类型，而不仅仅是内置的 Python 类型
+    # )
 
     def to_dict(self) -> dict:
         """
             . support use in Component, field is Var, can not use model_dump
         """
-        values = dict((k, getattr(self, k)) for k in self.model_fields)
+        # keys = self.model_fields.keys()  # v2
+        keys = self.__fields__.keys()  # v1
+        values = {}
+        for k in keys:
+            v = getattr(self, k)
+            if v is None:
+                continue
+            values[k] = v
         # rs = self.model_dump(exclude_none=True)
         return values
+
+    def to_component(self) -> Component:
+        """ sometimes, prop use with rx.foreach, like TabItem """
+        d = self.to_dict()
+        c = container(d)
+        return c
 
 
 class PropVar(ContainVar):
@@ -1664,8 +1710,20 @@ def patch_all():
       '@ant-design/pro-utils',
     ]
   }, transpilePackages:"""
-        rs = old__update_next_config(*args, **kwargs)
+
+        def _hack_json_dumps(next_config: dict):
+            # sort transpilePackages, make sure next_config_file no update every times
+            next_config["transpilePackages"].sort()
+            return _old_json_dumps(next_config)
+        _old_json_dumps = json.dumps
+        json.dumps = _hack_json_dumps
+        try:
+            rs = old__update_next_config(*args, **kwargs)
+        finally:
+            json.dumps = _old_json_dumps
+
         return rs.replace(', transpilePackages:', fix_antd_pro)
+
 
     # 1. https://github.com/vercel/next.js/issues/58817 next.js 14.0.3 fail to use antd
     def my_update_next_config(export=False, transpile_packages: Optional[List[str]] = None):
@@ -1722,9 +1780,11 @@ def patch_all():
     # StatefulComponent._get_memoized_event_triggers = classmethod(_my_get_memoized_event_triggers)
 
 
-ReactNode = Union[Component, str]
-JsNode = Union[JsValue, JsEvent]
+def vt(t):
+    return t | Var[t]
 
-fragment = AntdFragment.create
 
+ReactNode = BaseComponent | str
+JsNode = JsValue | JsEvent
 ExTypes = JsValue | ContainVar | JsEvent
+fragment = AntdFragment.create

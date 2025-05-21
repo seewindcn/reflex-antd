@@ -2,12 +2,42 @@ from __future__ import annotations
 
 from typing import Optional, Union, Dict, Any, List
 
-from reflex import Component, Var, EventHandler
-from reflex.event import passthrough_event_spec
+from reflex import Component, Var
+from reflex.event import EventHandler, passthrough_event_spec
 from reflex_antd.antd import form, modal
 
+from ..constant import AlignType, DirectionType, SizeType, VariantType
 from ..base import ContainVar, JsValue, ReactNode, ExTypes, PropBase, CasualVar
 from .base import AntdProBaseComponent
+
+
+class FormProps(PropBase):
+    grid: Var[bool]
+    row_props: Var[dict | ExTypes]
+    readonly: Var[bool]
+    trigger: Var[ReactNode | ExTypes]
+    submitter: Var[bool | ContainVar]
+
+    # form
+    colon: Optional[Var[bool]]
+    component: Optional[Var[Union[bool, ReactNode]]]
+    disabled: Optional[Var[bool]]
+    fields: Optional[Var[ContainVar]]
+    form: Optional[Var[Union[str, CasualVar]]]
+    initial_values: Optional[Var[Dict]]
+    label_align: Optional[Var[AlignType]]
+    label_wrap: Optional[Var[bool]]
+    label_col: Optional[Var[Dict]]
+    layout: Optional[Var[DirectionType]]
+    name: Optional[Var[str]]
+    preserve: Optional[Var[bool]]
+    required_mark: Optional[Var[Union[bool, JsValue]]]
+    scrollTo_first_error: Optional[Var[Union[bool, Dict]]]
+    size: Optional[Var[SizeType]]
+    validate_messages: Optional[Var[Dict]]
+    validate_trigger: Optional[Var[Union[str, List[str]]]]
+    variant: Optional[Var[VariantType]]
+    wrapper_col: Optional[Var[Dict]]
 
 
 class ProForm(AntdProBaseComponent, form.Form):
@@ -67,6 +97,7 @@ class StepForm(ProForm):
     tag = 'StepsForm.StepForm'
 
     step_props: Var[dict | ExTypes]
+    on_finish: EventHandler[passthrough_event_spec(Any)]
 
 
 class StepsForm(ProForm):
@@ -75,6 +106,12 @@ class StepsForm(ProForm):
     current: Var[int]
     steps: Var[list | ExTypes]
     steps_props: Var[dict | ExTypes]
+    step_form_render: Var[ExTypes]
+    steps_form_render: Var[ExTypes]
+    steps_render: Var[ExTypes]
+    form_ref: Var[ExTypes]
+
+    on_finish: EventHandler[passthrough_event_spec(Any)]
 
 
 class ModalForm(ProForm):
@@ -251,3 +288,4 @@ pro_form_digit = ProFormDigit.create
 pro_form_textarea = ProFormTextArea.create
 pro_form_date_picker = ProFormDatePicker.create
 pro_form_select = ProFormSelect.create
+pro_form_radio = ProFormRadioGroup.create

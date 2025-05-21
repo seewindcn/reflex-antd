@@ -6,3 +6,13 @@ from .antd_pro.pro_form import (  # noqa
     pro_form_item,
     pro_form_text, pro_form_digit, pro_form_textarea, pro_form_date_picker, pro_form_select
 )
+from .antd_pro.pro_table import (  # noqa
+    pro_table, edit_pro_table,
+    Column, ColumnStateType,
+    OptionConfig, SettingOptionType, SearchConfig,
+    SearchProps, Setting, FormProps,
+    ListToolBarProps, ListToolBarMenu, ListToolBarTabs,
+    TableRowEditable, TableDropdown,
+    RecordCreator,
+)
+

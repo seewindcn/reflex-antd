@@ -2,7 +2,7 @@ from typing import Optional, Union, Dict, Any, List
 from reflex import Var, Component
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, JsValue, ReactNode
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExTypes
 from ..constant import StatusType, SizeType, SelectModeType, PlacementType, VariantType
 
 
@@ -20,6 +20,10 @@ class Select(AntdComponent):
     popup_match_select_width: Optional[Var[Union[bool, int]]]
     dropdown_render: Optional[Var[JsValue]]
     dropdown_style: Optional[Var[Dict]]
+
+    popup_render: Var[ExTypes]
+    styles: Var[dict | ContainVar]
+
     field_names: Optional[Var[Dict]]
     filter_option: Optional[Var[Union[bool, JsValue]]]
     filter_sort: Optional[Var[JsValue]]

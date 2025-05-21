@@ -3,15 +3,55 @@ from reflex import Var, Component
 from reflex.constants import EventTriggers
 from reflex.utils import imports
 
-from ..base import AntdComponent, ContainVar, JsValue, ExTypes
+from ..base import AntdComponent, ContainVar, JsValue, ExTypes, PropBase, ReactNode
 from ..constant import StatusType, SizeType
+
+
+class Column(PropBase):
+    align: str = None
+    class_name: str = None
+    col_span: int = None
+    data_index: str | list[str] = None
+    default_filtered_value: list[str] = None
+    filter_reset_to_default_filtered_value: bool = None
+    default_sort_order: str = None
+    ellipsis: bool | dict = None
+    filter_dropdown: ReactNode | ExTypes = None
+    filtered: bool = None
+    filtered_value: list[str] = None
+    filter_icon: ReactNode | ExTypes = None
+    filter_on_close: bool = None
+    filter_multiple: bool = None
+    filter_mode: str = None
+    filter_search: bool | ExTypes = None
+    filters: bool | list[dict] | ExTypes = None
+    filter_dropdown_props: dict | ExTypes = None
+    fixed: bool | str = None
+    key: str = None
+    render: ExTypes = None
+    responsive: dict | ExTypes = None
+    row_scope: dict | ExTypes = None
+    should_cell_update: ExTypes = None
+    show_sorter_tooltip: bool | ExTypes = None
+    sort_directions: list[str] = None
+    sorter: bool | ExTypes = None
+    sort_order: str = None
+    sort_icon: ReactNode | ExTypes = None
+    title: ReactNode | ExTypes = None
+    width: str | int = None
+    min_width: str | int = None
+    hidden: bool = None
+
+    on_cell: ExTypes = None
+    on_filter: ExTypes = None
+    on_header_cell: ExTypes = None
 
 
 class Table(AntdComponent):
     tag = 'Table'
 
     bordered: Optional[Var[bool]]
-    columns: Optional[Var[Union[ContainVar, list]]]
+    columns: Var[list[dict] | list[Column] | ContainVar]
     components: Optional[Var[Union[ContainVar, dict]]]
     data_source: Optional[Var[List[Dict[str, Any]]]]
     expandable: Optional[Var[ContainVar]]
