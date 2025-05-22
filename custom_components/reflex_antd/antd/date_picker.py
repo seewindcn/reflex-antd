@@ -98,7 +98,6 @@ class RangePicker(BaseDatePicker):
     disabled: Var[Tuple[bool, bool]]
     disabled_time: Var[JsValue]
     format: Var[ContainVar]
-    id: Var[Dict[str, str]]
     picker_value: Var[ContainVar]
     presets: Var[ContainVar]
     render_extra_footer: Var[JsValue]

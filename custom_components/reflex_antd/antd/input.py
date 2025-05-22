@@ -15,7 +15,6 @@ class Input(AntdComponent):
     count: Var[Union[Dict, ContainVar]]
     default_value: Var[str]
     disabled: Var[bool]
-    id: Var[str]
     max_length: Var[int]
     prefix: Var[ReactNode]
     show_count: Var[Union[bool, JsValue]]
