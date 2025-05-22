@@ -13,8 +13,8 @@ from .tooltip import Tooltip
 class Popover(Tooltip):
     tag = 'Popover'
 
-    content: Optional[Var[Union[ReactNode, ContainVar]]]
-    title: Optional[Var[Union[ReactNode, ContainVar]]]
+    content: Var[Union[ReactNode, ContainVar]]
+    title: Var[Union[ReactNode, ContainVar]]
 
 
 popover = Popover.create

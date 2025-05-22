@@ -8,22 +8,22 @@ from ..base import AntdComponent, ContainVar, JsValue, ReactNode
 class Card(AntdComponent):
     tag = 'Card'
 
-    actions: Optional[Var[ContainVar]]
-    active_tab_key: Optional[Var[str]]
-    bordered: Optional[Var[bool]]
-    cover: Optional[Var[ReactNode]]
-    default_active_tab_key: Optional[Var[str]]
-    extra: Optional[Var[ReactNode]]
-    hoverable: Optional[Var[bool]]
-    loading: Optional[Var[bool]]
-    size: Optional[Var[str]]
-    tab_bar_extra_content: Optional[Var[ReactNode]]
-    tab_list: Optional[Var[list[ContainVar]]]
-    title: Optional[Var[ReactNode]]
-    type: Optional[Var[str]]
-    tab_props: Optional[Var[Union[ContainVar, dict]]]
-    class_names: Optional[Var[dict]]
-    styles: Optional[Var[dict]]
+    actions: Var[ContainVar]
+    active_tab_key: Var[str]
+    bordered: Var[bool]
+    cover: Var[ReactNode]
+    default_active_tab_key: Var[str]
+    extra: Var[ReactNode]
+    hoverable: Var[bool]
+    loading: Var[bool]
+    size: Var[str]
+    tab_bar_extra_content: Var[ReactNode]
+    tab_list: Var[list[ContainVar]]
+    title: Var[ReactNode]
+    type: Var[str]
+    tab_props: Var[Union[ContainVar, dict]]
+    class_names: Var[dict]
+    styles: Var[dict]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
@@ -36,15 +36,15 @@ class Card(AntdComponent):
 class CardGrid(AntdComponent):
     tag = 'Card.Grid'
 
-    hoverable: Optional[Var[bool]]
+    hoverable: Var[bool]
 
 
 class CardMeta(AntdComponent):
     tag = 'Card.Meta'
 
-    avatar: Optional[Var[ReactNode]]
-    description: Optional[Var[ReactNode]]
-    title: Optional[Var[ReactNode]]
+    avatar: Var[ReactNode]
+    description: Var[ReactNode]
+    title: Var[ReactNode]
 
 
 card = Card.create

@@ -11,14 +11,14 @@ from .badge import Badge
 class FloatButton(AntdComponent):
     tag = "FloatButton"
 
-    icon: Optional[Var[ReactNode]]
-    description: Optional[Var[ReactNode]]
-    tooltip: Optional[Var[Union[ReactNode, JsValue]]]
-    type: Optional[Var[TypeType]]
-    shape: Optional[Var[FloatGroupShapeType]]
-    href: Optional[Var[str]]
-    target: Optional[Var[str]]
-    badge: Optional[Var[Union[Dict]]]
+    icon: Var[ReactNode]
+    description: Var[ReactNode]
+    tooltip: Var[Union[ReactNode, JsValue]]
+    type: Var[TypeType]
+    shape: Var[FloatGroupShapeType]
+    href: Var[str]
+    target: Var[str]
+    badge: Var[Union[Dict]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
@@ -31,9 +31,9 @@ class FloatButton(AntdComponent):
 class FloatGroup(FloatButton):
     tag = "FloatButton.Group"
 
-    open: Optional[Var[bool]]
-    trigger: Optional[Var[TriggerType]]
-    close_icon: Optional[Var[ReactNode]]
+    open: Var[bool]
+    trigger: Var[TriggerType]
+    close_icon: Var[ReactNode]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
@@ -46,9 +46,9 @@ class FloatGroup(FloatButton):
 class FloatBackTop(FloatButton):
     tag = "FloatButton.BackTop"
 
-    duration: Optional[Var[int]]
-    target: Optional[Var[Union[ReactNode, JsValue]]]
-    visibility_height: Optional[Var[int]]
+    duration: Var[int]
+    target: Var[Union[ReactNode, JsValue]]
+    visibility_height: Var[int]
 
 
 float_button = FloatButton.create

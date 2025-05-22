@@ -8,17 +8,17 @@ from ..base import AntdComponent, ContainVar, JsValue, ReactNode
 class Collapse(AntdComponent):
     tag = 'Collapse'
 
-    accordion: Optional[Var[bool]]
-    active_key: Optional[Var[Union[list[str], str, list[int], int]]]
-    bordered: Optional[Var[bool]]
-    default_active_key: Optional[Var[Union[list[str], str, list[int], int]]]
-    destroy_inactive_panel: Optional[Var[bool]]
-    expand_icon: Optional[Var[ReactNode]]
-    collapsible: Optional[Var[str]]
-    expand_icon_position: Optional[Var[str]]
-    ghost: Optional[Var[bool]]
-    size: Optional[Var[str]]
-    items: Optional[Var[Union[ContainVar, list]]]
+    accordion: Var[bool]
+    active_key: Var[Union[list[str], str, list[int], int]]
+    bordered: Var[bool]
+    default_active_key: Var[Union[list[str], str, list[int], int]]
+    destroy_inactive_panel: Var[bool]
+    expand_icon: Var[ReactNode]
+    collapsible: Var[str]
+    expand_icon_position: Var[str]
+    ghost: Var[bool]
+    size: Var[str]
+    items: Var[Union[ContainVar, list]]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

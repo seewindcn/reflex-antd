@@ -10,13 +10,13 @@ from ..constant import OrientationType, DirectionType
 class Flex(AntdComponent):
     tag = 'Flex'
 
-    vertical: Optional[Var[bool]]
-    wrap: Optional[Var[str | bool]]
-    justify: Optional[Var[str]]
-    align: Optional[Var[str]]
-    flex: Optional[Var[str]]
-    gap: Optional[Var[str | int]]
-    component: Optional[Var[str]]
+    vertical: Var[bool]
+    wrap: Var[str | bool]
+    justify: Var[str]
+    align: Var[str]
+    flex: Var[str]
+    gap: Var[str | int]
+    component: Var[str]
 
 
 flex = Flex.create

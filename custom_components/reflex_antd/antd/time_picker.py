@@ -14,35 +14,35 @@ from .date_picker import RangePicker as DateRangePicker
 class TimePicker(AntdComponent):
     tag = 'TimePicker'
 
-    allow_clear: Optional[Var[Union[bool, ContainVar]]]
-    auto_focus: Optional[Var[bool]]
-    cell_render: Optional[Var[JsValue]]
-    change_on_scroll: Optional[Var[bool]]
-    default_value: Optional[Var[DayJS]]
-    disabled: Optional[Var[bool]]
-    disabled_time: Optional[Var[JsValue]]
-    format: Optional[Var[str]]
-    get_popup_container: Optional[Var[JsValue]]
-    hide_disabled_options: Optional[Var[bool]]
-    hour_step: Optional[Var[int]]
-    input_read_only: Optional[Var[bool]]
-    minute_step: Optional[Var[int]]
-    need_confirm: Optional[Var[bool]]
-    open: Optional[Var[bool]]
-    placeholder: Optional[Var[Union[str, List[str]]]]
-    placement: Optional[Var[PlacementType]]
-    popup_class_name: Optional[Var[str]]
-    popup_style: Optional[Var[ContainVar]]
-    prefix: Optional[Var[ReactNode]]
-    render_extra_footer: Optional[Var[JsValue]]
-    second_step: Optional[Var[int]]
-    show_now: Optional[Var[bool]]
-    size: Optional[Var[SizeType]]
-    status: Optional[Var[StatusType]]
-    suffix_icon: Optional[Var[ReactNode]]
-    use12_hours: Optional[Var[bool]]
-    value: Optional[Var[DayJS]]
-    variant: Optional[Var[VariantType]]
+    allow_clear: Var[Union[bool, ContainVar]]
+    auto_focus: Var[bool]
+    cell_render: Var[JsValue]
+    change_on_scroll: Var[bool]
+    default_value: Var[DayJS]
+    disabled: Var[bool]
+    disabled_time: Var[JsValue]
+    format: Var[str]
+    get_popup_container: Var[JsValue]
+    hide_disabled_options: Var[bool]
+    hour_step: Var[int]
+    input_read_only: Var[bool]
+    minute_step: Var[int]
+    need_confirm: Var[bool]
+    open: Var[bool]
+    placeholder: Var[Union[str, List[str]]]
+    placement: Var[PlacementType]
+    popup_class_name: Var[str]
+    popup_style: Var[ContainVar]
+    prefix: Var[ReactNode]
+    render_extra_footer: Var[JsValue]
+    second_step: Var[int]
+    show_now: Var[bool]
+    size: Var[SizeType]
+    status: Var[StatusType]
+    suffix_icon: Var[ReactNode]
+    use12_hours: Var[bool]
+    value: Var[DayJS]
+    variant: Var[VariantType]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
@@ -63,7 +63,7 @@ class TimePicker(AntdComponent):
 class RangePicker(DateRangePicker):
     tag = 'TimePicker.RangePicker'
 
-    order: Optional[Var[bool]]
+    order: Var[bool]
 
     def _get_imports(self) -> imports.ImportDict:
         _imports = super()._get_imports()

@@ -11,11 +11,11 @@ from ..constant import TimelineModeType
 class Timeline(AntdComponent):
     tag = 'Timeline'
 
-    mode: Optional[Var[TimelineModeType]]
-    pending: Optional[Var[ReactNode]]
-    pending_dot: Optional[Var[ReactNode]]
-    reverse: Optional[Var[bool]]
-    items: Optional[Var[Union[List, ContainVar]]]
+    mode: Var[TimelineModeType]
+    pending: Var[ReactNode]
+    pending_dot: Var[ReactNode]
+    reverse: Var[bool]
+    items: Var[Union[List, ContainVar]]
 
 
 timeline = Timeline.create

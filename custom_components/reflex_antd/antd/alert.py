@@ -9,14 +9,14 @@ from ..constant import StatusType
 class Alert(AntdComponent):
     tag = 'Alert'
 
-    action: Optional[Var[ReactNode]]
-    banner: Optional[Var[bool]]
-    closable: Optional[Var[Union[bool, dict]]]
-    description: Optional[Var[ReactNode]]
-    icon: Optional[Var[ReactNode]]
-    message: Optional[Var[ReactNode]]
-    show_icon: Optional[bool]
-    type: Optional[Var[StatusType | str]]
+    action: Var[ReactNode]
+    banner: Var[bool]
+    closable: Var[Union[bool, dict]]
+    description: Var[ReactNode]
+    icon: Var[ReactNode]
+    message: Var[ReactNode]
+    show_icon: Var[bool]
+    type: Var[StatusType | str]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

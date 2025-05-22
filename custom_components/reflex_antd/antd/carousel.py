@@ -8,15 +8,15 @@ from ..base import AntdComponent, ContainVar, JsValue
 class Carousel(AntdComponent):
     tag = 'Carousel'
 
-    autoplay: Optional[Var[bool]]
-    autoplay_speed: Optional[Var[int]]
-    dot_position: Optional[Var[str]]
-    dots: Optional[Var[Union[bool, dict]]]
-    fade: Optional[Var[bool]]
-    infinite: Optional[Var[bool]]
-    speed: Optional[Var[int]]
-    easing: Optional[Var[str]]
-    wait_for_animate: Optional[Var[bool]]
+    autoplay: Var[bool]
+    autoplay_speed: Var[int]
+    dot_position: Var[str]
+    dots: Var[Union[bool, dict]]
+    fade: Var[bool]
+    infinite: Var[bool]
+    speed: Var[int]
+    easing: Var[str]
+    wait_for_animate: Var[bool]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

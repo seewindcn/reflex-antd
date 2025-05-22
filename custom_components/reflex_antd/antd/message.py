@@ -157,7 +157,7 @@ class MessageHolder(Bare):
         )
         return rs
 
-    def _get_vars(self, include_children: bool = False) -> Iterator[Var]:
+    def _get_vars(self, **kwargs) -> Iterator[Var]:
         yield self.contents
         yield Var(
             _js_expr='',

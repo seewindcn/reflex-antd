@@ -1277,7 +1277,7 @@ class AntdBaseComponent(Component):
         try:
             super().__init__(*args, **kw)
         except Exception as err:
-            logging.exception(f"class<{self}>, args={args}, kw={kw}, error: {err}")
+            logging.exception(f"class<{self.__class__}>, args={args}, kw={kw}, error: {err}")
             raise
         self._init_contains(contains, exs, ex_hooks)
 

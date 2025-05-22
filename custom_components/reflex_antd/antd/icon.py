@@ -12,9 +12,9 @@ class BaseIconComponent(Component):
 class IconComponent(BaseIconComponent):
     tag = "None"
 
-    rotate: Optional[Var[int]]
-    spin: Optional[Var[bool]]
-    two_tone_color: Optional[Var[str]]
+    rotate: Var[int]
+    spin: Var[bool]
+    two_tone_color: Var[str]
 
     @classmethod
     def create(cls, *children, **props) -> Component:

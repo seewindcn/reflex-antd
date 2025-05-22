@@ -9,27 +9,27 @@ from ..constant import SizeType, PlacementType, TabsType
 
 
 class StatisticBase(AntdComponent):
-    prefix: Optional[Var[ReactNode]]
-    suffix: Optional[Var[ReactNode]]
-    title: Optional[Var[ReactNode]]
-    value: Optional[Var[Union[str, int]]]
-    value_style: Optional[Var[Dict]]
+    prefix: Var[ReactNode]
+    suffix: Var[ReactNode]
+    title: Var[ReactNode]
+    value: Var[Union[str, int]]
+    value_style: Var[Dict]
 
 
 class Statistic(StatisticBase):
     tag = 'Statistic'
 
-    decimal_separator: Optional[Var[str]]
-    formatter: Optional[Var[JsValue]]
-    group_separator: Optional[Var[str]]
-    loading: Optional[Var[bool]]
-    precision: Optional[Var[int]]
+    decimal_separator: Var[str]
+    formatter: Var[JsValue]
+    group_separator: Var[str]
+    loading: Var[bool]
+    precision: Var[int]
 
 
 class StatisticCountdown(StatisticBase):
     tag = 'Statistic.Countdown'
 
-    format: Optional[Var[str]]
+    format: Var[str]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()

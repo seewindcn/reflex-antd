@@ -15,17 +15,17 @@ _ref = Var(_js_expr="refs['__antd_notification']", )
 
 class Notification(JsValue):
     is_global: bool = False
-    btn: Optional[Var[ReactNode]]
-    class_name: Optional[Var[str | list]]
-    close_icon: Optional[Var[ReactNode]]
-    description: Optional[Var[str]]
-    duration: Optional[Var[int]]
-    icon: Optional[Var[ReactNode]]
-    key: Optional[Var[str]]
-    message: Optional[Var[str]]
-    placement: Optional[Var[PlacementType]]
-    role: Optional[Var[RoleType]]
-    props: Optional[Var[Union[dict, ContainVar]]]
+    btn: Var[ReactNode]
+    class_name: Var[str | list]
+    close_icon: Var[ReactNode]
+    description: Var[str]
+    duration: Var[int]
+    icon: Var[ReactNode]
+    key: Var[str]
+    message: Var[str]
+    placement: Var[PlacementType]
+    role: Var[RoleType]
+    props: Var[Union[dict, ContainVar]]
 
     def get_imports(self) -> imports.ImportDict:
         _imports = {
@@ -105,7 +105,7 @@ class NotificationHolder(Bare):
         rs.contents = data
         return rs
 
-    def _get_vars(self, include_children: bool = False) -> Iterator[Var]:
+    def _get_vars(self, **kwargs) -> Iterator[Var]:
         yield self.contents
         yield Var(
             _js_expr='',

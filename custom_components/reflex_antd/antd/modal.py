@@ -15,30 +15,30 @@ from . import helper
 class Modal(AntdComponent):
     tag = 'Modal'
 
-    class_names: Optional[Var[ContainVar]]
-    styles: Optional[Var[ContainVar]]
-    cancel_button_props: Optional[Var[ContainVar]]
-    cancel_text: Optional[Var[ReactNode]]
-    centered: Optional[Var[bool]]
-    close_icon: Optional[Var[Union[ReactNode, bool]]]
-    confirm_loading: Optional[Var[bool]]
-    destroy_on_close: Optional[Var[bool]]
-    focus_trigger_after_close: Optional[Var[bool]]
-    footer: Optional[Var[ContainVar]]
-    force_render: Optional[Var[bool]]
-    get_container: Optional[Var[Union[bool, ContainVar]]]
-    keyboard: Optional[Var[bool]]
-    mask: Optional[Var[bool]]
-    mask_closable: Optional[Var[bool]]
-    modal_render: Optional[Var[ReactNode]]
-    ok_button_props: Optional[Var[ContainVar]]
-    ok_text: Optional[Var[ReactNode]]
-    ok_type: Optional[Var[TypeType]]
-    title: Optional[Var[ReactNode]]
-    open: Optional[Var[bool]]
-    width: Optional[Var[Union[str, int]]]
-    wrapClassName: Optional[Var[str]]
-    z_index: Optional[Var[int]]
+    class_names: Var[ContainVar]
+    styles: Var[ContainVar]
+    cancel_button_props: Var[ContainVar]
+    cancel_text: Var[ReactNode]
+    centered: Var[bool]
+    close_icon: Var[Union[ReactNode, bool]]
+    confirm_loading: Var[bool]
+    destroy_on_close: Var[bool]
+    focus_trigger_after_close: Var[bool]
+    footer: Var[ContainVar]
+    force_render: Var[bool]
+    get_container: Var[Union[bool, ContainVar]]
+    keyboard: Var[bool]
+    mask: Var[bool]
+    mask_closable: Var[bool]
+    modal_render: Var[ReactNode]
+    ok_button_props: Var[ContainVar]
+    ok_text: Var[ReactNode]
+    ok_type: Var[TypeType]
+    title: Var[ReactNode]
+    open: Var[bool]
+    width: Var[Union[str, int]]
+    wrapClassName: Var[str]
+    z_index: Var[int]
 
     _memoization_mode = memo_never_no_recursive
 
@@ -64,7 +64,7 @@ class Modal(AntdComponent):
 
 class Confirm(FakeComponentMixin, JsValue):
     """ confirm模式, 使用 useContext(EventLoopContext); 会报错, """
-    config: Optional[Var[dict]]
+    config: Var[dict]
     # sample: before_open=helper.js_value(f""" {form_id}.setFieldsValue({str(ws.form_params).strip('{}')}) """)
     before_open: JsValue = None
 

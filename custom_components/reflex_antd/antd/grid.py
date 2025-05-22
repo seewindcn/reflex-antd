@@ -10,28 +10,28 @@ from ..constant import OrientationType, DirectionType
 class Row(AntdComponent):
     tag = 'Row'
 
-    align: Optional[Var[str]]
-    gutter: Optional[Var[Union[int, ContainVar, dict, list]]]
-    justify: Optional[Var[str]]
-    wrap: Optional[Var[str]]
+    align: Var[str]
+    gutter: Var[Union[int, ContainVar, dict, list]]
+    justify: Var[str]
+    wrap: Var[str]
 
 
 class Col(AntdComponent):
     tag = 'Col'
 
-    flex: Optional[Var[Union[str, int]]]
-    offset: Optional[Var[int]]
-    order: Optional[Var[int]]
-    pull: Optional[Var[int]]
-    push: Optional[Var[int]]
-    span: Optional[Var[int]]
+    flex: Var[Union[str, int]]
+    offset: Var[int]
+    order: Var[int]
+    pull: Var[int]
+    push: Var[int]
+    span: Var[int]
 
-    xs: Optional[Var[Union[int, Dict]]]
-    sm: Optional[Var[Union[int, Dict]]]
-    md: Optional[Var[Union[int, Dict]]]
-    lg: Optional[Var[Union[int, Dict]]]
-    xl: Optional[Var[Union[int, Dict]]]
-    xxl: Optional[Var[Union[int, Dict]]]
+    xs: Var[Union[int, Dict]]
+    sm: Var[Union[int, Dict]]
+    md: Var[Union[int, Dict]]
+    lg: Var[Union[int, Dict]]
+    xl: Var[Union[int, Dict]]
+    xxl: Var[Union[int, Dict]]
 
 
 row = Row.create

@@ -11,11 +11,11 @@ from ..constant import StatusType
 class Result(AntdComponent):
     tag = 'Result'
 
-    extra: Optional[Var[ReactNode]]
-    icon: Optional[Var[ReactNode]]
-    status: Optional[Var[Union[StatusType, str]]]
-    sub_title: Optional[Var[ReactNode]]
-    title: Optional[Var[ReactNode]]
+    extra: Var[ReactNode]
+    icon: Var[ReactNode]
+    status: Var[Union[StatusType, str]]
+    sub_title: Var[ReactNode]
+    title: Var[ReactNode]
 
 
 result = Result.create
