@@ -110,6 +110,7 @@ def load_pages():
         if not load_all and key not in ['/', '/404', '/general']:
             continue
         route.add_page(app)
+    logging.info('[demo]load_pages done...')
 
 
 load_pages()

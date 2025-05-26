@@ -22,7 +22,7 @@ def dev_run_backend(
     import uvicorn
 
     config = get_config()
-    app_module = f"reflex.app_module_for_backend:{constants.CompileVars.APP}"
+    # app_module = exec.get_app_module()  # f"reflex.app_module_for_backend:{constants.CompileVars.APP}"
 
     # Create a .nocompile file to skip compile for backend.
     if os.path.exists(constants.Dirs.WEB):
@@ -31,7 +31,7 @@ def dev_run_backend(
 
     # Run the backend in development mode.
     uvicorn.run(
-        app=f"{app_module}.{constants.CompileVars.API}",
+        app=exec.get_app_instance(),
         host=host,
         port=port,
         log_level=loglevel.value,
