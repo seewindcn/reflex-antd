@@ -29,6 +29,7 @@ class Modal(AntdComponent):
     get_container: Var[Union[bool, ContainVar]]
     keyboard: Var[bool]
     mask: Var[bool]
+    closable: Var[bool]
     mask_closable: Var[bool]
     modal_render: Var[ReactNode]
     ok_button_props: Var[ContainVar]

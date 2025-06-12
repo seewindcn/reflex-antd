@@ -2,7 +2,7 @@ from typing import Optional, Union, Dict, Any, List
 
 from reflex import Component, Var
 
-from ..base import AntdComponent, ContainVar, JsValue, ReactNode
+from ..base import AntdComponent, ContainVar, JsValue, ReactNode, ExTypes
 from ..constant import OrientationType, SizeType
 
 
@@ -27,9 +27,11 @@ class Drawer(AntdComponent):
     size: Var[SizeType]
     styles: Var[ContainVar]
     title: Var[ReactNode]
+    loading: Var[bool]
     open: Var[bool]
     width: Var[Union[str, int]]
     z_index: Var[int]
+    drawer_render: Var[ExTypes]
 
     def get_event_triggers(self) -> Dict[str, Any]:
         _triggers = super().get_event_triggers()
