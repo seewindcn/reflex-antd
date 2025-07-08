@@ -65,6 +65,9 @@ def wrap_use_pretty_dumps(func):
 class MyStatefulComponent(StatefulComponent):
     _valid_parents: List[str] = []  # hack: support use in rx.match
 
+    def _get_all_app_wrap_components(self) -> dict[tuple[int, str], Component]:
+        return self.component._get_all_app_wrap_components()
+
 
 def stateless(hd: Callable[..., Component] = None, memo=memo_never_no_recursive) -> Callable:
     def _my(_hd: Callable[..., Component]) -> Callable:
@@ -104,6 +107,8 @@ def stateful(hd: Callable[..., Component] = None, forced=True, memo=memo_always)
         return _my(hd)
 
 
+stateful_no_recursive = functools.partial(stateful, memo=memo_always_no_recursive)
+
 STR_TYPES = (str, list, dict)
 
 
@@ -119,39 +124,115 @@ def to_str(v: str | list | dict | Any) -> Any:
     return str(v)
 
 
+def is_ex_type_instance(obj: Any) -> bool:
+    return isinstance(obj, (ContainVar, JsValue, JsEvent, ExItem, ExFormatter))
+
+
 def compose_react_imports(tags: list[str]):
     return {"react": [ImportVar(tag=tag, install=tag in ['useEffect', 'useState']) for tag in tags]}
 
 
-def get_component_all_imports(com: Component | Var) -> imports.ImportDict:
-    return {} if isinstance(com, STR_TYPES) or isinstance(com, Var) else com._get_all_imports()
+def get_component_all_imports(*com: Component | Var) -> imports.ImportDict:
+    def _get(_c):
+        if is_ex_type_instance(_c):
+            return _c.get_imports()
+        return {} if isinstance(_c, STR_TYPES) or isinstance(_c, Var) else _c._get_all_imports()
+    if len(com) == 1:
+        return _get(com[0])
+    return imports.merge_imports(
+        *[_get(c) for c in com]
+    )
 
 
-def get_component_all_dynamic_imports(com: Component | Var) -> Set[str]:
-    if hasattr(com, '_get_all_dynamic_imports') and callable(com._get_all_dynamic_imports):
-        return com._get_all_dynamic_imports()
-    return set()
-
-
-def get_component_hooks(com) -> Dict[str, None]:
-    return {} if isinstance(com, STR_TYPES) or isinstance(com, Var) \
-        else (com._get_all_hooks() if version > '000.006.007' else com._get_all_hooks_internal() | com._get_all_hooks())
-
-
-def get_component_custom_code(com: Component) -> Set[str]:
-    return com._get_all_custom_code() if isinstance(com, BaseComponent) else set()
-
-
-def get_custom_components(com: Any) -> set[CustomComponent]:
-    if isinstance(com, CasualVar):
+def get_component_all_dynamic_imports(*com: Component | Var) -> Set[str]:
+    def _get(_c):
+        if isinstance(_c, BaseComponent):
+            return _c._get_all_dynamic_imports()
         return set()
-    if isinstance(com, CustomComponent):
-        return {com}
-    if hasattr(com, 'get_custom_components') and callable(com.get_custom_components):
-        return com.get_custom_components()
-    if hasattr(com, '_get_all_custom_components') and callable(com._get_all_custom_components):
-        return com._get_all_custom_components()
-    return set()
+    rs = set()
+    for c in com:
+        rs = rs | _get(c)
+    return rs
+
+
+def hook_events(hook_events: dict = None) -> dict:
+    if not hook_events:
+        return {Hooks.EVENTS: VarData(position=Hooks.HookPosition.INTERNAL)}
+    hook_events.pop(Hooks.EVENTS, None)  # remove and add to first
+    return {Hooks.EVENTS: VarData(position=Hooks.HookPosition.INTERNAL), **hook_events}
+
+
+def get_component_hooks(*coms) -> Dict[str, None]:
+    def _get(c):
+        if isinstance(c, STR_TYPES):
+            return {}
+        if isinstance(c, Var):
+            vd = get_var_data(c)
+            return {hook: None for hook in vd.hooks} if vd else {}
+        if is_ex_type_instance(c):
+            return c.get_hooks()
+        return c._get_all_hooks() if version > '000.006.007' else c._get_all_hooks_internal() | c._get_all_hooks()
+    rs = {}
+    has_event = False
+    for _c in coms:
+        _hooks = _get(_c)
+        if not _hooks:
+            continue
+        if not has_event:
+            has_event = bool([h for h in _hooks if 'addEvents' in h])
+        rs.update(_get(_c))
+    if has_event:
+        rs = hook_events(rs)
+    return rs
+
+
+# def get_var_data_hooks(v: Union[Var, VarData, "JsValue"]) -> dict[str, None]:
+#     if isinstance(v, JsValue):
+#         return v.get_hooks()
+#     _var_data = get_var_data(v) if isinstance(v, Var) else v
+#     return {hook: None for hook in _var_data.hooks} if _var_data else {}
+# get_var_data_hooks = get_component_hooks
+
+
+def get_all_app_wrap_components(*com) -> Dict:
+    def _get(_c):
+        if is_ex_type_instance(_c):
+            return _c.get_all_app_wrap_components()
+        if isinstance(_c, Component):
+            return _c._get_all_app_wrap_components()
+        return {}
+    rs = {}
+    for c in com:
+        rs.update(_get(c))
+    return rs
+
+
+def get_component_custom_code(*com: Component) -> Set[str]:
+    def _get(_c):
+        if is_ex_type_instance(_c):
+            return _c.get_custom_code()
+        return _c._get_all_custom_code() if isinstance(_c, BaseComponent) else set()
+    rs = set()
+    for c in com:
+        rs = rs | _get(c)
+    return rs
+
+
+def get_custom_components(*com: Any) -> set[CustomComponent]:
+    def _get(_c):
+        if isinstance(_c, CasualVar):
+            return set()
+        if isinstance(_c, CustomComponent):
+            return {_c}
+        if is_ex_type_instance(_c):
+            return _c.get_custom_components()
+        if isinstance(_c, Component):
+            return _c._get_all_custom_components()
+        return set()
+    rs = set()
+    for c in com:
+        rs = rs | _get(c)
+    return rs
 
 
 def get_var_data(v: Var) -> VarData | None:
@@ -162,13 +243,6 @@ def get_var_data(v: Var) -> VarData | None:
     else:
         _data = None
     return _data
-
-
-def get_var_data_hooks(v: Union[Var, VarData, "JsValue"]) -> dict[str, None]:
-    if isinstance(v, JsValue):
-        return v.get_hooks()
-    _var_data = get_var_data(v) if isinstance(v, Var) else v
-    return {hook: None for hook in _var_data.hooks} if _var_data else {}
 
 
 class ExItem(ABC):
@@ -196,6 +270,9 @@ class ExItem(ABC):
 
     def get_hooks(self) -> Dict[str, None]:
         return {}
+
+    def get_all_app_wrap_components(self) -> Dict:
+        return get_all_app_wrap_components(self.item)
 
     # def get_interpolations(self) -> List[Tuple[int, int]]:
     #     return []
@@ -306,6 +383,9 @@ class JsEvent:
         code = self._item.serialize()
         return f'const {name} = {code}'
 
+    def get_all_app_wrap_components(self) -> Dict:
+        return {}  # get_all_app_wrap_components(self._item)
+
 
 js_event = JsEvent
 
@@ -392,7 +472,7 @@ class ExLambdaHandlerItem(ExItem):
         chain = self.parent._create_event_chain(key, self.item)
         rendered_chain = format.format_prop(chain).strip("{}")
         _hook = f"""const {self._get_fn_name()} = useCallback({rendered_chain}, [addEvents, Event]);"""
-        return {Hooks.EVENTS: None, _hook: None}
+        return hook_events({_hook: None})
 
 
 class ExCallableItem(ExItem):
@@ -470,6 +550,7 @@ class JsValue:
     to_js: bool = None
     custom_imports: imports.ImportDict = None
     dynamic_imports: Set[str] = None
+    _ex_hooks: list = None
 
     @property
     def to_react(self) -> bool:
@@ -481,6 +562,7 @@ class JsValue:
             self, value: Union[str, List[str], Callable, Component] = None,
             custom_imports: imports.ImportDict = None,
             dynamic_imports: Set[str] = None,
+            ex_hooks: list = None,
             **kwargs):
         self.value = value
         self.custom_imports = custom_imports if custom_imports is not None else {}
@@ -489,6 +571,12 @@ class JsValue:
             self.custom_imports.update(
                 {"next/dynamic": [ImportVar(tag="dynamic", is_default=True)]}
             )
+        if ex_hooks:
+            self._ex_hooks = []
+            for ex in ex_hooks:
+                if not isinstance(ex, ContainVar):
+                    ex = contain(ex)
+                self._ex_hooks.append(ex.init(None, ''))
         self._init(**kwargs)
 
     def _init(self, **kwargs) -> None:
@@ -499,8 +587,18 @@ class JsValue:
         item = ExJsItem(self, parent, key=key)
         return item
 
+    def add_hooks(self) -> list[str | Var]:
+        hooks = []
+        for ex in self._ex_hooks:
+            # hooks.extend(ex.get_hooks().keys())
+            codes = ex.to_hook_code()
+            if codes:
+                hooks.extend(codes)
+        return hooks
+
     @wrap_use_pretty_dumps
-    def serialize(self) -> str:
+    def serialize(self, to_js = None) -> str:
+        _to_js = to_js if to_js is not None else self.to_js
         if isinstance(self.value, str):
             code = self.value
         else:
@@ -508,23 +606,42 @@ class JsValue:
             code = code[2:] if code.startswith('<>') else code
             code = code[:-3] if code.endswith('</>') else code
             code = code.strip('{}')
-        return f"({code})" if self.to_js else f"{code}"
+        if self._ex_hooks:
+            _hooks = self.add_hooks()
+            code = '\n'.join(_hooks + [code])
+        return f"({code})" if _to_js else f"{code}"
+
+    def _iter_comps(self) -> Iterable[Component | Var]:
+        yield self.value
+        if self._ex_hooks:
+            for ex in self._ex_hooks:
+                yield ex
 
     def get_imports(self) -> imports.ImportDict:
         _imports = imports.merge_imports(
-            get_component_all_imports(self.value),
+            get_component_all_imports(*self._iter_comps()),
             self.custom_imports
         )
         return _imports
 
     def get_dynamic_imports(self) -> Set[str]:
-        return get_component_all_dynamic_imports(self.value) | self.dynamic_imports
+        return get_component_all_dynamic_imports(*self._iter_comps()) | self.dynamic_imports
 
     def get_state(self) -> str:
         return ''
 
     def get_hooks(self) -> Dict[str, None]:
-        return get_component_hooks(self.value)
+        return get_component_hooks(*self._iter_comps())
+
+    def get_custom_code(self) -> set[str]:
+        rs = get_component_custom_code(*self._iter_comps())
+        return rs
+
+    def get_custom_components(self) -> set[CustomComponent]:
+        return get_custom_components(*self._iter_comps())
+
+    def get_all_app_wrap_components(self) -> Dict:
+        return get_all_app_wrap_components(*self._iter_comps())
 
     def get_var_data(self) -> VarData:
         return VarData(
@@ -533,15 +650,11 @@ class JsValue:
             hooks=self.get_hooks(),
         )
 
-    def get_custom_code(self) -> set[str]:
-        rs = get_component_custom_code(self.value)
-        return rs
-
-    def get_custom_components(self) -> set[CustomComponent]:
-        return get_custom_components(self.value)
-
     def to_hook_code(self, name: str) -> str:
-        return self.serialize()
+        _code = self.serialize(to_js=False)
+        if not name or (name[0]=='_' and name[1:].isdigit()) or (name[:2]=='__'):
+            return _code
+        return f"""const {name}={_code}"""
 
 
 class JsFunctionValue(JsValue):
@@ -558,37 +671,29 @@ class JsFunctionValue(JsValue):
         self._value = self.value(*self.args)
 
     @wrap_use_pretty_dumps
-    def serialize(self) -> str:
+    def serialize(self, to_js=None) -> str:
+        _to_js = to_js if to_js is not None else self.to_js
         is_component = False
         if isinstance(self._value, str):
-            v = self._value
+            code = self._value
         elif isinstance(self._value, Component):
             is_component = True
-            v = str(self._value)
+            code = str(self._value)
         else:
-            v = to_str(self._value)
+            code = to_str(self._value)
             # raise TypeError(self._value)
         sep_1, sep_2 = (('{', '}') if self.to_react else ('(', ')')) if not is_component else ('(', ')')
+        if self._ex_hooks:
+            _hooks = self.add_hooks()
+            code = '\n'.join(_hooks + [code])
         return f"""(({','.join(self._args.args)}) => 
-        {sep_1} {v} {sep_2} )"""
+        {sep_1} {code} {sep_2} )"""
 
-    def get_imports(self) -> imports.ImportDict:
-        return imports.merge_imports(
-            get_component_all_imports(self._value),
-            self.custom_imports,
-        )
-
-    def get_dynamic_imports(self) -> Set[str]:
-        return get_component_all_dynamic_imports(self._value) | self.dynamic_imports
-
-    def get_hooks(self) -> Dict[str, None]:
-        return get_component_hooks(self._value)
-
-    def get_custom_code(self) -> set[str]:
-        return get_component_custom_code(self._value)
-
-    def get_custom_components(self) -> set[CustomComponent]:
-        return get_custom_components(self._value)
+    def _iter_comps(self) -> Iterable[Component | Var]:
+        yield self._value
+        if self._ex_hooks:
+            for ex in self._ex_hooks:
+                yield ex
 
     def to_hook_code(self, name: str) -> str:
         """
@@ -599,12 +704,30 @@ class JsFunctionValue(JsValue):
         return code
 
 
-def js_value(value: Union[str, Callable, Foreach, Match, Cond], **kwargs) -> JsValue:
-    """ """
+def js_value(
+        value: Union[str, Callable, Foreach, Match, Cond, Component],
+        to_js: bool = None,
+        custom_imports: imports.ImportDict = None,
+        dynamic_imports: Set[str] = None,
+        ex_hooks: list = None,
+        ) -> JsValue:
+    """
+    : ex_hooks: this codes will add inside this js_value function body
+     """
     if isinstance(value, (str, Component)):
-        return JsValue(value, **kwargs)
+        return JsValue(
+            value,
+            to_js=to_js,
+            custom_imports=custom_imports, dynamic_imports=dynamic_imports,
+            ex_hooks=ex_hooks,
+        )
     if isinstance(value, Callable):
-        return JsFunctionValue(value, **kwargs)
+        return JsFunctionValue(
+            value,
+            to_js=to_js,
+            custom_imports=custom_imports, dynamic_imports=dynamic_imports,
+            ex_hooks=ex_hooks,
+        )
     raise NotImplemented("Not implemented: %s(%s)" % (type(value), value))
 
 
@@ -633,7 +756,7 @@ class JsUseEffect(JsValue):
         self.dep_name = dep_name
         self.js = js
 
-    def serialize(self) -> str:
+    def serialize(self, **kwargs) -> str:
         return ''
 
     def _get_hooks(self, **kwargs) -> Dict[str, None]:
@@ -654,7 +777,7 @@ useEffect(() => {
             dep=self.get_dep_name(),
             js=self.js,
         )
-        _hooks = get_var_data_hooks(self.value)
+        _hooks = get_component_hooks(self.value)
         _my_hooks = self._get_hooks(**kw)
         _hooks.update(_my_hooks)
         return _hooks
@@ -682,7 +805,7 @@ class JsLocalDictVar(JsUseEffect):
         super().__init__(value, js, **kwargs)
         self.name = name
 
-    def serialize(self) -> str:
+    def serialize(self, **kwargs) -> str:
         return self.name
 
     def get_imports(self) -> imports.ImportDict:
@@ -757,7 +880,7 @@ class ExVarItem(ExItem):
         return _var_data.imports if _var_data else {}
 
     def get_hooks(self) -> Dict[str, None]:
-        return get_var_data_hooks(self.item)
+        return get_component_hooks(self.item)
 
     def get_state(self) -> str:
         _var_data = get_var_data(self.item)
@@ -857,11 +980,14 @@ class ExFormatter:
         return ''
 
     def get_hooks(self) -> Dict[str, None]:
-        hooks = {}
+        rs = get_component_hooks(*[ex for _, ex in self.iter_items()])
+        return rs
+
+    def get_all_app_wrap_components(self) -> Dict:
+        comps = {}
         for _, ex in self.iter_items():
-            _hooks = ex.get_hooks()
-            hooks.update(_hooks)
-        return hooks
+            comps.update(ex.get_all_app_wrap_components())
+        return comps
 
     # def get_interpolations(self) -> List[Tuple[int, int]]:
     #     rs = []
@@ -877,9 +1003,8 @@ class ExFormatter:
             # interpolations=self.get_interpolations(),
         )
 
-
 class ExVar(Var):
-    _var_value: Any = dataclasses.field()
+    _var_value: Any = dataclasses.field(default=None)
 
     def __init__(self, *args, _var_value=None, **kwargs):
         self._var_value = _var_value
@@ -1016,6 +1141,7 @@ class ContainVar(ExVar):
             _var_is_string=False,
             _var_data=None,
             _var_value=value,
+            _var_fmt=None,
         )
         return rs
 
@@ -1025,10 +1151,10 @@ class ContainVar(ExVar):
         _var = dataclasses.replace(
             self,
             _js_expr=fmt.get_value(),
-            _var_value=_vv,
             _var_fmt=fmt,
             _var_data=fmt.get_var_data(),
         )
+        _var._var_value = _vv
         return _var
 
     def get_custom_components(self) -> set[CustomComponent]:
@@ -1044,16 +1170,19 @@ class ContainVar(ExVar):
         return rs
 
     def get_hooks(self) -> Dict[str, None]:
-        return get_var_data_hooks(self)
+        return get_component_hooks(self._var_fmt)
 
     def get_imports(self) -> imports.ImportDict:
-        return self._var_data.old_school_imports()
+        return self._var_data.old_school_imports() if self._var_data else {}
 
     def get_dynamic_imports(self) -> Set[str]:
         rs = set()
         for _, i in self._var_fmt.iter_items():
             rs |= i.get_dynamic_imports()
         return rs
+
+    def get_all_app_wrap_components(self) -> Dict:
+        return self._var_fmt.get_all_app_wrap_components() if self._var_fmt else {}
 
     def to_hook_code(self) -> Dict[str | Var, None]:
         """ ContainVar used at hook code
@@ -1078,6 +1207,7 @@ class ContainVar(ExVar):
             return _is_ok
 
         def _iter_items():
+            # 自动加了 _ 前缀
             _prefix = f'{self._var_fmt.name}_' if self._var_fmt.name else '_'
             if isinstance(items, list):
                 for idx, item in enumerate(items):
@@ -1234,6 +1364,7 @@ class AntdBaseComponent(Component):
     _custom_components: Set[CustomComponent] = pydantic.PrivateAttr(default_factory=set)
     _ex_hooks: List[ContainVar] = pydantic.PrivateAttr(default_factory=list)
     _custom_js: str | None = pydantic.PrivateAttr(default=None)
+    _event_hooked: bool = pydantic.PrivateAttr(default=False)
 
     def _render_custom_js(self):
         _custom_js = self.__class__._custom_js
@@ -1281,11 +1412,22 @@ class AntdBaseComponent(Component):
             raise
         self._init_contains(contains, exs, ex_hooks)
 
+    def event_hooked(self):
+        self._event_hooked = True
+
     def _render(self, *args, **kwargs) -> Tag:
         if isinstance(self.__class__._custom_js, str):
             self._render_custom_js()
         rs = super()._render(*args, **kwargs)
         return rs
+
+    def _get_all_app_wrap_components(self) -> dict[tuple[int, str], Component]:
+        components = super()._get_all_app_wrap_components()
+        for ex in self._iter_all_extends():
+            components.update(
+                ex.get_all_app_wrap_components()
+            )
+        return components
 
     def _get_all_custom_components(
             self, seen: set[str] | None = None
@@ -1297,9 +1439,7 @@ class AntdBaseComponent(Component):
 
     def _get_all_custom_code(self) -> Set[str]:
         code = super()._get_all_custom_code()
-        for v in self._iter_all_contains():
-            code.update(v.get_custom_code())
-        for k, v in self._iter_exs():
+        for v in self._iter_all_extends():
             code.update(v.get_custom_code())
         for n, prop in self.iter_component_props():
             code.update(prop._get_all_custom_code())
@@ -1307,9 +1447,7 @@ class AntdBaseComponent(Component):
 
     def _get_all_dynamic_imports(self) -> Set[str]:
         rs = super()._get_all_dynamic_imports()
-        for v in self._iter_all_contains():
-            rs |= v.get_dynamic_imports()
-        for k, v in self._iter_exs():
+        for v in self._iter_all_extends():
             rs |= v.get_dynamic_imports()
         return rs
 
@@ -1384,18 +1522,33 @@ class AntdBaseComponent(Component):
     def add_hooks(self) -> list[str | Var]:
         hooks = []
         for ex in self._ex_hooks:
-            hooks.extend(ex.get_hooks().keys())
+            for k, v in ex.get_hooks().items():
+                if Hooks.EVENTS == k:
+                    ...
+                hooks.append(k)
             codes = ex.to_hook_code()
             if codes:
                 hooks.extend(codes)
-
         return hooks
+
+    def _get_added_hooks(self) -> dict[str, VarData | None]:
+        rs = super()._get_added_hooks()
+        # cannot add EVENTS by add_hooks, because EVENTS mush use INTERNAL that position before others
+        if Hooks.EVENTS in rs and not rs[Hooks.EVENTS]:
+            rs = hook_events(rs)
+        return rs
 
     def _get_vars_hooks(self) -> dict[str, None]:
         var_hooks = super()._get_vars_hooks()
         if [h for h in var_hooks if 'addEvents' in h]:
-            var_hooks = {Hooks.EVENTS: None, **var_hooks}
+            var_hooks = hook_events(var_hooks)
         return var_hooks
+
+    def _get_events_hooks(self) -> dict[str, VarData | None]:
+        rs = super()._get_events_hooks()
+        if not rs and self._event_hooked:
+            return hook_events()
+        return rs
 
     def iter_component_props(self) -> Iterable[tuple[str, Component]]:
         cls = self.__class__
@@ -1417,7 +1570,7 @@ class AntdBaseComponent(Component):
                 yield k, v
 
     def _iter_exs(self) -> Iterable[Tuple[str, ExItem]]:
-        """ iter component's property which is ContainVar """
+        """ iter component's property which is ExItem """
         for k in self.get_fields().keys():
             v = getattr(self, k, None)
             if isinstance(v, ExVar) and isinstance(v._var_value, ExItem):
@@ -1432,6 +1585,12 @@ class AntdBaseComponent(Component):
             yield v
         for ex in self._iter_ex_hooks():
             yield ex
+
+    def _iter_all_extends(self) -> Iterable[Union[ContainVar, ExItem]]:
+        for v in self._iter_all_contains():
+            yield v
+        for _, v in self._iter_exs():
+            yield v
 
     def _init_contains(self, contains: Dict[str, ContainVar], exs: Dict[str, Any], ex_hooks: List[ContainVar]) -> None:
         self._ex_hooks = []

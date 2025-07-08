@@ -72,7 +72,7 @@ class Notification(JsValue):
     def get_open_notification(self) -> str:
         return f'openNotification_{self.uid}'
 
-    def serialize(self) -> str:
+    def serialize(self, **kwargs) -> str:
         return self.get_open_notification() if not self.is_global else ''
 
 

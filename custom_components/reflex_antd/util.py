@@ -22,7 +22,9 @@ def switch(
         values: List[Tuple[Callable[[rx.Var, ], rx.Var] | str, rx.Component | Callable[..., rx.Component]]],
         default: rx.Component | Callable[..., rx.Component] = None,
 ) -> rx.Component | None:
-    """
+    """ 串联多个rx.cond, 用例:
+        . 表格列, 不同列不同render,
+    *注意* 可以用 rx.match 就不要用 rx.cond 串联
     chain cond, like:
     cond(condition1, com1,
         cond(condition2, com2,
@@ -31,9 +33,9 @@ def switch(
     )
      """
     conds = None
-    for v in reversed(values):
+    for v in reversed(values):  # 反向遍历, 最下面的在最里面判断
         _op, _com = v
-        _cond = _op(val) if callable(_op) else val == _op
+        _cond = _op(val) if callable(_op) else val == _op  # 条件
         if conds is not None:
             conds = rx.cond(_cond, _com, conds)
         else:

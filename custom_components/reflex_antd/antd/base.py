@@ -45,7 +45,7 @@ def theme(**kwargs):
 
 
 class DayJS(JsValue):
-    def serialize(self) -> str:
+    def serialize(self, **kwargs) -> str:
         if isinstance(self.value, list):
             return f"""dayjs({[f"'{v}', " for v in self.value]})"""
         return f"dayjs('{self.value}')"
@@ -60,7 +60,7 @@ class Locale(JsValue):
     def lang(self) -> str:
         return self.value.replace("_", "")
 
-    def serialize(self) -> str:
+    def serialize(self, **kwargs) -> str:
         return self.lang
 
     def get_imports(self) -> imports.ImportDict:

@@ -137,6 +137,29 @@ def form_hook_reset_fields(form_id: str, state, dep_name: str = None) -> JsValue
     )
     return _hook
 
+def form_hook_set_field_value(form_id: str, state, field_name: str, dep_name: str = None) -> JsValue:
+    """设置表单字段值"""
+    state_expr = state._js_expr
+    js_code = f"""
+        const value = {state_expr};
+        // 处理各种空值情况
+        if (
+            value === '' || 
+            value === null || 
+            value === undefined || 
+            (Array.isArray(value) && value.length === 0)
+        ) {{
+            {form_id}.setFieldsValue({{ {field_name}: undefined }});
+        }} else {{
+            {form_id}.setFieldsValue({{ {field_name}: value }});
+        }}
+    """
+    return JsUseEffect(
+        state,
+        js_code,
+        dep_name=dep_name,
+    )
+
 
 def _modal_form(
         modal_type: str, *children: Component,

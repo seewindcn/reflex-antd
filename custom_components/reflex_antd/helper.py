@@ -1,9 +1,10 @@
 from .base import (  # noqa
-    stateful, stateless, memo_always, memo_never, memo_never_no_recursive, memo_always_no_recursive,
+    stateful, stateless, stateful_no_recursive,
+    memo_always, memo_never, memo_never_no_recursive, memo_always_no_recursive,
     patch_all, default_config, contain, js_value, js_event, container, casual_var,
     CasualVar, ReactNode, ContainVar, CasualDict,
     JsValue, JsEvent, JsUseEffect, JsLocalDictVar, ImportVar, ExTypes,
-    fragment,
+    fragment, AntdFragment,
     AntdNoSSRComponent, AntdBaseComponent,
 )
 from .antd.base import (  # noqa

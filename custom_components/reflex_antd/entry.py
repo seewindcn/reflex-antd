@@ -7,7 +7,7 @@ from .antd.date_picker import date_picker, range_picker  # noqa
 from .antd.time_picker import time_picker, range_picker as time_range_picker  # noqa
 from .antd.form import (  # noqa
     form, form_item, form_list, form_provider, confirm_form, modal_form,
-    gen_form_id, form_hook_reset_fields,
+    gen_form_id, form_hook_reset_fields,form_hook_set_field_value
 )
 from .antd.input import input, text_area, search, password  # noqa
 from .antd.input_number import input_number  # noqa

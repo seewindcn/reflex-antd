@@ -134,7 +134,7 @@ class Confirm(FakeComponentMixin, JsValue):
         })
         return _triggers
 
-    def serialize(self) -> str:
+    def serialize(self, **kwargs) -> str:
         return self.get_name()
 
 

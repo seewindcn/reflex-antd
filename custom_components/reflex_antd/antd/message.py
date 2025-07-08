@@ -123,7 +123,7 @@ class Message(JsValue):
             return set(_hooks)
         return dict((h, None) for h in _hooks)
 
-    def serialize(self) -> str:
+    def serialize(self, **kwargs) -> str:
         # if self.config_item is not None:
         #     return '{contextHolder}'
         return self.get_open_message()

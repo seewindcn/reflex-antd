@@ -96,7 +96,7 @@ class TableState(MyBaseState):
                 sorter=True,
                 render=helper.js_value(
                     lambda text: ' <a>{text}</a>',
-                    is_component=True,
+                    to_js=True,
                 ),
             ),
             dict(
@@ -450,7 +450,7 @@ def table_editable_page() -> rx.Component:
                     hk_data,
                     dict(
                         on_save=helper.js_event(TableState.on_edit_save, event_trigger=lambda key, values: [key, values]),
-                        others=helper.js_value(_others_js),
+                        _others=helper.js_value(_others_js),
                         custom_cell=helper.js_value(_editable_cols),
                         custom_col=helper.js_value(_table_columns),
                     ),

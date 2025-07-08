@@ -55,7 +55,7 @@ class Tree(AntdComponent):
             "on_drop": lambda e: [e.node, e.dragNode, e.dragNodesKeys, e.dropPosition, e.dropToGap],  # e.event,
             "on_expand": lambda keys, e: [keys, e],
             "on_load": lambda keys, e: [keys, e],
-            "on_right_click": lambda e: [e.event, e.node],
+            "on_right_click": lambda event, node: [event, node],
             "on_select": lambda keys, e: [keys, e],
 
             "load_data": lambda node: [node],
@@ -65,6 +65,3 @@ class Tree(AntdComponent):
 
 
 tree = Tree.create
-
-
-
