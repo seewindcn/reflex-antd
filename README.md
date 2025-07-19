@@ -30,6 +30,9 @@ pip install reflex-antd
 reflex component build
 reflex component publish -t <pypi-token>
 
+* fix: InvalidDistribution: Metadata is missing required fields: Name, Version *
+pip install pkginfo --upgrade
+
 # ant-demo update
 cd antd_demo/
 reflex deploy
