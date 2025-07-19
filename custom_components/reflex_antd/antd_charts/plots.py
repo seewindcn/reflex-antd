@@ -3,12 +3,12 @@ https://ant-design-charts.antgroup.com/en/options/plots/overview
 """
 from typing import Any, Optional, Union, Self, List
 from types import SimpleNamespace
-from abc import ABC
 import dataclasses
 
 from . import g2, base
-from ..base import Var, BaseModel, Base, ExTypes, ContainVar, ReactNode, PropBase
+from ..base import Var, BaseModel, ExTypes, ContainVar, ReactNode, PropBase
 
+Base = g2.Base
 
 # class Spec(g2.AxisComponent, g2.BaseMark, ABC):
 #     depth: Optional[Var[int]]
@@ -34,21 +34,21 @@ from ..base import Var, BaseModel, Base, ExTypes, ContainVar, ReactNode, PropBas
 #     data: Optional[Var[ExTypes]]
 
 
-class ContainerConfig(Base, ABC):
+class ContainerConfig(Base):
     width: Optional[Var[int]]
     height: Optional[Var[int]]
     auto_fit: Optional[Var[bool]]
     renderer: Optional[Var[ExTypes]]
 
 
-class DataConfig(Base, ABC):
+class DataConfig(Base):
     data: Optional[Var[ExTypes | list[dict]]]
     x_field: Optional[Var[ExTypes | str]]
     y_field: Optional[Var[ExTypes | str]]
     series_field: Optional[Var[ExTypes | str]]
 
 
-class ShapeConfig(Base, ABC):
+class ShapeConfig(Base):
     shape_field: Optional[Var[ExTypes | str]]
     color_field: Optional[Var[ExTypes | str]]
     size_field: Optional[Var[ExTypes | str]]

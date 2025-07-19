@@ -13,11 +13,11 @@ import inspect
 import re
 import json
 
-import pydantic as pydantic2_md
 import reflex as rx
-from reflex import Component, Var, State, Base, ImportVar, NoSSRComponent
+from reflex import Component, Var, State, Base, ImportVar, NoSSRComponent, field as var_field
+from reflex.components.component import field as comp_field
 from reflex.vars import StringVar, base as vars_base
-from reflex.base import pydantic_main as pydantic_md, BaseModel  # noqa
+from reflex.base import BaseModel
 
 from reflex.components.component import (
     BaseComponent, CustomComponent, StatefulComponent, ComponentStyle, render_dict_to_var,
@@ -34,7 +34,6 @@ from reflex.experimental import hooks
 
 from . import util, constant
 
-pydantic = pydantic_md
 # 0.4.6 -> 000.004.006
 version = '.'.join(map(lambda x: x.zfill(3), Reflex.VERSION.split('.')))
 
@@ -242,8 +241,9 @@ class ExComponentItemBase(ExItem):
 
     def get_custom_code(self) -> set[str]:
         rs = get_component_custom_code(self.item)
-        if isinstance(self.item, StatefulComponent):
-            rs.add(self.item.code)
+        # TODO get_custom_code StatefulComponent
+        # if isinstance(self.item, StatefulComponent):
+        #     rs.add(self.item.code)
         return rs
 
 
@@ -552,7 +552,7 @@ class JsFunctionValue(JsValue):
 
     @property
     def args(self):
-        args = [CasualVar.create_safe(arg, ) for arg in self._args.args]
+        args = [CasualVar.create(arg, ) for arg in self._args.args]
         return args
 
     def _init(self, **kwargs) -> None:
@@ -890,16 +890,15 @@ class ExVar(Var):
 
     @classmethod
     def create(
-            cls, value: Any, _var_is_local: bool = True, _var_is_string: bool = False,
+            cls, value: Any,
             _var_data: VarData | None = None,
     ) -> Var | None:
-        v = Var.create(value, _var_is_local=_var_is_local, _var_is_string=_var_is_string, _var_data=_var_data)
+        v = Var.create(value, _var_data=_var_data)
         return cls(
             _js_expr=v._js_expr,
             _var_type=v._var_type,
-            _var_is_local=v._var_is_local,
-            _var_is_string=v._var_is_string,
             _var_data=v._var_data,
+            _var_value=value,
         )
 
 
@@ -908,8 +907,6 @@ class CasualVar(StringVar):
     def create(
             cls,
             value: Any,
-            _var_is_local: bool | None = None,
-            _var_is_string: bool | None = None,
             _var_data: VarData | None = None,
             _var_type: type = str,
     ) -> Var:
@@ -925,12 +922,12 @@ class CasualVar(StringVar):
         except (AttributeError,):
             if name.startswith("_"):
                 raise
-            return self.create_safe(
+            return self.create(
                 f'{self._js_expr}.{name}',
             )
 
     def __getitem__(self, i: Any) -> Var:
-        return self.create_safe(
+        return self.create(
             f'{self._js_expr}["{i}"]',
         )
         # try:
@@ -938,7 +935,7 @@ class CasualVar(StringVar):
         # except (exceptions.VarTypeError,):
         #     if str(i).startswith("_"):
         #         raise
-        #     return self.create_safe(
+        #     return self.create(
         #         f'{self._js_expr}["{i}"]',
         #     )
 
@@ -993,7 +990,11 @@ class NodeVar(ExVar):
 
 
 class ContainVar(ExVar):
-    _var_fmt: ExFormatter
+    _var_fmt: ExFormatter = dataclasses.field(default=None)
+
+    def __init__(self, *args, _var_fmt=None, **kwargs):
+        self._var_fmt = _var_fmt
+        super().__init__(*args, **kwargs)
 
     def __str__(self):
         rs = self._var_full_name
@@ -1011,12 +1012,9 @@ class ContainVar(ExVar):
     @classmethod
     def create(cls, _args_: Any = None, **kwargs) -> Self:
         value = _args_ if _args_ is not None else kwargs
-        # v: Var = super().create(_name, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
         rs = cls(
             _js_expr='',
             _var_type=cls,
-            _var_is_local=True,
-            _var_is_string=False,
             _var_data=None,
             _var_value=value,
         )
@@ -1136,12 +1134,9 @@ class PropBase(BaseModel):
 class PropVar(ContainVar):
     @classmethod
     def create(cls, prop: PropBase) -> Self:
-        # v: Var = super().create(_name, _var_is_local=_var_is_local, _var_is_string=_var_is_string)
         rs = cls(
             _js_expr='',
             _var_type=cls,
-            _var_is_local=True,
-            _var_is_string=False,
             _var_data=None,
             _var_value=prop,
         )
@@ -1234,9 +1229,9 @@ _custom_jss = {}
 
 
 class AntdBaseComponent(Component):
-    _custom_components: Set[CustomComponent] = pydantic.PrivateAttr(default_factory=set)
-    _ex_hooks: List[ContainVar] = pydantic.PrivateAttr(default_factory=list)
-    _custom_js: str | None = pydantic.PrivateAttr(default=None)
+    _custom_components: Set[CustomComponent] = comp_field(default_factory=set)
+    _ex_hooks: List[ContainVar] = comp_field(default_factory=list)
+    _custom_js: str | None = comp_field(default=None)
 
     def _render_custom_js(self):
         _custom_js = self.__class__._custom_js
@@ -1409,7 +1404,7 @@ class AntdBaseComponent(Component):
     def iter_component_props(self) -> Iterable[tuple[str, Component]]:
         cls = self.__class__
         _props = cls.get_props()
-        for name, field in cls.get_fields().items():
+        for name, _field in cls.get_fields().items():
             if name not in _props:
                 continue
             _p = getattr(self, name)
@@ -1501,7 +1496,7 @@ class LiteralAntdComponentVar(vars_base.CachedVarOperation, vars_base.LiteralVar
             imported_names = {j.alias or j.name for i in var_data.imports for j in i[1]}
         else:
             imported_names = set()
-        return str(render_dict_to_var(self._var_value.render(), imported_names))
+        return str(render_dict_to_var(self._var_value.render()))  # TODO , imported_names))
 
     @vars_base.cached_property_no_lock
     def _cached_get_all_var_data(self) -> VarData | None:
@@ -1616,7 +1611,7 @@ def default_config(provider: Component = None, antd_app: Component = None):
         _config_app = AntdApp()
 
     _app = getattr(prerequisites.get_app(), constants.CompileVars.APP)
-    _old_error_boundary = _app.error_boundary
+    # TODO _old_error_boundary = _app.error_boundary
 
     def _antd_error_boundary(*children: Component) -> Component:
         _coms = [_old_error_boundary(*children)] if _old_error_boundary else children
@@ -1696,10 +1691,10 @@ def patch_all():
         d = _wrap_func(*args, **kwargs)
         return _support_js_regex(d)
 
-    compiler._compile_tailwind = functools.partial(_wrap_js_regex, compiler._compile_tailwind)
+    # TODO compiler._compile_tailwind = functools.partial(_wrap_js_regex, compiler._compile_tailwind)
 
-    old_update_next_config = prerequisites.update_next_config
-    old__update_next_config = prerequisites._update_next_config
+    # old_update_next_config = prerequisites.update_next_config
+    # old__update_next_config = prerequisites._update_next_config
 
     # 2. https://github.com/ant-design/pro-components/issues/8543
     def my__update_next_config(*args, **kwargs) -> str:
@@ -1777,8 +1772,8 @@ def patch_all():
         ])
         return old_update_next_config(export=export, transpile_packages=transpile_packages)
 
-    prerequisites.update_next_config = my_update_next_config
-    prerequisites._update_next_config = my__update_next_config
+    # prerequisites.update_next_config = my_update_next_config
+    # prerequisites._update_next_config = my__update_next_config
 
     def _my_get_memoized_event_triggers(
             cls,
@@ -1828,7 +1823,7 @@ def patch_all():
             )
         return _old_render_dict_to_var(tag, imported_names)
     _old_render_dict_to_var = component_md.render_dict_to_var
-    component_md.render_dict_to_var = my_render_dict_to_var
+    # TODO component_md.render_dict_to_var = my_render_dict_to_var
 
 
 def vt(t):

@@ -148,7 +148,8 @@ class MessageHolder(Bare):
             cs.append('{contextHolder}')
         cs.append('</>')
         data = '\n'.join(cs)
-        rs = cls(
+        rs = cls._unsafe_create(
+            children=[],
             msg=msg,
             contents=Var(
                 _js_expr=data,

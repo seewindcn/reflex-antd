@@ -62,10 +62,10 @@ class CodeMirror(rx.Component):
     def _get_imports(self) -> ParsedImportDict:
         _imports = {
             f'@uiw/codemirror-theme-okaidia{VERSION}': [
-                ImportVar(tag='okaidia', is_default=False, alias=None, install=True, render=True, transpile=False)
+                ImportVar(tag='okaidia', is_default=False, alias=None, install=True, render=True)
             ],
             f'@uiw/react-codemirror{VERSION}': [
-                ImportVar(tag='CodeMirror', is_default=True, alias=None, install=True, render=True, transpile=False)
+                ImportVar(tag='CodeMirror', is_default=True, alias=None, install=True, render=True)
             ]
         }
         return _imports
@@ -86,7 +86,7 @@ class YamlEdit(CodeMirror):
         _imports.update(
             {
                 '@codemirror/lang-yaml': [
-                    ImportVar(tag='yaml', is_default=False, alias=None, install=True, render=True, transpile=False, )
+                    ImportVar(tag='yaml', is_default=False, alias=None, install=True, render=True)
                 ],
             }
         )
@@ -110,7 +110,7 @@ class JsonEdit(CodeMirror):
         _imports.update(
             {
                 '@codemirror/lang-json': [
-                    ImportVar(tag='json', is_default=False, alias=None, install=True, render=True, transpile=False, )
+                    ImportVar(tag='json', is_default=False, alias=None, install=True, render=True)
                 ],
             }
         )
@@ -134,7 +134,7 @@ class PythonEdit(CodeMirror):
         _imports.update(
             {
                 '@codemirror/lang-python': [
-                    ImportVar(tag='python', is_default=False, alias=None, install=True, render=True, transpile=False, )
+                    ImportVar(tag='python', is_default=False, alias=None, install=True, render=True)
                 ],
             }
         )

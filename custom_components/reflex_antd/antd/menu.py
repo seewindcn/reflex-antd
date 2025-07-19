@@ -3,11 +3,11 @@ from reflex import Component, Var, EventChain, Base
 from reflex.utils import imports
 from reflex.constants import EventTriggers
 
-from ..base import AntdComponent, ContainVar, ReactNode, pydantic
+from ..base import AntdComponent, ContainVar, ReactNode
 from ..constant import ThemeType, DirectionType, TriggerType
 
 
-class MenuItem(pydantic.BaseModel):
+class MenuItem(Base):
     key: str
     label: str
     icon: Component

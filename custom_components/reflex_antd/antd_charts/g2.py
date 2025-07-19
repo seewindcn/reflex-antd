@@ -1,5 +1,4 @@
 from typing import Any, Optional
-from abc import ABC
 
 from ..base import Var, ContainVar, ReactNode, Base, ExTypes
 from . import constant as C
@@ -8,15 +7,16 @@ from . import constant as C
 https://g2.antv.antgroup.com/api/overview 
  """
 
+Base = object
 
-class AxisComponent(Base, ABC):
+class AxisComponent(Base):
     title: Optional[ReactNode | ContainVar]
     tick_count: Optional[Var[int]]
     label_formatter: Optional[ContainVar]
     state: Optional[C.stateType]
 
 
-class BaseMark(Base, ABC):
+class BaseMark(Base):
     x: Optional[Var[int]]
     y: Optional[Var[int]]
     encode: Optional[Var[ExTypes]]

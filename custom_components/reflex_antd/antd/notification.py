@@ -95,7 +95,8 @@ class NotificationHolder(Bare):
             cs.append('{contextHolder}')
         cs.append('</>')
         data = '\n'.join(cs)
-        rs = cls(
+        rs = cls._unsafe_create(
+            children=[],
             noti=noti,
             contents=Var(
                 _js_expr=data,
