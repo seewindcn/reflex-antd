@@ -146,6 +146,11 @@ def antd_feedback_alert() -> rx.Component:
             rx.text("可口的图标让信息类型更加醒目。"),
             feedback.alert(message=rx.text('Success Tips'), type="error", show_icon=True, width=200),
             feedback.alert(message=rx.text('Informational Notes'), type="info", show_icon=True, width=200),
+            rx.text('feedback spin test'),
+            layout.space(
+                feedback.spin(indicator=general.icon('LoadingOutlined')),
+                general.button(icon=general.icon('LoadingOutlined')),
+            ),
         ),
         width="100%",
     )
